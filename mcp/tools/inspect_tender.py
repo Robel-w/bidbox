@@ -1,0 +1,1 @@
+"""Inspect tender data."""

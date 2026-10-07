@@ -1,0 +1,5 @@
+services:
+  bidbox:
+    build: .
+    env_file:
+      - .env
