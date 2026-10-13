@@ -1,0 +1,1 @@
+"""BidBox MCP server package."""
