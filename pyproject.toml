@@ -7,6 +7,27 @@ name = "bidbox"
 version = "0.1.0"
 description = "AI-assisted public procurement investigation and evidence reporting"
 requires-python = ">=3.12"
+dependencies = [
+    "mcp>=1.0.0",
+    "langgraph>=0.2.0",
+    "langchain-mcp-adapters>=0.1.0",
+    "pydantic>=2.7.0",
+    "duckdb>=1.0.0",
+    "httpx>=0.27.0",
+    "openai>=1.30.0",
+    "pytest>=8.0.0",
+    "ruff>=0.4.0",
+]
+
+[project.scripts]
+bidbox-server = "bidbox_mcp.server:main"
+bidbox-seed = "scripts.seed_data:main"
+bidbox-download = "scripts.download_data:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["bidbox*", "bidbox_mcp*", "data*", "scripts*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
