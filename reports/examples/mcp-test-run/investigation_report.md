@@ -2,7 +2,7 @@
 
 **Run ID:** `mcp-test-run`  
 **Authorized By:** Dr. Beatrice Omwamba (Chief Oversight Examiner)  
-**Generated At (UTC):** 2026-10-14T21:30:43.534969+00:00  
+**Generated At (UTC):** 2026-10-14T22:09:47.488088+00:00  
 
 ## Executive Summary
 This file compiles 1 evidence-backed observation(s) for committee review.
@@ -21,7 +21,7 @@ This file compiles 1 evidence-backed observation(s) for committee review.
 - An anomaly constitutes a flag for human verification, not misconduct or liability.
 
 ## Tool-Call Audit Appendix
-Total logged actions in run: 3
+Total logged actions in run: 5
 
 ```json
 [
@@ -128,11 +128,77 @@ Total logged actions in run: 3
     "tokens": null,
     "prev_hash": "b1f7aa36f8f2253d68590719ef01d0176faa4ee24c963851b05b9b1853ffebd3",
     "hash": "28aa323acece01c9e9415a19c5f9d73f4939be64220310fc0fecee18088e507b"
+  },
+  {
+    "seq": 3,
+    "ts_utc": "2026-10-14T21:30:43.535681+00:00",
+    "run_id": "mcp-test-run",
+    "actor": "tool",
+    "tool": "create_investigation_file",
+    "inputs": {
+      "args": [],
+      "kwargs": {
+        "run_id": "mcp-test-run",
+        "approver_name": "Dr. Beatrice Omwamba",
+        "approver_role": "Chief Oversight Examiner"
+      }
+    },
+    "outputs": {
+      "run_id": "mcp-test-run",
+      "markdown_path": "reports\\examples\\mcp-test-run\\investigation_report.md",
+      "json_path": "reports\\examples\\mcp-test-run\\investigation_report.json",
+      "approver_name": "Dr. Beatrice Omwamba",
+      "approver_role": "Chief Oversight Examiner",
+      "status": "finalized",
+      "findings_count": 1
+    },
+    "duration_ms": 10.61,
+    "tokens": null,
+    "prev_hash": "28aa323acece01c9e9415a19c5f9d73f4939be64220310fc0fecee18088e507b",
+    "hash": "c08f9c03db0fc884b305900e4502464dd27e6808db2d1342bc5a2cca45d67a8e"
+  },
+  {
+    "seq": 4,
+    "ts_utc": "2026-10-14T22:09:47.470086+00:00",
+    "run_id": "mcp-test-run",
+    "actor": "tool",
+    "tool": "flag_finding",
+    "inputs": {
+      "args": [],
+      "kwargs": {
+        "run_id": "mcp-test-run",
+        "ocid": "ocds-synth-kenya-000100",
+        "type": "pricing_outlier",
+        "severity": "high",
+        "statement": "Unit contract price is 100x above median peer benchmark",
+        "rationale": "Contract value KES 25M deviates substantially from CPV 30213100-6 norm",
+        "uncertainty": "Technical specs may include non-standard enterprise servers",
+        "follow_up": "Procurement committee should verify component breakdown invoice",
+        "sources": [
+          {
+            "ocid": "ocds-synth-kenya-000100",
+            "award_id": "AWD-000100",
+            "field_path": "awards[0].value.amount",
+            "source_url": "data/fixtures/releases.json"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "flag_id": "FLAG-AE9922F5",
+      "run_id": "mcp-test-run",
+      "ocid": "ocds-synth-kenya-000100",
+      "status": "draft"
+    },
+    "duration_ms": 0.1,
+    "tokens": null,
+    "prev_hash": "c08f9c03db0fc884b305900e4502464dd27e6808db2d1342bc5a2cca45d67a8e",
+    "hash": "e64c8eef2b1fa4416a0366615b41756675a6095ffba7bc83bdab4b2900804978"
   }
 ]
 ```
 
-**Execution Cost:** $0.00 (Local model (Ollama / qwen2.5:7b-instruct): $0.00 (open weights))
+**Execution Cost:** $0.00 (Local model (Ollama / llama3.2:latest): $0.00 (open weights))
 **Total Tokens:** 0
 
 ---

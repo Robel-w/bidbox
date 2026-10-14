@@ -1,0 +1,166 @@
+# BidBox Investigation Report
+
+**Run ID:** `demo-4cc3dec4`  
+**Authorized By:** Demo Reviewer (Procurement Review Officer)  
+**Generated At (UTC):** 2026-10-14T21:49:41.814781+00:00  
+
+## Executive Summary
+This file compiles 0 evidence-backed observation(s) for committee review.
+
+## Findings
+*No draft findings were filed for this investigation.*
+## Data Limitations
+- Analyses rely solely on completed historical procurement awards (OCDS data).
+- An anomaly constitutes a flag for human verification, not misconduct or liability.
+
+## Tool-Call Audit Appendix
+Total logged actions in run: 6
+
+```json
+[
+  {
+    "seq": 0,
+    "ts_utc": "2026-10-14T21:49:01.842928+00:00",
+    "run_id": "demo-4cc3dec4",
+    "actor": "agent",
+    "tool": "llm_call",
+    "inputs": {
+      "model": "llama3.2:latest"
+    },
+    "outputs": {
+      "tokens": {
+        "prompt_tokens": 247,
+        "completion_tokens": 31,
+        "total_tokens": 278
+      }
+    },
+    "duration_ms": 0.0,
+    "tokens": {
+      "prompt_tokens": 247,
+      "completion_tokens": 31,
+      "total_tokens": 278
+    },
+    "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "hash": "70650aa85d1686eb4765630ec31f29209a756e75a3bef4c3adf7febabd445c22"
+  },
+  {
+    "seq": 1,
+    "ts_utc": "2026-10-14T21:49:33.574427+00:00",
+    "run_id": "demo-4cc3dec4",
+    "actor": "agent",
+    "tool": "source_verification",
+    "inputs": {
+      "source": {
+        "ocid": "ocds-synth-kenya-000100",
+        "award_id": "AWD-000100",
+        "field_path": "awards[0].value.amount",
+        "source_url": "data/fixtures/releases.json"
+      }
+    },
+    "outputs": {
+      "verified": false,
+      "reason": "'read_text_file'"
+    },
+    "duration_ms": 0.0,
+    "tokens": null,
+    "prev_hash": "70650aa85d1686eb4765630ec31f29209a756e75a3bef4c3adf7febabd445c22",
+    "hash": "5882405fbe034d5935f79d4eded2abec573496ef1c8cfdfa3ce0186f7c3e1782"
+  },
+  {
+    "seq": 2,
+    "ts_utc": "2026-10-14T21:49:37.608548+00:00",
+    "run_id": "demo-4cc3dec4",
+    "actor": "agent",
+    "tool": "llm_call",
+    "inputs": {
+      "model": "llama3.2:latest"
+    },
+    "outputs": {
+      "tokens": {
+        "prompt_tokens": 78,
+        "completion_tokens": 22,
+        "total_tokens": 100
+      }
+    },
+    "duration_ms": 0.0,
+    "tokens": {
+      "prompt_tokens": 78,
+      "completion_tokens": 22,
+      "total_tokens": 100
+    },
+    "prev_hash": "5882405fbe034d5935f79d4eded2abec573496ef1c8cfdfa3ce0186f7c3e1782",
+    "hash": "a11f8872f10b8d5053cf0f83507e48c822476371a9af5f5797c501185fcf298b"
+  },
+  {
+    "seq": 3,
+    "ts_utc": "2026-10-14T21:49:37.634012+00:00",
+    "run_id": "demo-4cc3dec4",
+    "actor": "agent",
+    "tool": "request_approval",
+    "inputs": {
+      "action": "flag_finding_and_create_investigation_file",
+      "summary": "Commit reviewed findings and prepare the committee investigation file."
+    },
+    "outputs": {
+      "status": "pending",
+      "action": "flag_finding_and_create_investigation_file"
+    },
+    "duration_ms": 0.0,
+    "tokens": null,
+    "prev_hash": "a11f8872f10b8d5053cf0f83507e48c822476371a9af5f5797c501185fcf298b",
+    "hash": "82ed64d573b4df857aef411cfb14b454fb29d3d3058fc0c7cba8af5e94b1d322"
+  },
+  {
+    "seq": 4,
+    "ts_utc": "2026-10-14T21:49:37.660511+00:00",
+    "run_id": "demo-4cc3dec4",
+    "actor": "agent",
+    "tool": "request_approval",
+    "inputs": {
+      "action": "flag_finding_and_create_investigation_file",
+      "summary": "Commit reviewed findings and prepare the committee investigation file."
+    },
+    "outputs": {
+      "status": "pending",
+      "action": "flag_finding_and_create_investigation_file"
+    },
+    "duration_ms": 0.0,
+    "tokens": null,
+    "prev_hash": "82ed64d573b4df857aef411cfb14b454fb29d3d3058fc0c7cba8af5e94b1d322",
+    "hash": "786eb268c7a7028e884b71968342953d6a046935e03b4359fc1435284788af84"
+  },
+  {
+    "seq": 5,
+    "ts_utc": "2026-10-14T21:49:37.680821+00:00",
+    "run_id": "demo-4cc3dec4",
+    "actor": "human",
+    "tool": "approval_gate",
+    "inputs": {
+      "action": "flag_finding_and_create_investigation_file",
+      "approver_name": "Demo Reviewer",
+      "approver_role": "Procurement Review Officer",
+      "decision": "approve",
+      "reason": "Reviewed for committee"
+    },
+    "outputs": {
+      "run_id": "demo-4cc3dec4",
+      "action": "flag_finding_and_create_investigation_file",
+      "approver_name": "Demo Reviewer",
+      "approver_role": "Procurement Review Officer",
+      "decision": "approve",
+      "reason": "Reviewed for committee",
+      "ts_utc": ""
+    },
+    "duration_ms": 0.0,
+    "tokens": null,
+    "prev_hash": "786eb268c7a7028e884b71968342953d6a046935e03b4359fc1435284788af84",
+    "hash": "3d1809765b828705a0ce5e9aac18e00f4220ea876c1f38d0ceb33c1f7caf5011"
+  }
+]
+```
+
+**Execution Cost:** $0.00 (Local model (Ollama / qwen2.5:7b-instruct): $0.00 (open weights))
+**Total Tokens:** 378
+
+---
+Prepared for committee decision. No award decision is made or implied.

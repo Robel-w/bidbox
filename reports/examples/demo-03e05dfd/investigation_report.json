@@ -1,0 +1,154 @@
+{
+  "run_id": "demo-03e05dfd",
+  "approver_name": "Demo Reviewer",
+  "approver_role": "Procurement Review Officer",
+  "generated_at_utc": "2026-10-14T21:52:45.754184+00:00",
+  "findings": [],
+  "data_limitations": [
+    "Historical completed awards only",
+    "Screening signals for human inquiry, not misconduct determination"
+  ],
+  "audit_calls": [
+    {
+      "seq": 0,
+      "ts_utc": "2026-10-14T21:51:15.903797+00:00",
+      "run_id": "demo-03e05dfd",
+      "actor": "agent",
+      "tool": "llm_call",
+      "inputs": {
+        "model": "llama3.2:latest"
+      },
+      "outputs": {
+        "tokens": {
+          "prompt_tokens": 246,
+          "completion_tokens": 31,
+          "total_tokens": 277
+        }
+      },
+      "duration_ms": 0.0,
+      "tokens": {
+        "prompt_tokens": 246,
+        "completion_tokens": 31,
+        "total_tokens": 277
+      },
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "hash": "68759c461fe2960a0f9a459b1caf2ebd66465c34f4da5afa0a6957f760d3ba54"
+    },
+    {
+      "seq": 1,
+      "ts_utc": "2026-10-14T21:52:07.626693+00:00",
+      "run_id": "demo-03e05dfd",
+      "actor": "agent",
+      "tool": "llm_call",
+      "inputs": {
+        "model": "llama3.2:latest"
+      },
+      "outputs": {
+        "tokens": {
+          "prompt_tokens": 67,
+          "completion_tokens": 11,
+          "total_tokens": 78
+        }
+      },
+      "duration_ms": 0.0,
+      "tokens": {
+        "prompt_tokens": 67,
+        "completion_tokens": 11,
+        "total_tokens": 78
+      },
+      "prev_hash": "68759c461fe2960a0f9a459b1caf2ebd66465c34f4da5afa0a6957f760d3ba54",
+      "hash": "e0a8d047fd04fd843f98f08bad4a043e06b37479cba397e5de168b53170fb4f2"
+    },
+    {
+      "seq": 2,
+      "ts_utc": "2026-10-14T21:52:42.317496+00:00",
+      "run_id": "demo-03e05dfd",
+      "actor": "agent",
+      "tool": "llm_call",
+      "inputs": {
+        "model": "llama3.2:latest"
+      },
+      "outputs": {
+        "tokens": {
+          "prompt_tokens": 74,
+          "completion_tokens": 18,
+          "total_tokens": 92
+        }
+      },
+      "duration_ms": 0.0,
+      "tokens": {
+        "prompt_tokens": 74,
+        "completion_tokens": 18,
+        "total_tokens": 92
+      },
+      "prev_hash": "e0a8d047fd04fd843f98f08bad4a043e06b37479cba397e5de168b53170fb4f2",
+      "hash": "42b9db068c796e75ec1e9bd741849b150459b1ea75689cb79ce54f8ca225f56e"
+    },
+    {
+      "seq": 3,
+      "ts_utc": "2026-10-14T21:52:42.328126+00:00",
+      "run_id": "demo-03e05dfd",
+      "actor": "agent",
+      "tool": "request_approval",
+      "inputs": {
+        "action": "flag_finding_and_create_investigation_file",
+        "summary": "Commit reviewed findings and prepare the committee investigation file."
+      },
+      "outputs": {
+        "status": "pending",
+        "action": "flag_finding_and_create_investigation_file"
+      },
+      "duration_ms": 0.0,
+      "tokens": null,
+      "prev_hash": "42b9db068c796e75ec1e9bd741849b150459b1ea75689cb79ce54f8ca225f56e",
+      "hash": "40f04e2561db78190c3e254a8c11a7696aaec78917b3dc5dede899df7486ae87"
+    },
+    {
+      "seq": 4,
+      "ts_utc": "2026-10-14T21:52:42.343916+00:00",
+      "run_id": "demo-03e05dfd",
+      "actor": "agent",
+      "tool": "request_approval",
+      "inputs": {
+        "action": "flag_finding_and_create_investigation_file",
+        "summary": "Commit reviewed findings and prepare the committee investigation file."
+      },
+      "outputs": {
+        "status": "pending",
+        "action": "flag_finding_and_create_investigation_file"
+      },
+      "duration_ms": 0.0,
+      "tokens": null,
+      "prev_hash": "40f04e2561db78190c3e254a8c11a7696aaec78917b3dc5dede899df7486ae87",
+      "hash": "e64101e4c550d42e1cf8dae6de92f8522a39217f73810b4438129efe8c663303"
+    },
+    {
+      "seq": 5,
+      "ts_utc": "2026-10-14T21:52:42.357802+00:00",
+      "run_id": "demo-03e05dfd",
+      "actor": "human",
+      "tool": "approval_gate",
+      "inputs": {
+        "action": "flag_finding_and_create_investigation_file",
+        "approver_name": "Demo Reviewer",
+        "approver_role": "Procurement Review Officer",
+        "decision": "approve",
+        "reason": "Reviewed for committee"
+      },
+      "outputs": {
+        "run_id": "demo-03e05dfd",
+        "action": "flag_finding_and_create_investigation_file",
+        "approver_name": "Demo Reviewer",
+        "approver_role": "Procurement Review Officer",
+        "decision": "approve",
+        "reason": "Reviewed for committee",
+        "ts_utc": ""
+      },
+      "duration_ms": 0.0,
+      "tokens": null,
+      "prev_hash": "e64101e4c550d42e1cf8dae6de92f8522a39217f73810b4438129efe8c663303",
+      "hash": "5f6cf6ffb1f341d81853e3fc613c5af4ef22d85e60e66dc906040f59f97f37f7"
+    }
+  ],
+  "footer": "Prepared for committee decision. No award decision is made or implied."
+}

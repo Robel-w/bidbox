@@ -1,0 +1,148 @@
+{
+  "run_id": "demo-632f970a",
+  "approver_name": "Demo Reviewer",
+  "approver_role": "Procurement Review Officer",
+  "generated_at_utc": "2026-10-14T22:17:34.161693+00:00",
+  "findings": [],
+  "data_limitations": [
+    "Historical completed awards only",
+    "Screening signals for human inquiry, not misconduct determination"
+  ],
+  "audit_calls": [
+    {
+      "seq": 0,
+      "ts_utc": "2026-10-14T22:16:31.108521+00:00",
+      "run_id": "demo-632f970a",
+      "actor": "agent",
+      "tool": "llm_call",
+      "inputs": {
+        "model": "llama3.2:latest"
+      },
+      "outputs": {
+        "tokens": {
+          "prompt_tokens": 247,
+          "completion_tokens": 31,
+          "total_tokens": 278
+        }
+      },
+      "duration_ms": 0.0,
+      "tokens": {
+        "prompt_tokens": 247,
+        "completion_tokens": 31,
+        "total_tokens": 278
+      },
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "hash": "28eb82eab91d60397c47ec41ba300820b545147cfd1670d124e3038486e4a4cd"
+    },
+    {
+      "seq": 1,
+      "ts_utc": "2026-10-14T22:17:29.350585+00:00",
+      "run_id": "demo-632f970a",
+      "actor": "agent",
+      "tool": "llm_call",
+      "inputs": {
+        "model": "llama3.2:latest"
+      },
+      "outputs": {
+        "tokens": {
+          "prompt_tokens": 222,
+          "completion_tokens": 17,
+          "total_tokens": 239
+        }
+      },
+      "duration_ms": 0.0,
+      "tokens": {
+        "prompt_tokens": 222,
+        "completion_tokens": 17,
+        "total_tokens": 239
+      },
+      "prev_hash": "28eb82eab91d60397c47ec41ba300820b545147cfd1670d124e3038486e4a4cd",
+      "hash": "29dd08c92a306d679963e9ea0b4670c58efacbde27eee3ba92982125dc53df1d"
+    },
+    {
+      "seq": 2,
+      "ts_utc": "2026-10-14T22:17:29.384210+00:00",
+      "run_id": "demo-632f970a",
+      "actor": "agent",
+      "tool": "request_approval",
+      "inputs": {
+        "action": "flag_finding_and_create_investigation_file",
+        "summary": "Commit reviewed findings and prepare the committee investigation file."
+      },
+      "outputs": {
+        "status": "pending",
+        "action": "flag_finding_and_create_investigation_file"
+      },
+      "duration_ms": 0.0,
+      "tokens": null,
+      "prev_hash": "29dd08c92a306d679963e9ea0b4670c58efacbde27eee3ba92982125dc53df1d",
+      "hash": "c31a1509bb5e5d1cffc2c71db139bbbd9bea6297a873c878542ccd32a1abbeae"
+    },
+    {
+      "seq": 3,
+      "ts_utc": "2026-10-14T22:17:29.412355+00:00",
+      "run_id": "demo-632f970a",
+      "actor": "human",
+      "tool": "approval_gate",
+      "inputs": {
+        "action": "flag_finding_and_create_investigation_file",
+        "approver_name": "Demo Reviewer",
+        "approver_role": "Procurement Review Officer",
+        "decision": "approve",
+        "reason": "Reviewed for committee"
+      },
+      "outputs": {
+        "run_id": "demo-632f970a",
+        "action": "flag_finding_and_create_investigation_file",
+        "approver_name": "Demo Reviewer",
+        "approver_role": "Procurement Review Officer",
+        "decision": "approve",
+        "reason": "Reviewed for committee",
+        "ts_utc": ""
+      },
+      "duration_ms": 0.0,
+      "tokens": null,
+      "prev_hash": "c31a1509bb5e5d1cffc2c71db139bbbd9bea6297a873c878542ccd32a1abbeae",
+      "hash": "3fdbfbd6c8762fb5e5a6addbaa88372694a0f963cc59e634ae36cec5c981ffd8"
+    },
+    {
+      "seq": 4,
+      "ts_utc": "2026-10-14T22:17:32.952069+00:00",
+      "run_id": "demo-632f970a",
+      "actor": "tool",
+      "tool": "flag_finding",
+      "inputs": {
+        "args": [],
+        "kwargs": {
+          "run_id": "demo-632f970a",
+          "ocid": "ocds-synth-kenya-000100",
+          "type": "pricing",
+          "severity": "high",
+          "statement": "Award price is materially above the historical peer benchmark.",
+          "rationale": "Modified Z-score: 932.348; peer median: 250279.59 KES.",
+          "uncertainty": "Specifications or scope differences may explain the variance.",
+          "follow_up": "Committee should verify the component and scope breakdown.",
+          "sources": [
+            {
+              "ocid": "ocds-synth-kenya-000100",
+              "award_id": "AWD-000100",
+              "field_path": "awards[0].value.amount",
+              "source_url": "data/fixtures/releases.json"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "flag_id": "FLAG-7B898CEF",
+        "run_id": "demo-632f970a",
+        "ocid": "ocds-synth-kenya-000100",
+        "status": "draft"
+      },
+      "duration_ms": 0.22,
+      "tokens": null,
+      "prev_hash": "3fdbfbd6c8762fb5e5a6addbaa88372694a0f963cc59e634ae36cec5c981ffd8",
+      "hash": "cf5c5c6834aad856116dfef7c1259ddff67748b4d8ba535fc2465e25ceeebefc"
+    }
+  ],
+  "footer": "Prepared for committee decision. No award decision is made or implied."
+}
