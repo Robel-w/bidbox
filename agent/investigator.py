@@ -13,6 +13,7 @@ from audit.logger import append_audit_event
 
 
 FILESYSTEM_VERSION = os.getenv("BIDBOX_FILESYSTEM_MCP_VERSION", "2025.1.14")
+_TOOLS_CACHE: dict[str, Any] | None = None
 
 
 def mcp_client() -> MultiServerMCPClient:
@@ -42,12 +43,16 @@ def mcp_client() -> MultiServerMCPClient:
 
 async def load_tools() -> dict[str, Any]:
 	"""Load tools from both configured MCP servers through the adapter."""
+	global _TOOLS_CACHE
+	if _TOOLS_CACHE is not None:
+		return _TOOLS_CACHE
 	client = mcp_client()
 	tools = await client.get_tools()
 	by_name: dict[str, Any] = {}
 	for tool in tools:
 		name = getattr(tool, "name", "")
 		by_name[name.split("__")[-1]] = tool
+	_TOOLS_CACHE = by_name
 	return by_name
 
 

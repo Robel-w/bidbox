@@ -11,6 +11,7 @@ from .llm import ask_json
 
 
 ACCUSATORY = ("fraud", "corrupt", "bribe", "collusion", "criminal", "winner", "award to")
+_FIXTURE_RECORDS: list[dict] | None = None
 
 
 def _cited_value(record: dict, field_path: str):
@@ -24,6 +25,7 @@ def _cited_value(record: dict, field_path: str):
 
 async def review_evidence(state: dict) -> dict:
 	"""Apply deterministic sourcing checks, filesystem verification, and an LLM pass."""
+	global _FIXTURE_RECORDS
 	tools = await load_tools()
 	kept: list[dict] = []
 	dropped: list[dict] = []
@@ -41,13 +43,15 @@ async def review_evidence(state: dict) -> dict:
 				if PurePosixPath(source["source_url"]).name != "releases.json":
 					raise ValueError("source is outside the allowed fixture")
 				reader = "read_text_file" if "read_text_file" in tools else "read_file"
-				raw = await call_tool(
-					tools,
-					state["run_id"],
-					reader,
-					{"path": str(Path("data/fixtures/releases.json").resolve())},
-				)
-				records = raw if isinstance(raw, list) else json.loads(raw)
+				if _FIXTURE_RECORDS is None:
+					raw = await call_tool(
+						tools,
+						state["run_id"],
+						reader,
+						{"path": str(Path("data/fixtures/releases.json").resolve())},
+					)
+					_FIXTURE_RECORDS = raw if isinstance(raw, list) else json.loads(raw)
+				records = _FIXTURE_RECORDS
 				match = next((item for item in records if item.get("ocid") == source["ocid"]), None)
 				if not match:
 					raise ValueError("cited OCID not found in fixture")

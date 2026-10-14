@@ -14,7 +14,7 @@ async def plan_investigation(state: dict) -> dict:
 	response = await ask_json(
 		state["run_id"],
 		"Choose evidence checks only. Return JSON {checks: string[], reason: string}. Allowed checks: price benchmark, supplier history, buyer concentration, data-quality.",
-		json.dumps(tender),
+		json.dumps({"tender": tender, "user_request": state.get("user_request", "")}),
 		{"checks": [], "reason": ""},
 	)
 	allowed = {"price benchmark", "supplier history", "buyer concentration", "data-quality"}
