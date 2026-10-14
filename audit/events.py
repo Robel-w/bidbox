@@ -26,14 +26,20 @@ def request_approval(
 def record_approval(
     run_id: str,
     action: str,
-    approver_name: str,
-    approver_role: str = "Procurement Review Officer",
-    decision: str = "approve",
-    reason: str = "Authorized by human reviewer",
+    approver_name: str | None,
+    approver_role: str | None = None,
+    decision: str | None = None,
+    reason: str | None = None,
 ) -> dict[str, Any]:
-    """Record human gate sign-off or rejection, strictly requiring a named approver."""
+    """Record a human gate decision with all required sign-off fields."""
     if not approver_name or not approver_name.strip():
         raise ValueError("Named approver is required to authorize this action.")
+    if not approver_role or not approver_role.strip():
+        raise ValueError("Approver role is required to authorize this action.")
+    if not decision or not decision.strip():
+        raise ValueError("Approval decision is required.")
+    if not reason or not reason.strip():
+        raise ValueError("Approval reason is required.")
 
     clean_decision = decision.strip().lower()
     if clean_decision not in ("approve", "reject"):
@@ -140,6 +146,7 @@ def get_run_cost(run_id: str) -> RunCost:
             prompt_tokens=total_prompt,
             completion_tokens=total_comp,
             cost_usd=0.0,
+            cost_per_run=0.0,
             cost_display="$0.00",
             note=f"Local model (Ollama / {model}): $0.00 (open weights)",
         )
@@ -154,6 +161,7 @@ def get_run_cost(run_id: str) -> RunCost:
         prompt_tokens=total_prompt,
         completion_tokens=total_comp,
         cost_usd=cost_usd,
+        cost_per_run=cost_usd,
         cost_display=f"${cost_usd:.4f}",
         note=f"API pricing ({model}): ${cost_usd:.4f}",
     )

@@ -57,18 +57,14 @@ def append_audit_event(
     prev_hash = GENESIS_HASH
 
     if log_file.exists():
-        lines = [
-            line.strip()
-            for line in log_file.read_text(encoding="utf-8").splitlines()
-            if line.strip()
-        ]
+        valid, error = verify_chain(log_file)
+        if not valid:
+            raise ValueError(f"Cannot append to invalid audit chain: {error}")
+        lines = [line for line in log_file.read_text(encoding="utf-8").splitlines() if line.strip()]
         if lines:
-            try:
-                last_event = json.loads(lines[-1])
-                seq = int(last_event.get("seq", -1)) + 1
-                prev_hash = str(last_event.get("hash", GENESIS_HASH))
-            except json.JSONDecodeError:
-                pass
+            last_event = json.loads(lines[-1])
+            seq = int(last_event["seq"]) + 1
+            prev_hash = str(last_event["hash"])
 
     ts_utc = datetime.now(UTC).isoformat()
     raw_event = {

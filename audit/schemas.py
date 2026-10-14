@@ -48,5 +48,6 @@ class RunCost(BaseModel):
     prompt_tokens: int = 0
     completion_tokens: int = 0
     cost_usd: float = 0.0
+    cost_per_run: float = 0.0
     cost_display: str = "$0.00"
     note: str = "Local model (open weights): $0.00"
