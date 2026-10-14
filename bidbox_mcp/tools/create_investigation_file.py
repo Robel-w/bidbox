@@ -4,6 +4,7 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
+from audit.events import get_run_cost
 from audit.logger import audited, get_audit_logs
 from bidbox_mcp.schemas.investigation import InvestigationFileResult
 from bidbox_mcp.tools.flag_finding import get_draft_flags
@@ -64,6 +65,8 @@ def create_investigation_file_tool(
             ]
         )
 
+    cost_info = get_run_cost(run_id)
+
     lines.extend(
         [
             "## Data Limitations",
@@ -76,6 +79,9 @@ def create_investigation_file_tool(
             "```json",
             json.dumps(audit_calls, indent=2, default=str),
             "```",
+            "",
+            f"**Execution Cost:** {cost_info.cost_display} ({cost_info.note})",
+            f"**Total Tokens:** {cost_info.total_tokens}",
             "",
             "---",
             FOOTER_TEXT,
