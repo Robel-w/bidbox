@@ -1,0 +1,14 @@
+{
+  "status": "timeout",
+  "timestamp": "2026-10-15",
+  "model": "llama3.2:latest",
+  "requested_runs": 1,
+  "default_runs": 3,
+  "timeout_seconds": 300,
+  "completed_cases_observed": ["001_normal_award", "002_price_outlier"],
+  "case_started": "003_supplier_pattern",
+  "aggregate": null,
+  "cost_usd": 0.0,
+  "cost_note": "Local open-weights model; cost is $0.00.",
+  "failure": "The real LangGraph evaluation exceeded five minutes because the local model took roughly 20-40 seconds per JSON pass. No aggregate score was fabricated."
+}

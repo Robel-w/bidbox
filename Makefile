@@ -1,4 +1,4 @@
-.PHONY: test eval demo seed download server lint
+.PHONY: test eval eval-tools demo seed download server lint
 
 seed:
 	python scripts/seed_data.py
@@ -14,6 +14,9 @@ test:
 
 eval:
 	python evaluation/run_evals.py
+
+eval-tools:
+	python evaluation/tool_checks.py
 
 demo:
 	python scripts/run_demo.py

@@ -1,115 +1,42 @@
-"""Run the BidBox demonstration."""
-from __future__ import annotations
+"""Run the Phase 4 investigation graph from the command line."""
 
-import json
+import argparse
+import asyncio
 from pathlib import Path
-from typing import Optional
+import sys
+import uuid
 
-from data.samples import generate_procurement_records
-from mcp.tools import (
-    search_procurements,
-    compare_historical_prices,
-    check_evidence_completeness,
-    create_investigation_summary,
-)
+from langgraph.types import Command
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from agent.graph import build_graph
+from audit.logger import get_audit_logs, verify_chain
 
 
-def run_demo(
-    procurement_id: Optional[str] = None,
-    output_dir: str = "reports/examples",
-) -> dict[str, Any]:
-    """Run a demonstration of the BidBox investigation system."""
-    print("BidBox Demonstration")
-    print("=" * 50)
-
-    # Load sample data
-    records = generate_procurement_records()
-    print(f"\nLoaded {len(records)} procurement records")
-
-    # Select target record
-    if procurement_id:
-        target = next((r for r in records if r.award.procurement_id == procurement_id), None)
-        if not target:
-            print(f"Warning: Record {procurement_id} not found, using first record")
-            target = records[0]
-    else:
-        target = records[0]
-
-    print(f"\nTarget: {target.tender.title}")
-    print(f"  Procurement ID: {target.award.procurement_id}")
-    print(f"  Supplier: {target.award.supplier_id}")
-    print(f"  Amount: ${target.award.total_amount.amount:,.2f} {target.award.total_amount.currency}")
-
-    # Evidence check
-    print("\n--- Evidence Check ---")
-    evidence_check = check_evidence_completeness(target)
-    print(f"  Complete: {evidence_check.is_complete}")
-    if evidence_check.gaps:
-        print(f"  Gaps found: {len(evidence_check.gaps)}")
-        for gap in evidence_check.gaps:
-            print(f"    - {gap.field_name}: {gap.reason}")
-    else:
-        print("  No evidence gaps detected")
-
-    # Price comparison
-    print("\n--- Price Analysis ---")
-    comparison = compare_historical_prices(target.award, records)
-    print(f"  Comparables found: {comparison.comparables_count}")
-    print(f"  Difference from benchmark: {comparison.difference_percent:.2f}%")
-    print(f"  Significant: {comparison.is_significant}")
-    if comparison.limitations:
-        print("  Limitations:")
-        for lim in comparison.limitations:
-            print(f"    - {lim}")
-
-    # Generate summary
-    print("\n--- Investigation Summary ---")
-    summary = create_investigation_summary(
-        record=target,
-        price_comparison=comparison,
-        evidence_check=evidence_check,
-    )
-    print(f"  Finding type: {summary.finding_type}")
-    print(f"  Description: {summary.description}")
-    print(f"  Confidence: {summary.confidence}")
-    print(f"  Limitations: {len(summary.limitations)}")
-
-    # Create report
-    report = {
-        "procurement_id": target.award.procurement_id,
-        "supplier_id": target.award.supplier_id,
-        "total_amount": target.award.total_amount.to_dict(),
-        "evidence_check": evidence_check.to_dict(),
-        "price_analysis": comparison.to_dict(),
-        "summary": summary.to_dict(),
-    }
-
-    # Save report
-    output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
-    report_file = output_path / f"investigation_{target.award.procurement_id}.json"
-
-    with open(report_file, "w") as f:
-        json.dump(report, f, indent=2, default=str)
-
-    print(f"\n--- Report Saved ---")
-    print(f"  Location: {report_file}")
-    print("\nDemonstration complete!")
-
-    return report
+async def run(ocid: str, approver: str | None, role: str) -> None:
+	run_id = f"demo-{uuid.uuid4().hex[:8]}"
+	graph = build_graph()
+	config = {"configurable": {"thread_id": run_id}}
+	result = await graph.ainvoke({"run_id": run_id, "ocid": ocid, "step_budget": 6, "steps_used": 0, "limitations": []}, config)
+	while "__interrupt__" in result:
+		prompt = result["__interrupt__"][0].value
+		name = approver or input(f"Approval required for {prompt['action']}. Approver name: ").strip()
+		result = await graph.ainvoke(Command(resume={"approver_name": name, "approver_role": role, "reason": "Reviewed for committee"}), config)
+	report = result.get("report", {})
+	path = f"reports/audit/{run_id}.jsonl"
+	print(f"report: {report.get('markdown_path', 'not generated')}")
+	print(f"audit: {verify_chain(path)}; events={len(get_audit_logs(run_id))}")
 
 
 def main() -> None:
-    """Entry point for demonstration."""
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Run BidBox demonstration")
-    parser.add_argument("--procurement-id", "-p", help="Specific procurement ID to investigate")
-    parser.add_argument("--output-dir", "-o", default="reports/examples", help="Output directory for reports")
-
-    args = parser.parse_args()
-    run_demo(procurement_id=args.procurement_id, output_dir=args.output_dir)
+	parser = argparse.ArgumentParser(description="Run the BidBox Phase 4 investigation demo.")
+	parser.add_argument("--ocid", required=True)
+	parser.add_argument("--approver")
+	parser.add_argument("--role", default="Procurement Review Officer")
+	args = parser.parse_args()
+	asyncio.run(run(args.ocid, args.approver, args.role))
 
 
 if __name__ == "__main__":
-    main()
+	main()

@@ -163,12 +163,31 @@ def load_data(
     return c
 
 
+def ensure_store_loaded(
+    conn: duckdb.DuckDBPyConnection | None = None,
+) -> duckdb.DuckDBPyConnection:
+    """Ensure awards index table is populated with fixture data."""
+    c = conn or get_default_connection()
+    init_db(c)
+    row = c.execute("SELECT count(*) FROM awards_index").fetchone()
+    count = row[0] if row else 0
+    if count == 0:
+        fixture_file = Path("data/fixtures/releases.json")
+        if not fixture_file.exists():
+            from scripts.seed_data import main as seed_main
+
+            seed_main()
+        load_data(fixture_file, conn=c)
+    return c
+
+
 def get_award(
     ocid: str,
     conn: duckdb.DuckDBPyConnection | None = None,
 ) -> dict[str, Any] | None:
     """Fetch a single award record by OCID."""
     c = conn or get_default_connection()
+    ensure_store_loaded(c)
     result = c.execute(
         "SELECT * FROM awards_index WHERE ocid = ?", [ocid]
     ).fetchone()
@@ -186,6 +205,7 @@ def awards_by_category(
 ) -> list[dict[str, Any]]:
     """Fetch all awards matching classification and currency."""
     c = conn or get_default_connection()
+    ensure_store_loaded(c)
     cursor = c.execute(
         "SELECT * FROM awards_index WHERE classification_id = ? AND currency = ?",
         [classification_id, currency],
@@ -200,6 +220,7 @@ def awards_by_supplier(
 ) -> list[dict[str, Any]]:
     """Fetch all awards won by a supplier using normalized supplier id."""
     c = conn or get_default_connection()
+    ensure_store_loaded(c)
     cursor = c.execute(
         "SELECT * FROM awards_index WHERE normalized_supplier_id = ?",
         [normalized_id],
@@ -214,6 +235,7 @@ def awards_by_buyer(
 ) -> list[dict[str, Any]]:
     """Fetch all awards issued by a buyer name or buyer id."""
     c = conn or get_default_connection()
+    ensure_store_loaded(c)
     cursor = c.execute(
         "SELECT * FROM awards_index WHERE buyer_id = ? OR buyer_name = ?",
         [buyer, buyer],

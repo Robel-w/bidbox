@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "AI-assisted public procurement investigation and evidence reporting"
 requires-python = ">=3.12"
 dependencies = [
-    "mcp>=1.0.0",
+    "mcp>=1.0.0,<2.0.0",
     "langgraph>=0.2.0",
     "langchain-mcp-adapters>=0.1.0",
     "pydantic>=2.7.0",

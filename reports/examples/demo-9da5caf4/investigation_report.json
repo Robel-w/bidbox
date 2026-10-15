@@ -1,0 +1,133 @@
+{
+  "run_id": "demo-9da5caf4",
+  "approver_name": "Demo Reviewer",
+  "approver_role": "Procurement Review Officer",
+  "generated_at_utc": "2026-10-14T22:15:40.572415+00:00",
+  "findings": [],
+  "data_limitations": [
+    "Historical completed awards only",
+    "Screening signals for human inquiry, not misconduct determination"
+  ],
+  "audit_calls": [
+    {
+      "seq": 0,
+      "ts_utc": "2026-10-14T22:14:43.275004+00:00",
+      "run_id": "demo-9da5caf4",
+      "actor": "agent",
+      "tool": "llm_call",
+      "inputs": {
+        "model": "llama3.2:latest"
+      },
+      "outputs": {
+        "tokens": {
+          "prompt_tokens": 247,
+          "completion_tokens": 31,
+          "total_tokens": 278
+        }
+      },
+      "duration_ms": 0.0,
+      "tokens": {
+        "prompt_tokens": 247,
+        "completion_tokens": 31,
+        "total_tokens": 278
+      },
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "hash": "e96b28dfe439d4ae9ed7ba03ffc86146ebe3ae6050fff5fdcaf45193dedd058e"
+    },
+    {
+      "seq": 1,
+      "ts_utc": "2026-10-14T22:15:33.145926+00:00",
+      "run_id": "demo-9da5caf4",
+      "actor": "agent",
+      "tool": "source_verification",
+      "inputs": {
+        "source": {
+          "ocid": "ocds-synth-kenya-000100",
+          "award_id": "AWD-000100",
+          "field_path": "awards[0].value.amount",
+          "source_url": "data/fixtures/releases.json"
+        }
+      },
+      "outputs": {
+        "verified": false,
+        "reason": "Expecting property name enclosed in double quotes: line 1 column 3 (char 2)"
+      },
+      "duration_ms": 0.0,
+      "tokens": null,
+      "prev_hash": "e96b28dfe439d4ae9ed7ba03ffc86146ebe3ae6050fff5fdcaf45193dedd058e",
+      "hash": "62362bb3d8a8fd4dbb2a165dfeda325b2cafcf46a3e63ead0cc35292d70ff28c"
+    },
+    {
+      "seq": 2,
+      "ts_utc": "2026-10-14T22:15:36.890504+00:00",
+      "run_id": "demo-9da5caf4",
+      "actor": "agent",
+      "tool": "llm_call",
+      "inputs": {
+        "model": "llama3.2:latest"
+      },
+      "outputs": {
+        "tokens": {
+          "prompt_tokens": 93,
+          "completion_tokens": 37,
+          "total_tokens": 130
+        }
+      },
+      "duration_ms": 0.0,
+      "tokens": {
+        "prompt_tokens": 93,
+        "completion_tokens": 37,
+        "total_tokens": 130
+      },
+      "prev_hash": "62362bb3d8a8fd4dbb2a165dfeda325b2cafcf46a3e63ead0cc35292d70ff28c",
+      "hash": "8d5f131338e4b4fa520161c7c95997002eb75caf48dd6fd1542ef5cae60b8dc9"
+    },
+    {
+      "seq": 3,
+      "ts_utc": "2026-10-14T22:15:36.909882+00:00",
+      "run_id": "demo-9da5caf4",
+      "actor": "agent",
+      "tool": "request_approval",
+      "inputs": {
+        "action": "flag_finding_and_create_investigation_file",
+        "summary": "Commit reviewed findings and prepare the committee investigation file."
+      },
+      "outputs": {
+        "status": "pending",
+        "action": "flag_finding_and_create_investigation_file"
+      },
+      "duration_ms": 0.0,
+      "tokens": null,
+      "prev_hash": "8d5f131338e4b4fa520161c7c95997002eb75caf48dd6fd1542ef5cae60b8dc9",
+      "hash": "def39b95583cd0fbf465494a9751ee250594d5d1ef1d4cb207b018530a454387"
+    },
+    {
+      "seq": 4,
+      "ts_utc": "2026-10-14T22:15:36.931381+00:00",
+      "run_id": "demo-9da5caf4",
+      "actor": "human",
+      "tool": "approval_gate",
+      "inputs": {
+        "action": "flag_finding_and_create_investigation_file",
+        "approver_name": "Demo Reviewer",
+        "approver_role": "Procurement Review Officer",
+        "decision": "approve",
+        "reason": "Reviewed for committee"
+      },
+      "outputs": {
+        "run_id": "demo-9da5caf4",
+        "action": "flag_finding_and_create_investigation_file",
+        "approver_name": "Demo Reviewer",
+        "approver_role": "Procurement Review Officer",
+        "decision": "approve",
+        "reason": "Reviewed for committee",
+        "ts_utc": ""
+      },
+      "duration_ms": 0.0,
+      "tokens": null,
+      "prev_hash": "def39b95583cd0fbf465494a9751ee250594d5d1ef1d4cb207b018530a454387",
+      "hash": "457f3dda86d39e18554e388af7098fe6c97f53789e928d7838081ba3cd61e1e6"
+    }
+  ],
+  "footer": "Prepared for committee decision. No award decision is made or implied."
+}

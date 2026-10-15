@@ -8,6 +8,8 @@ The agent investigates tender and award data, supplier history, and relevant pri
 
 BidBox is **decision support, not decision replacement**. It does not award tenders, select suppliers, or make final procurement decisions. Its role is to help a committee understand the available evidence before the committee applies its own professional judgment, procurement rules, and due process.
 
+Try the recorded replay locally: `python scripts/build_site.py` then open `docs/site/index.html`.
+
 ## The problem
 
 Public procurement committees often have to review large volumes of information under significant time pressure. Important signals can be difficult to identify when they are spread across:
