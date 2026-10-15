@@ -2,7 +2,7 @@
 
 **Run ID:** `mcp-test-run`  
 **Authorized By:** Dr. Beatrice Omwamba (Chief Oversight Examiner)  
-**Generated At (UTC):** 2026-10-14T22:19:13.235130+00:00  
+**Generated At (UTC):** 2026-10-15T08:25:38.605734+00:00  
 
 ## Executive Summary
 This file compiles 1 evidence-backed observation(s) for committee review.
@@ -21,7 +21,7 @@ This file compiles 1 evidence-backed observation(s) for committee review.
 - An anomaly constitutes a flag for human verification, not misconduct or liability.
 
 ## Tool-Call Audit Appendix
-Total logged actions in run: 7
+Total logged actions in run: 13
 
 ```json
 [
@@ -260,6 +260,204 @@ Total logged actions in run: 7
     "tokens": null,
     "prev_hash": "53075d4b2a6952c03394f2ec126acf7af3311191cf4e855721b3d5e7b318e353",
     "hash": "6591c350c888c97c6ee1a1bb9ae4e35a1c978bc5b448d05b40ca85fcaef74244"
+  },
+  {
+    "seq": 7,
+    "ts_utc": "2026-10-14T22:19:13.240599+00:00",
+    "run_id": "mcp-test-run",
+    "actor": "tool",
+    "tool": "create_investigation_file",
+    "inputs": {
+      "args": [],
+      "kwargs": {
+        "run_id": "mcp-test-run",
+        "approver_name": "Dr. Beatrice Omwamba",
+        "approver_role": "Chief Oversight Examiner"
+      }
+    },
+    "outputs": {
+      "run_id": "mcp-test-run",
+      "markdown_path": "reports\\examples\\mcp-test-run\\investigation_report.md",
+      "json_path": "reports\\examples\\mcp-test-run\\investigation_report.json",
+      "approver_name": "Dr. Beatrice Omwamba",
+      "approver_role": "Chief Oversight Examiner",
+      "status": "finalized",
+      "findings_count": 1
+    },
+    "duration_ms": 27.21,
+    "tokens": null,
+    "prev_hash": "6591c350c888c97c6ee1a1bb9ae4e35a1c978bc5b448d05b40ca85fcaef74244",
+    "hash": "3c03e3b2c371a19422e34eb63da1903966e4978e2b21a4937df71b5172593d66"
+  },
+  {
+    "seq": 8,
+    "ts_utc": "2026-10-15T07:42:52.393335+00:00",
+    "run_id": "mcp-test-run",
+    "actor": "tool",
+    "tool": "flag_finding",
+    "inputs": {
+      "args": [],
+      "kwargs": {
+        "run_id": "mcp-test-run",
+        "ocid": "ocds-synth-kenya-000100",
+        "type": "pricing_outlier",
+        "severity": "high",
+        "statement": "Unit contract price is 100x above median peer benchmark",
+        "rationale": "Contract value KES 25M deviates substantially from CPV 30213100-6 norm",
+        "uncertainty": "Technical specs may include non-standard enterprise servers",
+        "follow_up": "Procurement committee should verify component breakdown invoice",
+        "sources": [
+          {
+            "ocid": "ocds-synth-kenya-000100",
+            "award_id": "AWD-000100",
+            "field_path": "awards[0].value.amount",
+            "source_url": "data/fixtures/releases.json"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "flag_id": "FLAG-43A8F6A3",
+      "run_id": "mcp-test-run",
+      "ocid": "ocds-synth-kenya-000100",
+      "status": "draft"
+    },
+    "duration_ms": 0.11,
+    "tokens": null,
+    "prev_hash": "3c03e3b2c371a19422e34eb63da1903966e4978e2b21a4937df71b5172593d66",
+    "hash": "ec9f41a948330cf54c19771d3e6c4c3051200e6f7ecc46ae3acb215916d8295c"
+  },
+  {
+    "seq": 9,
+    "ts_utc": "2026-10-15T07:42:52.438010+00:00",
+    "run_id": "mcp-test-run",
+    "actor": "tool",
+    "tool": "create_investigation_file",
+    "inputs": {
+      "args": [],
+      "kwargs": {
+        "run_id": "mcp-test-run",
+        "approver_name": "Dr. Beatrice Omwamba",
+        "approver_role": "Chief Oversight Examiner"
+      }
+    },
+    "outputs": {
+      "run_id": "mcp-test-run",
+      "markdown_path": "reports\\examples\\mcp-test-run\\investigation_report.md",
+      "json_path": "reports\\examples\\mcp-test-run\\investigation_report.json",
+      "approver_name": "Dr. Beatrice Omwamba",
+      "approver_role": "Chief Oversight Examiner",
+      "status": "finalized",
+      "findings_count": 1
+    },
+    "duration_ms": 26.3,
+    "tokens": null,
+    "prev_hash": "ec9f41a948330cf54c19771d3e6c4c3051200e6f7ecc46ae3acb215916d8295c",
+    "hash": "06c846b049421d6aa4d8a22ae45c6fd7015afb2f86c7826fce2173f51cd5184a"
+  },
+  {
+    "seq": 10,
+    "ts_utc": "2026-10-15T08:13:43.053652+00:00",
+    "run_id": "mcp-test-run",
+    "actor": "tool",
+    "tool": "flag_finding",
+    "inputs": {
+      "args": [],
+      "kwargs": {
+        "run_id": "mcp-test-run",
+        "ocid": "ocds-synth-kenya-000100",
+        "type": "pricing_outlier",
+        "severity": "high",
+        "statement": "Unit contract price is 100x above median peer benchmark",
+        "rationale": "Contract value KES 25M deviates substantially from CPV 30213100-6 norm",
+        "uncertainty": "Technical specs may include non-standard enterprise servers",
+        "follow_up": "Procurement committee should verify component breakdown invoice",
+        "sources": [
+          {
+            "ocid": "ocds-synth-kenya-000100",
+            "award_id": "AWD-000100",
+            "field_path": "awards[0].value.amount",
+            "source_url": "data/fixtures/releases.json"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "flag_id": "FLAG-BB038A7C",
+      "run_id": "mcp-test-run",
+      "ocid": "ocds-synth-kenya-000100",
+      "status": "draft"
+    },
+    "duration_ms": 0.22,
+    "tokens": null,
+    "prev_hash": "06c846b049421d6aa4d8a22ae45c6fd7015afb2f86c7826fce2173f51cd5184a",
+    "hash": "ffaf683149b1f9c89d73194cf97d794551bb964c94f407fc2be2a5e59426f337"
+  },
+  {
+    "seq": 11,
+    "ts_utc": "2026-10-15T08:13:43.133547+00:00",
+    "run_id": "mcp-test-run",
+    "actor": "tool",
+    "tool": "create_investigation_file",
+    "inputs": {
+      "args": [],
+      "kwargs": {
+        "run_id": "mcp-test-run",
+        "approver_name": "Dr. Beatrice Omwamba",
+        "approver_role": "Chief Oversight Examiner"
+      }
+    },
+    "outputs": {
+      "run_id": "mcp-test-run",
+      "markdown_path": "reports\\examples\\mcp-test-run\\investigation_report.md",
+      "json_path": "reports\\examples\\mcp-test-run\\investigation_report.json",
+      "approver_name": "Dr. Beatrice Omwamba",
+      "approver_role": "Chief Oversight Examiner",
+      "status": "finalized",
+      "findings_count": 1
+    },
+    "duration_ms": 45.01,
+    "tokens": null,
+    "prev_hash": "ffaf683149b1f9c89d73194cf97d794551bb964c94f407fc2be2a5e59426f337",
+    "hash": "6d8469cd2d5419754b9449a36e7c934ef21041b6917dc70a8e44f5ba368c6244"
+  },
+  {
+    "seq": 12,
+    "ts_utc": "2026-10-15T08:25:38.564260+00:00",
+    "run_id": "mcp-test-run",
+    "actor": "tool",
+    "tool": "flag_finding",
+    "inputs": {
+      "args": [],
+      "kwargs": {
+        "run_id": "mcp-test-run",
+        "ocid": "ocds-synth-kenya-000100",
+        "type": "pricing_outlier",
+        "severity": "high",
+        "statement": "Unit contract price is 100x above median peer benchmark",
+        "rationale": "Contract value KES 25M deviates substantially from CPV 30213100-6 norm",
+        "uncertainty": "Technical specs may include non-standard enterprise servers",
+        "follow_up": "Procurement committee should verify component breakdown invoice",
+        "sources": [
+          {
+            "ocid": "ocds-synth-kenya-000100",
+            "award_id": "AWD-000100",
+            "field_path": "awards[0].value.amount",
+            "source_url": "data/fixtures/releases.json"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "flag_id": "FLAG-61859FF7",
+      "run_id": "mcp-test-run",
+      "ocid": "ocds-synth-kenya-000100",
+      "status": "draft"
+    },
+    "duration_ms": 0.21,
+    "tokens": null,
+    "prev_hash": "6d8469cd2d5419754b9449a36e7c934ef21041b6917dc70a8e44f5ba368c6244",
+    "hash": "a8b70df4dbeb269fb1e10a0a022b15e32eb86bc816823ad3a5d8b9109a7c0d98"
   }
 ]
 ```
