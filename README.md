@@ -129,3 +129,78 @@ The measure of success is not how many alerts the agent produces. It is whether 
 ## Status
 
 BidBox is currently an early-stage concept and prototype. This README describes the intended product direction; implementation details, supported data sources, and evaluation criteria will evolve as the project develops.
+
+## Getting Started
+
+### Prerequisites
+- Python 3.12 or higher
+- pip (Python package manager)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd bidbox
+
+# Install dependencies
+pip install -e .
+```
+
+### Running the Demo
+
+```bash
+# Run the demonstration
+python scripts/run_demo.py
+
+# Or specify a specific procurement ID
+python scripts/run_demo.py --procurement-id TENDER-2024-001
+
+# Or specify a custom output directory
+python scripts/run_demo.py --output-dir ./reports
+```
+
+### Running Evaluation Tests
+
+```bash
+python scripts/test_evals.py
+```
+
+### Generating Synthetic Data
+
+```bash
+# Generate synthetic procurement fixtures
+python scripts/seed_data.py
+
+# Download sample OCDS data (offline fallback if network unavailable)
+python scripts/download_data.py
+```
+
+## Project Structure
+
+```
+bidbox/
+├── agent/              # Agent state, planning, and orchestration
+├── apps/               # Web application
+├── audit/              # Audit event logging
+├── data/               # Procurement data models and samples
+├── docs/               # Documentation and design decisions
+├── evaluation/         # Evaluation cases and metrics
+├── mcp/                # Model Context Protocol tools
+├── reports/            # Report templates and examples
+├── scripts/            # Utility scripts
+├── tests/              # Unit and integration tests
+├── ARCHITECTURE.md     # System architecture
+├── CONTRIBUTING.md     # Contribution guidelines
+├── EVALS.md           # Evaluation documentation
+├── pyproject.toml     # Project configuration
+└── README.md          # This file
+```
+
+## Contributing
+
+Contributions should preserve BidBox's human-in-the-loop design, evidence traceability, and responsible handling of procurement data. Add or update tests and documentation with behavioral changes.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

@@ -1,1 +1,38 @@
-{}
+{
+  "id": "005_broken_supplier_id",
+  "description": "Supplier ID cannot be matched to any known supplier in the system",
+  "input": {
+    "record": {
+      "tender": {
+        "id": "TENDER-2024-030",
+        "title": "IT Consulting",
+        "description": "Software development services",
+        "publication_date": "2024-05-01",
+        "categories": ["IT Services"],
+        "procurement_type": "open"
+      },
+      "award": {
+        "procurement_id": "TENDER-2024-030",
+        "supplier_id": "SUP-UNKNOWN-999",
+        "award_date": "2024-05-15",
+        "total_amount": {"amount": 120000.0, "currency": "USD"},
+        "items": [
+          {
+            "description": "Software development",
+            "quantity": 500.0,
+            "unit": {"code": "hr", "name": "Hour"}
+          }
+        ],
+        "provenance": {"source": "synthetic", "provenance_type": "synthetic"}
+      }
+    },
+    "known_suppliers": ["SUP-001", "SUP-002", "SUP-003"]
+  },
+  "expected": {
+    "supplier_found": false,
+    "warning": "Supplier ID SUP-UNKNOWN-999 not found in supplier registry",
+    "confidence": "low",
+    "notes": "Cannot verify supplier eligibility or history without valid supplier ID"
+  },
+  "notes": "Expected to flag broken supplier ID as a signal for human verification."
+}
