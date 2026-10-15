@@ -2,10 +2,10 @@
   "run_id": "mcp-test-run",
   "approver_name": "Dr. Beatrice Omwamba",
   "approver_role": "Chief Oversight Examiner",
-  "generated_at_utc": "2026-10-15T08:25:38.605734+00:00",
+  "generated_at_utc": "2026-10-15T09:28:01.017231+00:00",
   "findings": [
     {
-      "flag_id": "FLAG-61859FF7",
+      "flag_id": "FLAG-4839296B",
       "run_id": "mcp-test-run",
       "ocid": "ocds-synth-kenya-000100",
       "type": "pricing_outlier",
@@ -462,6 +462,72 @@
       "tokens": null,
       "prev_hash": "6d8469cd2d5419754b9449a36e7c934ef21041b6917dc70a8e44f5ba368c6244",
       "hash": "a8b70df4dbeb269fb1e10a0a022b15e32eb86bc816823ad3a5d8b9109a7c0d98"
+    },
+    {
+      "seq": 13,
+      "ts_utc": "2026-10-15T08:25:38.611916+00:00",
+      "run_id": "mcp-test-run",
+      "actor": "tool",
+      "tool": "create_investigation_file",
+      "inputs": {
+        "args": [],
+        "kwargs": {
+          "run_id": "mcp-test-run",
+          "approver_name": "Dr. Beatrice Omwamba",
+          "approver_role": "Chief Oversight Examiner"
+        }
+      },
+      "outputs": {
+        "run_id": "mcp-test-run",
+        "markdown_path": "reports\\examples\\mcp-test-run\\investigation_report.md",
+        "json_path": "reports\\examples\\mcp-test-run\\investigation_report.json",
+        "approver_name": "Dr. Beatrice Omwamba",
+        "approver_role": "Chief Oversight Examiner",
+        "status": "finalized",
+        "findings_count": 1
+      },
+      "duration_ms": 28.51,
+      "tokens": null,
+      "prev_hash": "a8b70df4dbeb269fb1e10a0a022b15e32eb86bc816823ad3a5d8b9109a7c0d98",
+      "hash": "f5a98844a12d854c1a1b2c266159fe52f4ed3ddccdcd27ea41dfdf9c64e0627e"
+    },
+    {
+      "seq": 14,
+      "ts_utc": "2026-10-15T09:28:00.948002+00:00",
+      "run_id": "mcp-test-run",
+      "actor": "tool",
+      "tool": "flag_finding",
+      "inputs": {
+        "args": [],
+        "kwargs": {
+          "run_id": "mcp-test-run",
+          "ocid": "ocds-synth-kenya-000100",
+          "type": "pricing_outlier",
+          "severity": "high",
+          "statement": "Unit contract price is 100x above median peer benchmark",
+          "rationale": "Contract value KES 25M deviates substantially from CPV 30213100-6 norm",
+          "uncertainty": "Technical specs may include non-standard enterprise servers",
+          "follow_up": "Procurement committee should verify component breakdown invoice",
+          "sources": [
+            {
+              "ocid": "ocds-synth-kenya-000100",
+              "award_id": "AWD-000100",
+              "field_path": "awards[0].value.amount",
+              "source_url": "data/fixtures/releases.json"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "flag_id": "FLAG-4839296B",
+        "run_id": "mcp-test-run",
+        "ocid": "ocds-synth-kenya-000100",
+        "status": "draft"
+      },
+      "duration_ms": 0.47,
+      "tokens": null,
+      "prev_hash": "f5a98844a12d854c1a1b2c266159fe52f4ed3ddccdcd27ea41dfdf9c64e0627e",
+      "hash": "001357202d986fa9e1d1dbd238d3d4cdc1f29241bc83e9a8a5972e4795e7d881"
     }
   ],
   "footer": "Prepared for committee decision. No award decision is made or implied."
