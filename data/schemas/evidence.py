@@ -2,9 +2,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
 from decimal import Decimal
-from typing import Any, Literal, Optional
+from typing import Any, Optional
 
 from .common import Money, Provenance
 

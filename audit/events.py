@@ -1,7 +1,7 @@
 """Approval gate and financial cost tracking events."""
 
 import os
-from typing import Any
+from typing import Any, Literal, cast
 
 from audit.logger import append_audit_event, get_audit_logs
 from audit.schemas import ApprovalDecision, RunCost
@@ -46,13 +46,14 @@ def record_approval(
         raise ValueError(
             f"Invalid decision '{decision}': must be 'approve' or 'reject'."
         )
+    typed_decision = cast(Literal["approve", "reject"], clean_decision)
 
     decision_payload = ApprovalDecision(
         run_id=run_id,
         action=action,
         approver_name=approver_name.strip(),
         approver_role=approver_role.strip(),
-        decision=clean_decision,
+        decision=typed_decision,
         reason=reason.strip(),
         ts_utc="",
     )

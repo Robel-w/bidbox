@@ -15,12 +15,17 @@ dependencies = [
     "duckdb>=1.0.0",
     "httpx>=0.27.0",
     "openai>=1.30.0",
-    "pytest>=8.0.0",
-    "ruff>=0.4.0",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0", "ruff>=0.4.0", "mypy>=1.10.0"]
 
 [project.scripts]
 bidbox-server = "bidbox_mcp.server:main"
+bidbox-mcp = "bidbox_mcp.server:main"
+bidbox-demo = "scripts.run_demo:main"
+bidbox-approve = "bidbox.approve:main"
+bidbox-eval = "evaluation.run_evals:main"
 bidbox-seed = "scripts.seed_data:main"
 bidbox-download = "scripts.download_data:main"
 
@@ -31,3 +36,17 @@ include = ["bidbox*", "bidbox_mcp*", "data*", "scripts*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = ["reports", "evaluation/results"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+check_untyped_defs = true
+exclude = "(^reports/|^evaluation/results/)"

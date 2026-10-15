@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime
-import html
 import json
 from pathlib import Path
 import subprocess

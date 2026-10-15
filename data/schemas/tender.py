@@ -6,7 +6,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Any, Optional
 
-from .common import DateRange, Money, Provenance, Unit
+from .common import Money, Provenance, Unit
 
 
 @dataclass(frozen=True)
