@@ -1,1 +1,1 @@
-"""BidBox utility and seed scripts."""
+"""Scripts for BidBox."""

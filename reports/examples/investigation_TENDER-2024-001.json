@@ -1,0 +1,70 @@
+{
+  "procurement_id": "TENDER-2024-001",
+  "supplier_id": "SUP-001",
+  "total_amount": {
+    "amount": 25000.0,
+    "currency": "USD"
+  },
+  "evidence_check": {
+    "is_complete": true,
+    "gaps": [],
+    "available_evidence": [
+      {
+        "id": "EVD-TENDER-2024-001-amount",
+        "source": "TENDER-2024-001",
+        "description": "Award amount documented",
+        "provenance": {
+          "source": "synthetic_sample_data",
+          "provenance_type": "synthetic",
+          "note": "Generated for development and testing"
+        }
+      },
+      {
+        "id": "EVD-TENDER-2024-001-items",
+        "source": "TENDER-2024-001",
+        "description": "2 procurement items documented",
+        "provenance": {
+          "source": "synthetic_sample_data",
+          "provenance_type": "synthetic",
+          "note": "Generated for development and testing"
+        }
+      }
+    ]
+  },
+  "price_analysis": {
+    "target_price": {
+      "amount": 25000.0,
+      "currency": "USD"
+    },
+    "benchmark_price": {
+      "amount": 12000.0,
+      "currency": "USD"
+    },
+    "difference_percent": 108.33333333333333,
+    "comparables_count": 1,
+    "is_significant": true,
+    "limitations": [
+      "Limited comparables (1 awards)"
+    ]
+  },
+  "summary": {
+    "finding_type": "investigation_summary",
+    "description": "Price is 108.3% higher than comparable awards (benchmark: Money(amount=Decimal('12000'), currency='USD'))",
+    "evidence": [
+      {
+        "id": "FIND-TENDER-2024-001-price",
+        "source": "TENDER-2024-001",
+        "description": "Unusual price relative to historical comparable awards",
+        "provenance": {
+          "source": "synthetic_sample_data",
+          "provenance_type": "synthetic",
+          "note": "Generated for development and testing"
+        }
+      }
+    ],
+    "confidence": "low",
+    "limitations": [
+      "Limited comparables (1 awards)"
+    ]
+  }
+}
