@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help setup test eval eval-tools demo seed inspect download server lint typecheck check clean
+.PHONY: help setup test eval eval-tools demo web seed inspect download server lint typecheck check clean
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*##' Makefile
@@ -27,6 +27,9 @@ eval-tools:
 
 demo:
 	python scripts/run_demo.py --ocid ocds-synth-kenya-000100
+
+web: ## Start the local committee review UI
+	uvicorn bidbox.web:app --host 127.0.0.1 --port 8000
 
 inspect: ## Run the MCP server for inspection
 	python -m bidbox_mcp.server

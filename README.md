@@ -52,6 +52,10 @@ audit: (True, None)
 
 See [ARCHITECTURE.md](ARCHITECTURE.md), [EVALS.md](EVALS.md), [docs/limitations.md](docs/limitations.md), and [docs/demo.md](docs/demo.md). The test data is synthetic, contains no live tenders or personal data, and reports company-level observations only. Licensed under the repository [LICENSE](LICENSE).
 
+## Committee review UI
+
+Run `make web`, open `http://127.0.0.1:8000`, then run `python scripts/run_demo.py --approval web --ocid ocds-synth-kenya-000100` in another terminal. The UI reads recorded reports and audit logs and only records named approvals; it never starts an investigation or writes a report.
+
 ## Success looks like
 
 BidBox should help a procurement committee:
