@@ -79,7 +79,7 @@ BidBox is currently an early-stage concept and prototype. This README describes 
 
 ```bash
 # Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/Robel-w/bidbox.git
 cd bidbox
 
 # Install dependencies
