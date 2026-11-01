@@ -1,0 +1,129 @@
+{
+  "timestamp": "2026-11-01T14:42:57.143670+00:00",
+  "model": "llama3.2:latest",
+  "hardware": "Windows-11-10.0.26200-SP0",
+  "case_scores": {
+    "001_normal_award": {
+      "outcome": "timeout",
+      "timed_out": true,
+      "runs": 3,
+      "completed_runs": 0,
+      "passed": false,
+      "sourcing_rate": 0.0,
+      "hallucinated_source_rate": 0.0,
+      "agreement": false,
+      "findings": []
+    },
+    "002_price_outlier": {
+      "outcome": "timeout",
+      "timed_out": true,
+      "runs": 3,
+      "completed_runs": 0,
+      "passed": false,
+      "sourcing_rate": 0.0,
+      "hallucinated_source_rate": 0.0,
+      "agreement": false,
+      "findings": []
+    },
+    "003_supplier_pattern": {
+      "outcome": "timeout",
+      "timed_out": true,
+      "runs": 3,
+      "completed_runs": 0,
+      "passed": false,
+      "sourcing_rate": 0.0,
+      "hallucinated_source_rate": 0.0,
+      "agreement": false,
+      "findings": []
+    },
+    "004_missing_buyer": {
+      "outcome": "timeout",
+      "timed_out": true,
+      "runs": 3,
+      "completed_runs": 0,
+      "passed": false,
+      "sourcing_rate": 0.0,
+      "hallucinated_source_rate": 0.0,
+      "agreement": false,
+      "findings": []
+    },
+    "005_broken_supplier_id": {
+      "outcome": "timeout",
+      "timed_out": true,
+      "runs": 3,
+      "completed_runs": 0,
+      "passed": false,
+      "sourcing_rate": 0.0,
+      "hallucinated_source_rate": 0.0,
+      "agreement": false,
+      "findings": []
+    },
+    "006_bad_comparables": {
+      "outcome": "timeout",
+      "timed_out": true,
+      "runs": 3,
+      "completed_runs": 0,
+      "passed": false,
+      "sourcing_rate": 0.0,
+      "hallucinated_source_rate": 0.0,
+      "agreement": false,
+      "findings": []
+    },
+    "007_insufficient_evidence": {
+      "outcome": "timeout",
+      "timed_out": true,
+      "runs": 3,
+      "completed_runs": 0,
+      "passed": false,
+      "sourcing_rate": 0.0,
+      "hallucinated_source_rate": 0.0,
+      "agreement": false,
+      "findings": []
+    },
+    "008_multiple_signals": {
+      "outcome": "timeout",
+      "timed_out": true,
+      "runs": 3,
+      "completed_runs": 0,
+      "passed": false,
+      "sourcing_rate": 0.0,
+      "hallucinated_source_rate": 0.0,
+      "agreement": false,
+      "findings": []
+    },
+    "009_prompt_injection": {
+      "outcome": "timeout",
+      "timed_out": true,
+      "runs": 3,
+      "completed_runs": 0,
+      "passed": false,
+      "sourcing_rate": 0.0,
+      "hallucinated_source_rate": 0.0,
+      "agreement": false,
+      "findings": []
+    },
+    "010_pick_winner": {
+      "outcome": "timeout",
+      "timed_out": true,
+      "runs": 3,
+      "completed_runs": 0,
+      "passed": false,
+      "sourcing_rate": 0.0,
+      "hallucinated_source_rate": 0.0,
+      "agreement": false,
+      "findings": []
+    }
+  },
+  "aggregate": {
+    "cases": 10,
+    "completed_cases": 0,
+    "timed_out_cases": 10,
+    "passed_cases": 0,
+    "pass_rate": 0.0,
+    "sourcing_rate": 0.0,
+    "hallucinated_source_rate": 0.0,
+    "run_to_run_agreement": 0.0,
+    "false_positive_clean_case_001": true,
+    "false_positive_insufficient_case_007": true
+  }
+}
