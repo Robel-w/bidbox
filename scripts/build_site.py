@@ -74,8 +74,21 @@ def _ocid(report: dict[str, Any], events: list[dict[str, Any]]) -> str:
 def _approval(events: list[dict[str, Any]]) -> dict[str, Any] | None:
     for event in events:
         if event.get("tool") == "approval_gate":
-            return {**event.get("outputs", {}), "ts_utc": event.get("ts_utc", "")}
+            return {**(event.get("inputs") or {}), **(event.get("outputs") or {}), "ts_utc": event.get("ts_utc", "")}
     return None
+
+
+def _banner(events: list[dict[str, Any]], total_tokens: int, model: str, generated_at: str) -> str:
+    """Label a replay from recorded LLM/token and named-approval evidence."""
+    has_llm = any(event.get("tool") == "llm_call" for event in events) and total_tokens > 0
+    approval = _approval(events)
+    if not has_llm:
+        label = "Recorded run of the MCP tools on synthetic data (tool-level test, no LLM)"
+    elif approval and approval.get("approver_name"):
+        label = f"Recorded agent run on {model}"
+    else:
+        label = f"Recorded run on {model}; no named approval event was recorded"
+    return f"{label}, {generated_at}. Replay, not a live agent. Prepared for committee decision; no award decision is made or implied."
 
 
 def build_site(run_id: str | None = None, base_dir: Path | str = ".") -> Path:
@@ -91,11 +104,14 @@ def build_site(run_id: str | None = None, base_dir: Path | str = ".") -> Path:
     verified, chain_error = verify_chain(audit_path)
     total_tokens = sum((event.get("tokens") or {}).get("total_tokens", 0) for event in events)
     total_duration = round(sum(float(event.get("duration_ms", 0)) for event in events), 2)
+    generated_at = report.get("generated_at_utc") or (events[-1].get("ts_utc") if events else "date not recorded")
+    model = _model(events)
     payload = _json_safe({
         "run_id": selected,
         "report": report,
         "events": events,
-        "model": _model(events),
+        "model": model,
+        "banner": _banner(events, total_tokens, model, generated_at),
         "ocid": _ocid(report, events),
         "total_tokens": total_tokens,
         "total_duration_ms": total_duration,
@@ -130,7 +146,7 @@ const json=value=>JSON.stringify(value,null,2);
 const safe=(value)=>value==null?'':String(value);
 const sourceChips=sources=>{const wrap=document.createElement('div');wrap.className='chips';(sources||[]).forEach(source=>{const chip=document.createElement('span');chip.className='chip';chip.append(text(`${safe(source.ocid)} · ${safe(source.field_path)} · ${safe(source.source_url)}`));wrap.append(chip)});return wrap};
 const field=(label,value)=>{const p=document.createElement('p');const strong=document.createElement('strong');strong.append(text(label+': '));p.append(strong,text(value));return p};
-el('banner').append(text(`Recorded run from a real make demo execution on ${data.model}, ${data.report.generated_at_utc||data.built_at}. Replay, not a live agent. Prepared for committee decision; no award decision is made or implied.`));
+el('banner').append(text(data.banner));
 [['run_id',data.run_id],['tender ocid',data.ocid],['model',data.model],['total duration',`${data.total_duration_ms} ms`],['tokens',data.total_tokens],['tool calls',data.events.length]].forEach(([a,b])=>el('summary').append(block(a,b)));const badge=document.createElement('span');badge.className='badge '+(data.chain.verified?'verified':'failed');badge.append(text(data.chain.verified?'audit chain verified':'audit chain failed'));const auditBlock=block('audit result','');auditBlock.querySelector('.value').replaceChildren(badge);el('summary').append(auditBlock);
 data.events.forEach(event=>{const article=document.createElement('article');article.className='event '+(event.actor==='human'?'human ':'')+(event.tool==='recovery'?'recovery':'');const details=document.createElement('details');const summary=document.createElement('summary');summary.append(text(`${event.ts_utc} · ${event.actor} · ${event.tool||'event'} · ${event.duration_ms} ms`));const meta=document.createElement('div');meta.className='meta';meta.append(text('Inputs: '+json(event.inputs)+' | Outputs: '+json(event.outputs)));details.append(summary,meta);article.append(details);el('timeline').append(article)});
 (data.report.findings||[]).forEach(finding=>{const card=document.createElement('article');card.className='finding';card.append(field('Finding',finding.statement||finding.message),field('Evidence',finding.rationale),field('Context',finding.ocid),field('Potential significance',finding.rationale),field('Uncertainty',finding.uncertainty),field('Recommended follow-up',finding.follow_up));const priority=document.createElement('p');priority.append(text('Review priority: '+safe(finding.severity||'not recorded')));card.append(priority,sourceChips(finding.sources));el('findings').append(card)});if(!el('findings').childNodes.length)el('findings').append(text('No kept findings were recorded for this run.'));
