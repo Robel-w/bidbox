@@ -1,8 +1,7 @@
 """Tool to investigate historical supplier track record and buyer concentration."""
 
-from collections import Counter
-
 from audit.logger import audited
+from bidbox.indicators import get_indicator
 from bidbox.store import awards_by_supplier, normalize_supplier_id
 from bidbox_mcp.schemas.evidence import FindingSource
 from bidbox_mcp.schemas.supplier import SupplierInvestigationResult
@@ -22,24 +21,10 @@ def investigate_supplier_tool(supplier_id: str) -> SupplierInvestigationResult:
     sup_name = awards[0]["supplier_name"] if awards else "Unknown Supplier"
     currency = awards[0]["currency"] if awards else "KES"
 
-    buyer_counts: Counter[str] = Counter()
-    for a in awards:
-        b_name = a.get("buyer_name") or a.get("buyer_id") or "Unspecified Buyer"
-        buyer_counts[b_name] += 1
-
-    buyers_served = list(buyer_counts.keys())
-    top_buyer = None
-    concentration_share = 0.0
-    pattern = "No historical awards found"
-
-    if award_count > 0 and buyer_counts:
-        top_buyer, top_count = buyer_counts.most_common(1)[0]
-        concentration_share = round(top_count / award_count, 3)
-        if concentration_share >= 0.70:
-            pct = concentration_share * 100
-            pattern = f"High concentration: {pct:.1f}% of awards with {top_buyer}"
-        else:
-            pattern = "Diversified distribution across buyers"
+    concentration = get_indicator("buyer_concentration").function(awards)
+    buyers_served = list(dict.fromkeys(
+        str(a.get("buyer_name") or a.get("buyer_id") or "Unspecified Buyer") for a in awards
+    ))
 
     sources: list[FindingSource] = []
     sample_awards = awards[:5] if awards else []
@@ -73,8 +58,8 @@ def investigate_supplier_tool(supplier_id: str) -> SupplierInvestigationResult:
         total_value=round(total_val, 2),
         currency=currency,
         buyers_served=buyers_served,
-        buyer_concentration_share=concentration_share,
-        top_buyer=top_buyer,
-        repeat_win_pattern=pattern,
+        buyer_concentration_share=concentration.share,
+        top_buyer=concentration.top_buyer,
+        repeat_win_pattern=concentration.pattern,
         sources=sources,
     )
