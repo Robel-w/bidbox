@@ -2,22 +2,32 @@
 
 from uuid import uuid4
 
-from audit.logger import audited
+from audit.logger import audited, get_audit_logs
 from bidbox_mcp.schemas.evidence import FindingSource
 from bidbox_mcp.schemas.investigation import DraftFlag, FlagFindingResult
 
-# In-memory storage for draft flags by run_id
-DRAFT_FLAGS: dict[str, list[DraftFlag]] = {}
-
 
 def get_draft_flags(run_id: str) -> list[DraftFlag]:
-    """Retrieve draft flags filed under the specified run_id."""
-    return list(DRAFT_FLAGS.get(run_id, []))
+    """Rebuild a run's draft flags from its audit log.
 
-
-def clear_draft_flags() -> None:
-    """Clear draft flags store."""
-    DRAFT_FLAGS.clear()
+    Each MCP tool call may run in a fresh server process, so in-memory state does
+    not survive between flag_finding and create_investigation_file.
+    """
+    flags: list[DraftFlag] = []
+    seen: set[tuple[str, str]] = set()
+    for event in get_audit_logs(run_id):
+        outputs = event.get("outputs") or {}
+        if event.get("actor") != "tool" or event.get("tool") != "flag_finding":
+            continue
+        if not isinstance(outputs, dict) or outputs.get("status") != "draft":
+            continue
+        kwargs = event.get("inputs", {}).get("kwargs", {})
+        key = (str(kwargs.get("ocid")), str(kwargs.get("statement")))
+        if kwargs.get("run_id") != run_id or key in seen:
+            continue
+        seen.add(key)
+        flags.append(DraftFlag(flag_id=outputs["flag_id"], **kwargs))
+    return flags
 
 
 @audited("flag_finding")
@@ -35,7 +45,7 @@ def flag_finding_tool(
     """Validate and record an objective draft finding flag with required source citations."""
     flag_id = f"FLAG-{uuid4().hex[:8].upper()}"
 
-    draft = DraftFlag(
+    DraftFlag(
         flag_id=flag_id,
         run_id=run_id,
         ocid=ocid,
@@ -47,10 +57,6 @@ def flag_finding_tool(
         follow_up=follow_up,
         sources=sources,
     )
-
-    if run_id not in DRAFT_FLAGS:
-        DRAFT_FLAGS[run_id] = []
-    DRAFT_FLAGS[run_id].append(draft)
 
     return FlagFindingResult(
         flag_id=flag_id,

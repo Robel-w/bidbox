@@ -105,6 +105,17 @@ async def test_full_run_logs_every_tool_call_in_order(offline_run: dict) -> None
 
 
 @pytest.mark.anyio
+async def test_report_contains_findings_filed_in_separate_server_processes(offline_run: dict) -> None:
+    """Real MCP calls run in fresh processes; drafts must come from the audit log, not memory."""
+    result = await run_graph("cross-process-findings")
+    report = json.loads(Path(result["report"]["json_path"]).read_text(encoding="utf-8"))
+    assert [f["statement"] for f in report["findings"]] == [
+        "Award price is materially above the historical peer benchmark."
+    ]
+    assert report["findings"][0]["sources"][0]["ocid"] == "ocds-synth-kenya-000100"
+
+
+@pytest.mark.anyio
 async def test_failed_tool_is_retried_once_then_run_continues_with_limitation(offline_run: dict) -> None:
     async def broken(arguments: dict[str, Any]) -> Any:
         raise RuntimeError("supplier registry unavailable")
