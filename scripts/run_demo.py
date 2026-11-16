@@ -13,11 +13,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from agent.graph import build_graph
 from agent.investigator import close_tools
+from agent.llm import check_model_available
 from audit.logger import get_audit_logs, verify_chain
 from audit.metrics import write_run_metrics
 
 
 async def run(ocid: str, approver: str | None, role: str, approval_mode: str = "cli", approval_timeout: int = 900) -> None:
+	await check_model_available()
 	run_id = f"demo-{uuid.uuid4().hex[:8]}"
 	graph = build_graph()
 	config = {"configurable": {"thread_id": run_id}}

@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from agent.graph import build_graph
 from agent.investigator import close_tools
+from agent.llm import check_model_available
 from audit.logger import get_audit_logs
 from audit.metrics import write_run_metrics
 from evaluation.metrics import aggregate, score_case
@@ -84,6 +85,7 @@ def write_result(path: Path, result: dict[str, Any]) -> None:
 
 
 async def run(output: Path, selected: set[str] | None = None, resume: bool = False) -> dict[str, Any]:
+	await check_model_available()
 	cases = []
 	for path in sorted((ROOT / "evaluation/cases").glob("*.json")):
 		case = json.loads(path.read_text(encoding="utf-8"))
