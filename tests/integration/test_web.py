@@ -5,12 +5,50 @@ from pathlib import Path
 import shutil
 
 from fastapi.testclient import TestClient
+import pytest
 
-from audit.events import request_approval
+from audit.logger import append_audit_event
+
+from audit.events import request_approval, track_tokens
 from bidbox import web
 
 
 FORBIDDEN = ("award to", "winner", "select supplier")
+
+
+@pytest.mark.anyio
+async def test_sse_exposes_provider_transitions_with_model(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    names = ("rate_limited", "retry", "fallback_model")
+    for name in names:
+        append_audit_event("sse-test", "agent", name, {"model": "test-model"}, {}, status="retry")
+    response = await web.event_stream("sse-test")
+    received = []
+    for _ in names:
+        message = await anext(response.body_iterator)
+        received.append(json.loads(message.removeprefix("data: ").strip()))
+    await response.body_iterator.aclose()
+    assert [e["tool"] for e in received] == list(names)
+    assert all(e["inputs"]["model"] == "test-model" for e in received)
+
+
+def test_economics_reads_audit_only_run_without_fabricating_cost(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    for name in ("LLM_PRICE_IN", "LLM_PRICE_OUT", "LLM_PRICE_DATE", "LLM_PRICE_MODEL"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("LLM_PLAN", "free")
+    track_tokens("audit-only", 21, 10, "test-model", reasoning_tokens=7)
+    client = TestClient(web.app)
+    assert client.get("/api/runs").json()[0]["run_id"] == "audit-only"
+    response = client.get("/api/runs/audit-only")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["tokens"] == 31
+    assert data["report_available"] is False
+    assert data["metrics"]["prices"]["plan"] == "free"
+    assert data["cost_per_run"] is None
+    track_tokens("audit-only", None, None, "test-model", status="error")
+    assert client.get("/api/runs/audit-only").json()["tokens"] is None
 
 
 def test_web_reads_real_run_and_delegates_approval(tmp_path: Path, monkeypatch) -> None:

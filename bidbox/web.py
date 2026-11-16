@@ -13,7 +13,8 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from audit.events import get_run_cost, record_approval
+from audit.events import record_approval
+from audit.metrics import build_run_metrics
 from audit.logger import verify_chain
 
 
@@ -99,11 +100,12 @@ def run_summary(run_id: str, report: dict, events: list[dict]) -> dict:
 def all_runs() -> list[dict]:
     root = reports_root()
     result = []
-    for report_path in root.glob("examples/*/investigation_report.json"):
-        run_id = report_path.parent.name
-        audit_path = root / "audit" / f"{run_id}.jsonl"
-        if audit_path.exists():
-            result.append(run_summary(run_id, read_report(report_path), read_events(audit_path)))
+    for audit_path in root.glob("audit/*.jsonl"):
+        run_id = audit_path.stem
+        if not RUN_ID_PATTERN.fullmatch(run_id):
+            continue
+        report_path = root / "examples" / run_id / "investigation_report.json"
+        result.append(run_summary(run_id, read_report(report_path), read_events(audit_path)))
     return sorted(result, key=lambda item: item.get("started_at") or "", reverse=True)
 
 
@@ -127,11 +129,11 @@ def list_runs() -> list[dict]:
 @app.get("/api/runs/{run_id}")
 def run_detail(run_id: str) -> dict:
     report_path, audit_path = run_paths(run_id)
-    if not report_path.exists() or not audit_path.exists():
+    if not audit_path.exists():
         raise HTTPException(status_code=404, detail="Run not found")
     report = read_report(report_path)
     events = read_events(audit_path)
-    cost = get_run_cost(run_id)
+    metrics = build_run_metrics(run_id)
     verified, error = verify_chain(audit_path)
     return {
         **run_summary(run_id, report, events),
@@ -139,9 +141,13 @@ def run_detail(run_id: str) -> dict:
         "findings": report.get("findings", []),
         "dropped_findings": report.get("dropped_findings", []),
         "limitations": report.get("data_limitations", []),
-        "tokens": cost.total_tokens,
-        "cost_per_run": None if cost.cost_display == "not configured" else cost.cost_per_run,
-        "cost_note": cost.note,
+        "tokens": (metrics["tokens"]["input_total"] + metrics["tokens"]["output_total"]
+                   if metrics["tokens"]["input_total"] is not None and metrics["tokens"]["output_total"] is not None else None),
+        "model": metrics["model_name"],
+        "metrics": metrics,
+        "report_available": report_path.exists(),
+        "cost_per_run": metrics["list_price_cost_usd"],
+        "cost_note": "; ".join(metrics["notes"]),
         "report_path": str(report_path),
         "chain_error": error,
     }

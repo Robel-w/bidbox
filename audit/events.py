@@ -1,10 +1,9 @@
 """Approval gate and financial cost tracking events."""
 
-import os
 from typing import Any, Literal, cast
 
 from audit.logger import append_audit_event, get_audit_logs
-from audit.metrics import env_number
+from audit.metrics import build_run_metrics
 from audit.schemas import ApprovalDecision, RunCost
 
 
@@ -174,49 +173,17 @@ def track_tokens(
 
 def get_run_cost(run_id: str) -> RunCost:
     """Aggregate token usage and financial cost for a run based on environment pricing."""
-    logs = get_audit_logs(run_id)
-
-    total_prompt = 0
-    total_comp = 0
-
-    for item in logs:
-        tokens = item.get("tokens") or (
-            item.get("outputs", {}).get("tokens")
-            if isinstance(item.get("outputs"), dict)
-            else None
-        )
-        if isinstance(tokens, dict):
-            total_prompt += int(tokens.get("prompt_tokens", 0))
-            total_comp += int(tokens.get("completion_tokens", 0))
-
-    total_tokens = total_prompt + total_comp
-
-    model = os.getenv("LLM_MODEL", "qwen2.5:7b-instruct")
-    price_in, price_out = env_number("LLM_PRICE_IN"), env_number("LLM_PRICE_OUT")
-
-    if not (price_in["configured"] and price_out["configured"]):
-        return RunCost(
-            run_id=run_id,
-            total_tokens=total_tokens,
-            prompt_tokens=total_prompt,
-            completion_tokens=total_comp,
-            cost_usd=0.0,
-            cost_per_run=0.0,
-            cost_display="not configured",
-            note=f"Model {model}: LLM_PRICE_IN / LLM_PRICE_OUT not set, so no cost is shown.",
-        )
-
-    cost_usd = round(
-        (total_prompt * price_in["value"] + total_comp * price_out["value"]) / 1_000_000.0,
-        6,
-    )
+    metrics = build_run_metrics(run_id)
+    total_prompt = metrics["tokens"]["input_total"] or 0
+    total_comp = metrics["tokens"]["output_total"] or 0
+    cost = metrics["list_price_cost_usd"]
     return RunCost(
         run_id=run_id,
-        total_tokens=total_tokens,
+        total_tokens=total_prompt + total_comp,
         prompt_tokens=total_prompt,
         completion_tokens=total_comp,
-        cost_usd=cost_usd,
-        cost_per_run=cost_usd,
-        cost_display=f"${cost_usd:.6f}",
-        note=f"{model} at ${price_in['value']}/1M in, ${price_out['value']}/1M out (LLM tokens only)",
+        cost_usd=cost or 0.0,
+        cost_per_run=cost or 0.0,
+        cost_display=f"${cost:.8f} (list price)" if cost is not None else "not configured",
+        note="; ".join(metrics["notes"]) if cost is None else metrics["working"]["cost_per_answer"],
     )

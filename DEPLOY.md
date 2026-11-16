@@ -4,6 +4,10 @@ The default hosted endpoint is Groq (`https://api.groq.com/openai/v1`) with `LLM
 
 Set `LLM_REASONING_EFFORT=low` to reduce reasoning effort on both configured Groq models; empty omits this parameter. Qwen also supports `none` and `default`, but GPT-OSS does not, so these settings cannot be combined with that fallback. Reasoning-token counts are recorded only when returned in provider usage, separately from output totals; raw reasoning is never logged. Every HTTP attempt is metered, with unknown usage left null, including failed attempts.
 
+## List-price economics
+
+Supply `LLM_PRICE_IN` and `LLM_PRICE_OUT` as USD per million tokens through the host environment, plus `LLM_PRICE_MODEL` (exact model ID), `LLM_PRICE_DATE` (date entered, `YYYY-MM-DD`), and `LLM_PLAN=free` or `paid`. The Economics view shows currently configured list prices, not a provider bill. Missing rates or provider usage leave cost unknown; one price pair cannot cost a mixed-model run. Free-plan access never substitutes zero for missing list prices. No price or entry date is auto-filled.
+
 ## Ollama alternative
 
 Set `LLM_BASE_URL` to your OpenAI-compatible endpoint and `LLM_MODEL` to an exact model ID returned by that endpoint's model list. The demo and evaluation runners check availability before starting an investigation and fail with the available IDs if the configured model is missing. For Ollama, install the chosen model with `ollama pull <model>` or choose an already installed model. A model being available does not guarantee a valid evidence review; invalid reviewer JSON is recorded as a failed review requiring manual verification.

@@ -68,6 +68,15 @@ def build_run_metrics(run_id: str) -> dict[str, Any]:
     total_out = sum(c["output_tokens"] or 0 for c in llm_calls)
 
     price_in, price_out = env_number("LLM_PRICE_IN"), env_number("LLM_PRICE_OUT")
+    price_model = (os.getenv("LLM_PRICE_MODEL") or os.getenv("LLM_MODEL") or "qwen/qwen3.8-27b").strip()
+    price_date = (os.getenv("LLM_PRICE_DATE") or "").strip() or None
+    if price_date:
+        try:
+            datetime.strptime(price_date, "%Y-%m-%d")
+        except ValueError:
+            price_date = None
+    plan = (os.getenv("LLM_PLAN") or "").strip().lower()
+    plan = plan if plan in ("free", "paid") else "not configured"
     tool_fee, sms_fee = env_number("TOOL_FEE_USD"), env_number("SMS_FEE_USD")
     api_fee, hosting_fee = env_number("API_FEE_PER_OUTCOME_USD"), env_number("HOSTING_FEE_PER_OUTCOME_USD")
     fx = env_number("USD_TO_KES")
@@ -91,6 +100,8 @@ def build_run_metrics(run_id: str) -> dict[str, Any]:
         notes.append("Token usage not reported by the provider for at least one call; cost not computed.")
     elif not (price_in["configured"] and price_out["configured"]):
         notes.append("LLM_PRICE_IN / LLM_PRICE_OUT not configured; cost not computed.")
+    elif models != [price_model]:
+        notes.append(f"List-price rates apply only to {price_model}; rates for all recorded models are not configured.")
     else:
         avg_in, avg_out = total_in / model_calls, total_out / model_calls
         cost_per_answer = (avg_in * price_in["value"] + avg_out * price_out["value"]) / 1_000_000
@@ -147,7 +158,9 @@ def build_run_metrics(run_id: str) -> dict[str, Any]:
                                 if e.get("actor") == "tool" and e.get("tool") == "create_investigation_file"
                                 and isinstance(e.get("outputs"), dict) and e["outputs"].get("status") == "finalized"), None),
         "review_summary": next((e["outputs"] for e in reversed(events) if e.get("tool") == "evidence_review"), None),
-        "prices": {"LLM_PRICE_IN": price_in, "LLM_PRICE_OUT": price_out, "unit": "USD per 1M tokens"},
+        "prices": {"LLM_PRICE_IN": price_in, "LLM_PRICE_OUT": price_out, "unit": "USD per 1M tokens",
+                   "basis": "list price", "model": price_model, "date_entered": price_date, "plan": plan},
+        "list_price_cost_usd": round(cost_per_answer * model_calls, 8) if cost_per_answer is not None else None,
         "fees": {
             "TOOL_FEE_USD": {**tool_fee, "unit": "USD per tool call", "count": tool_call_count},
             "SMS_FEE_USD": {**sms_fee, "unit": "USD per SMS", "count": sms_messages},

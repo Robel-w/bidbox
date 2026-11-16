@@ -13,6 +13,7 @@ RUN = "metrics-run"
 ENV_NAMES = (
     "LLM_PRICE_IN", "LLM_PRICE_OUT", "TOOL_FEE_USD", "SMS_FEE_USD",
     "API_FEE_PER_OUTCOME_USD", "HOSTING_FEE_PER_OUTCOME_USD", "USD_TO_KES",
+    "LLM_PRICE_MODEL", "LLM_PRICE_DATE", "LLM_PLAN",
 )
 
 
@@ -21,6 +22,7 @@ def isolated(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(tmp_path)
     for name in ENV_NAMES:
         monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("LLM_MODEL", "test-model")
 
 
 def _tool(name: str, status: str = "ok") -> None:
@@ -101,6 +103,32 @@ def test_formula_matches_brief_and_flags_unconfigured_fees(monkeypatch: pytest.M
     assert any("SMS_FEE_USD" in note and "API_FEE_PER_OUTCOME_USD" in note for note in metrics["notes"])
     assert metrics["cost_per_outcome_kes"] is None
     assert any("USD_TO_KES" in note for note in metrics["notes"])
+
+
+def test_free_plan_does_not_invent_zero_prices(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LLM_PLAN", "free")
+    _sample_run()
+    metrics = build_run_metrics(RUN)
+    assert metrics["prices"]["plan"] == "free"
+    assert metrics["prices"]["basis"] == "list price"
+    assert metrics["prices"]["date_entered"] is None
+    assert metrics["list_price_cost_usd"] is None
+
+
+def test_list_price_date_and_model_scope(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LLM_PRICE_IN", "0.5")
+    monkeypatch.setenv("LLM_PRICE_OUT", "2")
+    monkeypatch.setenv("LLM_PRICE_DATE", "2026-11-16")
+    _sample_run()
+    metrics = build_run_metrics(RUN)
+    assert metrics["prices"]["date_entered"] == "2026-11-16"
+    assert metrics["list_price_cost_usd"] == pytest.approx(0.0032)
+    track_tokens(RUN, 20, 10, "fallback")
+    metrics = build_run_metrics(RUN)
+    assert metrics["list_price_cost_usd"] is None
+    assert get_run_cost(RUN).cost_display == "not configured"
+    monkeypatch.setenv("LLM_PRICE_DATE", "not a date")
+    assert build_run_metrics(RUN)["prices"]["date_entered"] is None
 
 
 def test_kes_uses_configured_rate_and_file_is_written(monkeypatch: pytest.MonkeyPatch) -> None:
