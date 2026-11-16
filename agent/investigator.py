@@ -18,6 +18,11 @@ FILESYSTEM_VERSION = os.getenv("BIDBOX_FILESYSTEM_MCP_VERSION", "2025.1.14")
 _TOOLS_CACHE: dict[str, Any] | None = None
 
 
+def npx_command(platform: str = sys.platform) -> str:
+	"""npx is a .cmd shim on Windows and cannot be spawned directly without the extension."""
+	return "npx.cmd" if platform.startswith("win") else "npx"
+
+
 def mcp_client() -> MultiServerMCPClient:
 	"""Create the two MCP connections used by an investigation."""
 	fixture_dir = str(Path("data/fixtures").resolve())
@@ -30,10 +35,8 @@ def mcp_client() -> MultiServerMCPClient:
 			},
 			"borrowed_filesystem": {
 				"transport": "stdio",
-				"command": "cmd",
+				"command": npx_command(),
 				"args": [
-					"/c",
-					"npx",
 					"-y",
 					f"@modelcontextprotocol/server-filesystem@{FILESYSTEM_VERSION}",
 					fixture_dir,
