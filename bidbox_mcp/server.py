@@ -3,6 +3,8 @@
 from mcp.server.fastmcp import FastMCP
 
 from bidbox.store import ensure_store_loaded
+from bidbox.data import search_awards as search_awards_data
+from audit.logger import audited
 from bidbox_mcp.schemas.evidence import FindingSource
 from bidbox_mcp.schemas.investigation import (
     FlagFindingResult,
@@ -17,6 +19,12 @@ from bidbox_mcp.tools.inspect_tender import inspect_tender_tool
 from bidbox_mcp.tools.investigate_supplier import investigate_supplier_tool
 
 mcp = FastMCP("bidbox")
+
+
+@mcp.tool(name="search_awards", description="Search actual award-bearing contract processes by OCID, buyer or title. Returns origin and fiscal years on every hit, or explicit not found. Sandbox data requires sandbox=true; no reference is guessed.")
+@audited("search_awards")
+def search_awards(query: str = "", limit: int = 20, sandbox: bool = False) -> dict:
+    return search_awards_data(query, limit, sandbox)
 
 
 @mcp.tool(

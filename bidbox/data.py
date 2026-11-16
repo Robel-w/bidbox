@@ -28,6 +28,36 @@ def get_process(ocid, origin="live-portal", connection=None):
     return result
 
 
+def search_processes(query="", limit=20, sandbox=False, awards_only=False, connection=None):
+    if not isinstance(query, str) or len(query) > 240 or not isinstance(limit, int) or not 1 <= limit <= 50:
+        raise ValueError("Search requires a query of at most 240 characters and limit 1–50")
+    origin = "synthetic" if sandbox else "live-portal"
+    if connection is None:
+        if not db_path().exists():
+            return {"hits": [], "status": "not found", "origin": origin, "synthetic_fallback_used": False}
+        with connect_store(read_only=True) as connection:
+            return search_processes(query, limit, sandbox, awards_only, connection)
+    cursor = connection.execute("""
+        SELECT r.ocid,r.origin,r.title,r.buyer_name,r.award_count,r.contract_count,
+            r.tender_amount,r.currency,r.procurement_method,r.source_url,r.ingested_at,r.release_date,
+            (SELECT list(m.fiscal_year ORDER BY m.fiscal_year) FROM fiscal_membership m
+             WHERE m.origin=r.origin AND m.ocid=r.ocid) AS fiscal_years
+        FROM procurement_records r WHERE r.origin = ? AND (NOT ? OR r.award_count > 0)
+          AND (contains(lower(coalesce(r.title,'')),?) OR contains(lower(coalesce(r.buyer_name,'')),?) OR contains(lower(r.ocid),?))
+        ORDER BY r.release_sort DESC,r.ocid LIMIT ?
+    """, [origin, awards_only, *([query.strip().lower()] * 3), limit])
+    names = [column[0] for column in cursor.description]
+    hits = [dict(zip(names, row)) for row in cursor.fetchall()]
+    for hit in hits:
+        hit["record_type"] = "award-bearing contract process" if hit["award_count"] else "tender-stage contract process"
+        hit["label"] = "SANDBOX" if sandbox else "LIVE DATA"
+    return {"hits": hits, "status": "found" if hits else "not found", "origin": origin, "synthetic_fallback_used": False}
+
+
+def search_awards(query="", limit=20, sandbox=False):
+    return search_processes(query, limit, sandbox, awards_only=True)
+
+
 def measure_coverage(connection):
     sums = ",".join(
         f"coalesce(sum(CAST(coverage->>'$.{name}' AS {'BOOLEAN' if name.startswith('with_') else 'BIGINT'})::BIGINT),0) AS {name}"
