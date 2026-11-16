@@ -1,4 +1,8 @@
-# Local demo configuration
+# LLM configuration
+
+The default hosted endpoint is Groq (`https://api.groq.com/openai/v1`) with `LLM_MODEL=qwen/qwen3.8-27b`. Set `LLM_API_KEY` through the host's secret manager, never in chat or a tracked file. Set `LLM_FALLBACK_MODEL=openai/gpt-oss-120b` to opt into that fallback. Qwen is listed as a preview model by Groq; availability must be checked against your account.
+
+## Ollama alternative
 
 Set `LLM_BASE_URL` to your OpenAI-compatible endpoint and `LLM_MODEL` to an exact model ID returned by that endpoint's model list. The demo and evaluation runners check availability before starting an investigation and fail with the available IDs if the configured model is missing. For Ollama, install the chosen model with `ollama pull <model>` or choose an already installed model. A model being available does not guarantee a valid evidence review; invalid reviewer JSON is recorded as a failed review requiring manual verification.
 
@@ -9,7 +13,7 @@ In the current environment, the OpenAI client's HTTP transport rejects a bracket
 For a local demo in Git Bash, an override scoped to one process is:
 
 ```bash
-NO_PROXY=localhost,127.0.0.1 LLM_MODEL=llama3.2:latest .venv/Scripts/python scripts/run_demo.py --ocid ocds-synth-kenya-000100
+NO_PROXY=localhost,127.0.0.1 LLM_BASE_URL=http://localhost:11434/v1 LLM_MODEL=llama3.2:latest LLM_FALLBACK_MODEL= LLM_REASONING_EFFORT= .venv/Scripts/python scripts/run_demo.py --ocid ocds-synth-kenya-000100
 ```
 
 This command uses synthetic fixture data and prompts for a human approver. Use the model installed on your machine, not an assumed model. Do not copy credentials into commands or tracked files.

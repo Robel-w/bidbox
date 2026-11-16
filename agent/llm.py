@@ -4,17 +4,27 @@ import json
 import os
 import time
 from typing import Any
+from urllib.parse import urlsplit
 
 from audit.events import track_tokens
 from openai import APIConnectionError, AsyncOpenAI, NotFoundError
 
 
+DEFAULT_MODEL = "qwen/qwen3.8-27b"
+DEFAULT_BASE_URL = "https://api.groq.com/openai/v1"
+
+
+def configured_client() -> AsyncOpenAI:
+    base_url = os.getenv("LLM_BASE_URL", DEFAULT_BASE_URL)
+    key = os.getenv("LLM_API_KEY", "").strip()
+    if not key and urlsplit(base_url).hostname not in ("localhost", "127.0.0.1", "::1"):
+        raise RuntimeError("LLM_API_KEY must be supplied as a host secret for the hosted endpoint.")
+    return AsyncOpenAI(api_key=key or "local-not-required", base_url=base_url)
+
+
 async def check_model_available() -> None:
-    model = os.getenv("LLM_MODEL", "qwen2.5:7b-instruct")
-    async with AsyncOpenAI(
-        api_key=os.getenv("OPENAI_API_KEY", "local-not-required"),
-        base_url=os.getenv("LLM_BASE_URL", "http://localhost:11434/v1"),
-    ) as client:
+    model = os.getenv("LLM_MODEL", DEFAULT_MODEL)
+    async with configured_client() as client:
         try:
             available = {item.id async for item in client.models.list()}
         except APIConnectionError as exc:
@@ -34,12 +44,9 @@ async def ask_json(
     schema: dict[str, Any],
 ) -> dict[str, Any]:
     """Ask the configured OpenAI-compatible model for one JSON object."""
-    model = os.getenv("LLM_MODEL", "qwen2.5:7b-instruct")
+    model = os.getenv("LLM_MODEL", DEFAULT_MODEL)
     started = time.perf_counter()
-    async with AsyncOpenAI(
-        api_key=os.getenv("OPENAI_API_KEY", "local-not-required"),
-        base_url=os.getenv("LLM_BASE_URL", "http://localhost:11434/v1"),
-    ) as client:
+    async with configured_client() as client:
         try:
             response = await client.chat.completions.create(
                 model=model,

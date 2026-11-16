@@ -13,6 +13,11 @@ from audit.logger import get_audit_logs
 REPO = Path(__file__).resolve().parents[2]
 
 
+@pytest.fixture(autouse=True)
+def hosted_test_key(monkeypatch):
+    monkeypatch.setenv("LLM_API_KEY", "test-only-placeholder")
+
+
 class FakeClient:
     def __init__(self, models, usage=None, error=None):
         self.ids = models
@@ -87,6 +92,30 @@ async def test_provider_omitting_usage_stays_null(monkeypatch, tmp_path):
     event = get_audit_logs("missing-usage")[0]
     assert event["outputs"]["input_tokens"] is None and event["outputs"]["output_tokens"] is None
     assert event["outputs"]["usage"] == "not reported"
+
+
+def test_hosted_client_requires_host_secret(monkeypatch):
+    monkeypatch.delenv("LLM_API_KEY")
+    monkeypatch.setenv("OPENAI_API_KEY", "must-not-be-used")
+    with pytest.raises(RuntimeError, match="LLM_API_KEY.*host secret"):
+        llm.configured_client()
+
+
+def test_client_uses_groq_and_llm_api_key(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(llm, "AsyncOpenAI", lambda **kwargs: captured.update(kwargs))
+    llm.configured_client()
+    assert captured["api_key"] == "test-only-placeholder"
+    assert captured["base_url"] == "https://api.groq.com/openai/v1"
+
+
+def test_local_ollama_does_not_require_key(monkeypatch):
+    monkeypatch.delenv("LLM_API_KEY")
+    monkeypatch.setenv("LLM_BASE_URL", "http://localhost:11434/v1")
+    captured = {}
+    monkeypatch.setattr(llm, "AsyncOpenAI", lambda **kwargs: captured.update(kwargs))
+    llm.configured_client()
+    assert captured["api_key"] == "local-not-required"
 
 
 def test_docker_does_not_set_invalid_ipv6_proxy():
