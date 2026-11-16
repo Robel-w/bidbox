@@ -10,6 +10,10 @@ from bidbox_mcp.schemas.investigation import InvestigationFileResult
 from bidbox_mcp.tools.flag_finding import get_draft_flags
 
 FOOTER_TEXT = "Prepared for committee decision. No award decision is made or implied."
+BASE_LIMITATIONS = [
+    "Analyses rely solely on completed historical procurement awards (OCDS data).",
+    "An anomaly constitutes a flag for human verification, not misconduct or liability.",
+]
 
 
 @audited("create_investigation_file")
@@ -17,6 +21,7 @@ def create_investigation_file_tool(
     run_id: str,
     approver_name: str | None = None,
     approver_role: str = "Procurement Review Officer",
+    limitations: list[str] | None = None,
 ) -> InvestigationFileResult:
     """Render finalized committee investigation Markdown and JSON report with governance signoff."""
     approval = require_report_approval(run_id, approver_name)
@@ -29,6 +34,7 @@ def create_investigation_file_tool(
     flags = get_draft_flags(run_id)
     audit_calls = get_audit_logs(run_id)
     now_str = datetime.now(UTC).isoformat()
+    data_limitations = [*BASE_LIMITATIONS, *dict.fromkeys(limitations or [])]
 
     # Build Markdown document
     lines: list[str] = [
@@ -69,8 +75,7 @@ def create_investigation_file_tool(
     lines.extend(
         [
             "## Data Limitations",
-            "- Analyses rely solely on completed historical procurement awards (OCDS data).",
-            "- An anomaly constitutes a flag for human verification, not misconduct or liability.",
+            *[f"- {item}" for item in data_limitations],
             "",
             "## Tool-Call Audit Appendix",
             f"Total logged actions in run: {len(audit_calls)}",
@@ -101,10 +106,7 @@ def create_investigation_file_tool(
         "approver_role": approver_role,
         "generated_at_utc": now_str,
         "findings": [f.model_dump() for f in flags],
-        "data_limitations": [
-            "Historical completed awards only",
-            "Screening signals for human inquiry, not misconduct determination",
-        ],
+        "data_limitations": data_limitations,
         "audit_calls": audit_calls,
         "footer": FOOTER_TEXT,
     }

@@ -101,12 +101,14 @@ def create_investigation_file(
     run_id: str,
     approver_name: str,
     approver_role: str = "Procurement Review Officer",
+    limitations: list[str] | None = None,
 ) -> InvestigationFileResult:
     """Render finalized committee investigation file with named human approval gate."""
     return create_investigation_file_tool(
         run_id=run_id,
         approver_name=approver_name,
         approver_role=approver_role,
+        limitations=limitations,
     )
 
 

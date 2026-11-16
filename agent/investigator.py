@@ -1,5 +1,6 @@
 """MCP tool loading and bounded investigation execution."""
 
+import asyncio
 import os
 import json
 import re
@@ -8,6 +9,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from langchain_core.tools import ToolException
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
 from audit.logger import append_audit_event
@@ -42,7 +44,9 @@ def mcp_client() -> MultiServerMCPClient:
 					fixture_dir,
 				],
 			},
-		}
+		},
+		# Surface MCP isError results as exceptions; otherwise refusals look like successful output.
+		handle_tool_errors=False,
 	)
 
 
@@ -104,44 +108,94 @@ def _parse_result(result: Any) -> Any:
 	return result.model_dump() if hasattr(result, "model_dump") else result
 
 
+class ToolCallFailed(RuntimeError):
+	"""A tool call failed after its retry; the caller decides whether the run can continue."""
+
+	def __init__(self, tool: str, status: str, error: str) -> None:
+		super().__init__(f"{tool} {status} after retry: {error}")
+		self.tool = tool
+		self.status = status
+		self.error = error
+
+	@property
+	def limitation(self) -> str:
+		return f"Tool '{self.tool}' failed ({self.status}) after one retry: {self.error}. Its check is missing from this report."
+
+
+_FAULTS_INJECTED: set[tuple[str, str]] = set()
+MAX_ATTEMPTS = 2
+
+
+def tool_timeout_s() -> float:
+	return float(os.getenv("TOOL_TIMEOUT_S") or 30)
+
+
+def _should_inject_fault(run_id: str, name: str) -> bool:
+	"""DEMO_FAULT_TOOL makes the named tool time out once per run, to show the failure path."""
+	if os.getenv("DEMO_FAULT_TOOL", "").strip() != name or (run_id, name) in _FAULTS_INJECTED:
+		return False
+	_FAULTS_INJECTED.add((run_id, name))
+	return True
+
+
+async def _invoke(tool: Any, arguments: dict[str, Any], inject_fault: bool) -> Any:
+	if inject_fault:
+		await asyncio.Event().wait()
+	return await tool.ainvoke(arguments)
+
+
+def _is_deterministic_tool_error(exc: BaseException) -> bool:
+	"""Errors reported by the tool itself (isError) would fail identically on retry."""
+	return isinstance(exc, (ToolException, LookupError))
+
+
 async def call_tool(
 	tools: dict[str, Any],
 	run_id: str,
 	name: str,
 	arguments: dict[str, Any],
 ) -> Any:
-	"""Call one adapter-loaded tool and record the call in the run's audit log."""
+	"""Call one tool with a timeout and one retry, recording every attempt in the audit log."""
 	args_summary = summarize_args(arguments)
-	started = time.perf_counter()
-	try:
-		if name not in tools:
-			raise LookupError(f"tool '{name}' is not available from any connected MCP server")
-		result = _parse_result(await tools[name].ainvoke(arguments))
-	except Exception as exc:
+	timeout = tool_timeout_s()
+	for attempt in range(1, MAX_ATTEMPTS + 1):
+		inject = _should_inject_fault(run_id, name)
+		inputs = {"args_summary": args_summary, "attempt": attempt, "timeout_s": timeout}
+		started = time.perf_counter()
+		try:
+			if name not in tools:
+				raise LookupError(f"tool '{name}' is not available from any connected MCP server")
+			raw = await asyncio.wait_for(_invoke(tools[name], arguments, inject), timeout)
+			result = _parse_result(raw)
+		except Exception as exc:
+			elapsed_ms = (time.perf_counter() - started) * 1000
+			timed_out = isinstance(exc, TimeoutError)
+			status = "timeout" if timed_out else "error"
+			error = f"no response within {timeout:g}s" if timed_out else f"{type(exc).__name__}: {exc}"[:300]
+			final = attempt == MAX_ATTEMPTS or _is_deterministic_tool_error(exc)
+			outputs: dict[str, Any] = {"error": error, "next": "give_up" if final else "retry"}
+			if inject:
+				outputs["injected_fault"] = "DEMO_FAULT_TOOL"
+			append_audit_event(run_id, "agent", name, inputs, outputs, duration_ms=elapsed_ms, status=status)
+			print(f"tool={name} attempt={attempt} status={status} error={error[:100]}", flush=True)
+			if final:
+				raise ToolCallFailed(name, status, error) from exc
+			continue
+		elapsed_ms = (time.perf_counter() - started) * 1000
+		summary = str(result).replace("\n", " ")[:160]
 		append_audit_event(
 			run_id,
 			"agent",
 			name,
-			{"args_summary": args_summary},
-			{"error": f"{type(exc).__name__}: {exc}"[:300]},
-			duration_ms=(time.perf_counter() - started) * 1000,
-			status="error",
+			inputs,
+			{"result_summary": summary},
+			duration_ms=elapsed_ms,
+			status="ok",
+			origin=data_origin(result),
 		)
-		raise
-	elapsed_ms = (time.perf_counter() - started) * 1000
-	summary = str(result).replace("\n", " ")[:160]
-	append_audit_event(
-		run_id,
-		"agent",
-		name,
-		{"args_summary": args_summary},
-		{"result_summary": summary},
-		duration_ms=elapsed_ms,
-		status="ok",
-		origin=data_origin(result),
-	)
-	print(f"tool={name} args={args_summary} result={summary[:100]} ms={elapsed_ms:.1f}", flush=True)
-	return result
+		print(f"tool={name} attempt={attempt} args={args_summary} result={summary[:100]} ms={elapsed_ms:.1f}", flush=True)
+		return result
+	raise AssertionError("unreachable")
 
 
 def finding_from_tool_output(output: dict[str, Any]) -> dict[str, Any] | None:
@@ -180,6 +234,7 @@ async def investigate(state: dict[str, Any]) -> dict[str, Any]:
 	tools = await load_tools()
 	outputs = list(state.get("tool_outputs", []))
 	findings = list(state.get("draft_findings", []))
+	limitations = list(state.get("limitations", []))
 	used = int(state.get("steps_used", 0))
 	plan = state.get("plan", {}).get("checks", [])
 	tender = state["tender"]
@@ -191,14 +246,18 @@ async def investigate(state: dict[str, Any]) -> dict[str, Any]:
 	for name, arguments in calls:
 		if used >= int(state.get("step_budget", 6)):
 			break
-		result = await call_tool(tools, state["run_id"], name, arguments)
-		value = result.model_dump() if hasattr(result, "model_dump") else result
-		outputs.append({"tool": name, "inputs": arguments, "output": value})
 		used += 1
-		draft = finding_from_tool_output(value)
+		try:
+			value = await call_tool(tools, state["run_id"], name, arguments)
+		except ToolCallFailed as failure:
+			limitations.append(failure.limitation)
+			continue
+		outputs.append({"tool": name, "inputs": arguments, "output": value})
+		draft = finding_from_tool_output(value) if isinstance(value, dict) else None
 		if draft:
 			findings.append(draft)
 	recovery_needed = bool(tender.get("data_quality_flags")) or any(
-		item["output"].get("verdict") == "insufficient_comparables" for item in outputs
+		isinstance(item["output"], dict) and item["output"].get("verdict") == "insufficient_comparables"
+		for item in outputs
 	)
-	return {"tool_outputs": outputs, "draft_findings": findings, "steps_used": used, "recovery_needed": recovery_needed}
+	return {"tool_outputs": outputs, "draft_findings": findings, "limitations": limitations, "steps_used": used, "recovery_needed": recovery_needed}

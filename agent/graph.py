@@ -10,7 +10,7 @@ from audit.events import record_approval, request_approval
 from audit.logger import get_audit_logs
 
 from .evidence import review_evidence
-from .investigator import call_tool, investigate, load_tools
+from .investigator import ToolCallFailed, call_tool, investigate, load_tools
 from .planner import plan_investigation
 from .recovery import recover
 from .state import InvestigationState
@@ -48,18 +48,23 @@ async def human_gate(state: InvestigationState) -> dict[str, Any]:
 
 async def filer(state: InvestigationState) -> dict[str, Any]:
 	tools = await load_tools()
+	limitations = list(state.get("limitations", []))
 	for finding in state.get("findings", []):
-		await call_tool(tools, state["run_id"], "flag_finding", {
-			"run_id": state["run_id"], "ocid": state["ocid"], "type": finding["category"],
-			"severity": finding.get("severity", "medium"), "statement": finding["message"],
-			"rationale": finding["rationale"], "uncertainty": finding["uncertainty"],
-			"follow_up": finding["follow_up"], "sources": finding["sources"],
-		})
+		try:
+			await call_tool(tools, state["run_id"], "flag_finding", {
+				"run_id": state["run_id"], "ocid": state["ocid"], "type": finding["category"],
+				"severity": finding.get("severity", "medium"), "statement": finding["message"],
+				"rationale": finding["rationale"], "uncertainty": finding["uncertainty"],
+				"follow_up": finding["follow_up"], "sources": finding["sources"],
+			})
+		except ToolCallFailed as failure:
+			limitations.append(failure.limitation)
 	result = await call_tool(tools, state["run_id"], "create_investigation_file", {
 		"run_id": state["run_id"], "approver_name": state["approver_name"],
 		"approver_role": state.get("approver_role") or "Procurement Review Officer",
+		"limitations": limitations,
 	})
-	return {"report": result.model_dump() if hasattr(result, "model_dump") else result}
+	return {"report": result, "limitations": limitations}
 
 
 def build_graph():

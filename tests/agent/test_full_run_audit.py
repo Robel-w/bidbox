@@ -105,17 +105,44 @@ async def test_full_run_logs_every_tool_call_in_order(offline_run: dict) -> None
 
 
 @pytest.mark.anyio
-async def test_failed_tool_call_is_logged_as_error(offline_run: dict) -> None:
+async def test_failed_tool_is_retried_once_then_run_continues_with_limitation(offline_run: dict) -> None:
     async def broken(arguments: dict[str, Any]) -> Any:
         raise RuntimeError("supplier registry unavailable")
 
     offline_run["investigate_supplier"].ainvoke = broken
-    with pytest.raises(RuntimeError):
-        await run_graph("failed-call-audit")
-    last = agent_calls("failed-call-audit")[-1]
-    assert last["tool"] == "investigate_supplier"
-    assert last["status"] == "error"
-    assert "supplier registry unavailable" in last["outputs"]["error"]
+    result = await run_graph("failed-call-audit")
+    assert result["report"]["status"] == "finalized"
+
+    failures = [e for e in agent_calls("failed-call-audit") if e["tool"] == "investigate_supplier"]
+    assert [(e["status"], e["inputs"]["attempt"], e["outputs"]["next"]) for e in failures] == [
+        ("error", 1, "retry"),
+        ("error", 2, "give_up"),
+    ]
+    report = json.loads(Path(result["report"]["json_path"]).read_text(encoding="utf-8"))
+    assert any("investigate_supplier" in item and "after one retry" in item for item in report["data_limitations"])
+
+
+@pytest.mark.anyio
+async def test_demo_fault_times_out_once_then_recovers(offline_run: dict, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEMO_FAULT_TOOL", "benchmark_award")
+    monkeypatch.setenv("TOOL_TIMEOUT_S", "0.2")
+    result = await run_graph("demo-fault-run")
+    assert result["report"]["status"] == "finalized"
+
+    attempts = [e for e in agent_calls("demo-fault-run") if e["tool"] == "benchmark_award"]
+    assert [e["status"] for e in attempts] == ["timeout", "ok"]
+    assert attempts[0]["outputs"]["injected_fault"] == "DEMO_FAULT_TOOL"
+    assert attempts[0]["outputs"]["next"] == "retry"
+    assert attempts[1]["inputs"]["attempt"] == 2
+
+
+@pytest.mark.anyio
+async def test_tool_reported_error_is_not_retried(offline_run: dict) -> None:
+    tools = offline_run
+    with pytest.raises(investigator.ToolCallFailed):
+        await investigator.call_tool(tools, "no-retry", "not_a_tool", {})
+    events = agent_calls("no-retry")
+    assert len(events) == 1 and events[0]["outputs"]["next"] == "give_up"
 
 
 @pytest.mark.anyio
