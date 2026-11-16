@@ -26,7 +26,19 @@ def main():
     years.add_argument("--all-fy", action="store_true")
     ingest.add_argument("--source-url", help="Exact publisher page URL for a previously downloaded local file")
     ingest.add_argument("--refresh", action="store_true", help="Re-download completed fiscal years")
+    measure = commands.add_parser("measure", help="Measure actual downloaded live-data field coverage")
+    measure.add_argument("--output", type=Path)
     args = parser.parse_args()
+    if args.command == "measure":
+        from .data import measure_coverage
+
+        with connect_store(read_only=True) as connection:
+            result = measure_coverage(connection)
+        text = json.dumps(result, indent=2, ensure_ascii=False)
+        if args.output:
+            args.output.write_text(text, encoding="utf-8")
+        print(text)
+        return
     if not (args.source or args.fy or args.all_fy):
         parser.error("ingest needs a URL/file, --fy or --all-fy")
     if args.source and args.all_fy:

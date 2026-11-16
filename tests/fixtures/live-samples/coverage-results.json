@@ -1,0 +1,334 @@
+{
+  "origin": "live-portal",
+  "totals": {
+    "releases_observed": 265138,
+    "distinct_ocids": 262961,
+    "with_buyer": 265138,
+    "with_tender_value": 0,
+    "with_currency": 0,
+    "with_procurement_method": 265138,
+    "with_number_of_tenderers": 0,
+    "with_period_start": 264891,
+    "with_period_end": 264891,
+    "with_period_both": 264891,
+    "with_awards": 92332,
+    "with_contracts": 92332,
+    "award_objects": 109607,
+    "award_values": 109607,
+    "award_currencies": 109607,
+    "award_items": 0,
+    "award_suppliers": 80309,
+    "contract_objects": 109607
+  },
+  "per_fy": [
+    {
+      "fiscal_year": "2018-2019",
+      "releases_observed": 11848,
+      "distinct_ocids": 11848,
+      "with_buyer": 11848,
+      "with_tender_value": 0,
+      "with_currency": 0,
+      "with_procurement_method": 11848,
+      "with_number_of_tenderers": 0,
+      "with_period_start": 11838,
+      "with_period_end": 11838,
+      "with_period_both": 11838,
+      "with_awards": 4110,
+      "with_contracts": 4110,
+      "award_objects": 5405,
+      "award_values": 5405,
+      "award_currencies": 5405,
+      "award_items": 0,
+      "award_suppliers": 4653,
+      "contract_objects": 5405
+    },
+    {
+      "fiscal_year": "2019-2020",
+      "releases_observed": 19746,
+      "distinct_ocids": 19746,
+      "with_buyer": 19746,
+      "with_tender_value": 0,
+      "with_currency": 0,
+      "with_procurement_method": 19746,
+      "with_number_of_tenderers": 0,
+      "with_period_start": 19714,
+      "with_period_end": 19714,
+      "with_period_both": 19714,
+      "with_awards": 5614,
+      "with_contracts": 5614,
+      "award_objects": 6606,
+      "award_values": 6606,
+      "award_currencies": 6606,
+      "award_items": 0,
+      "award_suppliers": 2421,
+      "contract_objects": 6606
+    },
+    {
+      "fiscal_year": "2020-2021",
+      "releases_observed": 26645,
+      "distinct_ocids": 26639,
+      "with_buyer": 26645,
+      "with_tender_value": 0,
+      "with_currency": 0,
+      "with_procurement_method": 26645,
+      "with_number_of_tenderers": 0,
+      "with_period_start": 26611,
+      "with_period_end": 26611,
+      "with_period_both": 26611,
+      "with_awards": 8172,
+      "with_contracts": 8172,
+      "award_objects": 9638,
+      "award_values": 9638,
+      "award_currencies": 9638,
+      "award_items": 0,
+      "award_suppliers": 3993,
+      "contract_objects": 9638
+    },
+    {
+      "fiscal_year": "2021-2022",
+      "releases_observed": 25767,
+      "distinct_ocids": 25644,
+      "with_buyer": 25767,
+      "with_tender_value": 0,
+      "with_currency": 0,
+      "with_procurement_method": 25767,
+      "with_number_of_tenderers": 0,
+      "with_period_start": 25720,
+      "with_period_end": 25720,
+      "with_period_both": 25720,
+      "with_awards": 10871,
+      "with_contracts": 10871,
+      "award_objects": 12398,
+      "award_values": 12398,
+      "award_currencies": 12398,
+      "award_items": 0,
+      "award_suppliers": 7761,
+      "contract_objects": 12398
+    },
+    {
+      "fiscal_year": "2022-2023",
+      "releases_observed": 48077,
+      "distinct_ocids": 47618,
+      "with_buyer": 48077,
+      "with_tender_value": 0,
+      "with_currency": 0,
+      "with_procurement_method": 48077,
+      "with_number_of_tenderers": 0,
+      "with_period_start": 48004,
+      "with_period_end": 48004,
+      "with_period_both": 48004,
+      "with_awards": 20170,
+      "with_contracts": 20170,
+      "award_objects": 23626,
+      "award_values": 23626,
+      "award_currencies": 23626,
+      "award_items": 0,
+      "award_suppliers": 20817,
+      "contract_objects": 23626
+    },
+    {
+      "fiscal_year": "2023-2024",
+      "releases_observed": 57857,
+      "distinct_ocids": 57512,
+      "with_buyer": 57857,
+      "with_tender_value": 0,
+      "with_currency": 0,
+      "with_procurement_method": 57857,
+      "with_number_of_tenderers": 0,
+      "with_period_start": 57806,
+      "with_period_end": 57806,
+      "with_period_both": 57806,
+      "with_awards": 25093,
+      "with_contracts": 25093,
+      "award_objects": 29588,
+      "award_values": 29588,
+      "award_currencies": 29588,
+      "award_items": 0,
+      "award_suppliers": 18585,
+      "contract_objects": 29588
+    },
+    {
+      "fiscal_year": "2024-2025",
+      "releases_observed": 42147,
+      "distinct_ocids": 42133,
+      "with_buyer": 42147,
+      "with_tender_value": 0,
+      "with_currency": 0,
+      "with_procurement_method": 42147,
+      "with_number_of_tenderers": 0,
+      "with_period_start": 42147,
+      "with_period_end": 42147,
+      "with_period_both": 42147,
+      "with_awards": 13461,
+      "with_contracts": 13461,
+      "award_objects": 16899,
+      "award_values": 16899,
+      "award_currencies": 16899,
+      "award_items": 0,
+      "award_suppliers": 16667,
+      "contract_objects": 16899
+    },
+    {
+      "fiscal_year": "2025-2026",
+      "releases_observed": 26004,
+      "distinct_ocids": 26004,
+      "with_buyer": 26004,
+      "with_tender_value": 0,
+      "with_currency": 0,
+      "with_procurement_method": 26004,
+      "with_number_of_tenderers": 0,
+      "with_period_start": 26004,
+      "with_period_end": 26004,
+      "with_period_both": 26004,
+      "with_awards": 4405,
+      "with_contracts": 4405,
+      "award_objects": 4901,
+      "award_values": 4901,
+      "award_currencies": 4901,
+      "award_items": 0,
+      "award_suppliers": 4872,
+      "contract_objects": 4901
+    },
+    {
+      "fiscal_year": "2026-2027",
+      "releases_observed": 7047,
+      "distinct_ocids": 7047,
+      "with_buyer": 7047,
+      "with_tender_value": 0,
+      "with_currency": 0,
+      "with_procurement_method": 7047,
+      "with_number_of_tenderers": 0,
+      "with_period_start": 7047,
+      "with_period_end": 7047,
+      "with_period_both": 7047,
+      "with_awards": 436,
+      "with_contracts": 436,
+      "award_objects": 546,
+      "award_values": 546,
+      "award_currencies": 546,
+      "award_items": 0,
+      "award_suppliers": 540,
+      "contract_objects": 546
+    }
+  ],
+  "pages": [
+    {
+      "fiscal_year": "2018-2019",
+      "source_url": "https://tenders.go.ke/api/ocds/tenders?fy=2018-2019",
+      "releases": 11848,
+      "metadata": {
+        "publisher": {
+          "name": "Public Procurement Regulatory Authority"
+        },
+        "publishedDate": "2025-02-05T15:00:55+03:00",
+        "publicationPolicy": null
+      },
+      "ingested_at": "2026-11-16T20:46:22.946102+00:00"
+    },
+    {
+      "fiscal_year": "2019-2020",
+      "source_url": "https://tenders.go.ke/api/ocds/tenders?fy=2019-2020",
+      "releases": 19746,
+      "metadata": {
+        "publisher": {
+          "name": "Public Procurement Regulatory Authority"
+        },
+        "publishedDate": "2025-02-05T15:01:19+03:00",
+        "publicationPolicy": null
+      },
+      "ingested_at": "2026-11-16T20:46:29.807535+00:00"
+    },
+    {
+      "fiscal_year": "2020-2021",
+      "source_url": "https://tenders.go.ke/api/ocds/tenders?fy=2020-2021",
+      "releases": 26645,
+      "metadata": {
+        "publisher": {
+          "name": "Public Procurement Regulatory Authority"
+        },
+        "publishedDate": "2025-02-05T15:01:52+03:00",
+        "publicationPolicy": null
+      },
+      "ingested_at": "2026-11-16T20:46:45.909767+00:00"
+    },
+    {
+      "fiscal_year": "2021-2022",
+      "source_url": "https://tenders.go.ke/api/ocds/tenders?fy=2021-2022",
+      "releases": 25767,
+      "metadata": {
+        "publisher": {
+          "name": "Public Procurement Regulatory Authority"
+        },
+        "publishedDate": "2025-02-05T15:02:30+03:00",
+        "publicationPolicy": null
+      },
+      "ingested_at": "2026-11-16T20:47:12.374752+00:00"
+    },
+    {
+      "fiscal_year": "2022-2023",
+      "source_url": "https://tenders.go.ke/api/ocds/tenders?fy=2022-2023",
+      "releases": 48077,
+      "metadata": {
+        "publisher": {
+          "name": "Public Procurement Regulatory Authority"
+        },
+        "publishedDate": "2025-02-05T15:03:44+03:00",
+        "publicationPolicy": null
+      },
+      "ingested_at": "2026-11-16T20:47:46.241711+00:00"
+    },
+    {
+      "fiscal_year": "2023-2024",
+      "source_url": "https://tenders.go.ke/api/ocds/tenders?fy=2023-2024",
+      "releases": 57857,
+      "metadata": {
+        "publisher": {
+          "name": "Public Procurement Regulatory Authority"
+        },
+        "publishedDate": "2025-02-05T15:05:16+03:00",
+        "publicationPolicy": null
+      },
+      "ingested_at": "2026-11-16T20:48:59.734048+00:00"
+    },
+    {
+      "fiscal_year": "2024-2025",
+      "source_url": "https://tenders.go.ke/api/ocds/tenders?fy=2024-2025",
+      "releases": 42147,
+      "metadata": {
+        "publisher": {
+          "name": "Public Procurement Regulatory Authority"
+        },
+        "publishedDate": "2025-07-01T00:00:28+03:00",
+        "publicationPolicy": null
+      },
+      "ingested_at": "2026-11-16T20:50:28.613064+00:00"
+    },
+    {
+      "fiscal_year": "2025-2026",
+      "source_url": "https://tenders.go.ke/api/ocds/tenders?fy=2025-2026",
+      "releases": 26004,
+      "metadata": {
+        "publisher": {
+          "name": "Public Procurement Regulatory Authority"
+        },
+        "publishedDate": "2026-06-30T23:59:28+03:00",
+        "publicationPolicy": null
+      },
+      "ingested_at": "2026-11-16T20:51:27.018933+00:00"
+    },
+    {
+      "fiscal_year": "2026-2027",
+      "source_url": "https://tenders.go.ke/api/ocds/tenders?fy=2026-2027",
+      "releases": 7047,
+      "metadata": {
+        "publisher": {
+          "name": "Public Procurement Regulatory Authority"
+        },
+        "publishedDate": "2026-10-31T23:59:10+03:00",
+        "publicationPolicy": null
+      },
+      "ingested_at": "2026-11-16T20:52:01.003650+00:00"
+    }
+  ],
+  "coverage_note": "Counts describe downloaded releases; full fiscal-year completeness is not independently established. Repeated OCIDs across fiscal years count once in total distinct_ocids."
+}
