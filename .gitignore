@@ -10,6 +10,7 @@ build/
 *.egg-info/
 evaluation/results/*
 !evaluation/results/.gitkeep
+tests/fixtures/live-samples/*.response
 data/fixtures/*
 !data/fixtures/.gitkeep
 reports/audit/*

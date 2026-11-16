@@ -1,0 +1,201 @@
+{
+  "sample_kind": "Actual PPIP release excerpt, not a complete first page or fiscal year",
+  "publishedDate": "2025-02-05T15:00:55+03:00",
+  "releases": [
+    {
+      "ocid": "ocds-5whusi-129",
+      "id": "20180801025230-TENDERNO.PPRA/01/2018/2019",
+      "date": "2018-08-01T02:52:30+03:00",
+      "tender": {
+        "id": "20180801025230-3009-TENDERNO.PPRA/01/2018/2019",
+        "title": "PROVISION OF WIDE AREA NETWORK AND INTERNET SERVICES FOR A PERIOD OF TWO YEARS ",
+        "procurementMethod": "open",
+        "tenderPeriod": {
+          "startDate": "2018-08-15T00:00:00+03:00",
+          "endDate": "2018-08-15T00:00:00+03:00"
+        },
+        "mainProcurementCategory": "works",
+        "awardCriteria": "costOnly"
+      },
+      "buyer": {
+        "id": "4992",
+        "name": "Public Procurement Regulatory Authority"
+      },
+      "parties": [
+        {
+          "id": "4992",
+          "name": "Public Procurement Regulatory Authority",
+          "roles": [
+            "buyer"
+          ]
+        }
+      ],
+      "tag": [
+        "tender"
+      ],
+      "initiationType": "tender",
+      "language": "en"
+    },
+    {
+      "ocid": "ocds-5whusi-130",
+      "id": "20180801030053-TENDERNO.EOI/PPRA/01/2018/2019",
+      "date": "2018-08-01T03:00:53+03:00",
+      "tender": {
+        "id": "20180801030053-3010-TENDERNO.EOI/PPRA/01/2018/2019",
+        "title": "EXPRESSION OF INTEREST FOR PROVISION OF EVENT MANAGEMENT AND LOGISTICAL SUPPORT FOR THE 11TH EAST AFRICA PUBLIC PROCUREMENT FORUM",
+        "procurementMethod": "selective",
+        "tenderPeriod": {
+          "startDate": "2018-08-15T00:00:00+03:00",
+          "endDate": "2018-08-15T00:00:00+03:00"
+        },
+        "mainProcurementCategory": "works",
+        "awardCriteria": "costOnly"
+      },
+      "buyer": {
+        "id": "4992",
+        "name": "Public Procurement Regulatory Authority"
+      },
+      "parties": [
+        {
+          "id": "4992",
+          "name": "Public Procurement Regulatory Authority",
+          "roles": [
+            "buyer"
+          ]
+        }
+      ],
+      "tag": [
+        "tender"
+      ],
+      "initiationType": "tender",
+      "language": "en"
+    },
+    {
+      "ocid": "ocds-5whusi-137",
+      "id": "20180801123051-TENDERNO.EOI/PPRA/001/2018/2019",
+      "date": "2018-08-01T12:30:51+03:00",
+      "tender": {
+        "id": "20180801123051-3011-TENDERNO.EOI/PPRA/001/2018/2019",
+        "title": "EXPRESSION OF INTEREST FOR PROVISION OF EVENT MANAGEMENT AND LOGISTICAL SUPPORT FOR THE 11TH EAST AFRICA PUBLIC PROCUREMENT FORUM",
+        "procurementMethod": "selective",
+        "tenderPeriod": {
+          "startDate": "2018-08-08T00:00:00+03:00",
+          "endDate": "2018-08-08T00:00:00+03:00"
+        },
+        "mainProcurementCategory": "works",
+        "awardCriteria": "costOnly"
+      },
+      "buyer": {
+        "id": "4992",
+        "name": "Public Procurement Regulatory Authority"
+      },
+      "parties": [
+        {
+          "id": "4992",
+          "name": "Public Procurement Regulatory Authority",
+          "roles": [
+            "buyer"
+          ]
+        }
+      ],
+      "tag": [
+        "tender"
+      ],
+      "initiationType": "tender",
+      "language": "en"
+    },
+    {
+      "ocid": "ocds-5whusi-138",
+      "id": "20180801123408-TENDERNO.PPRA/002/2018/2019",
+      "date": "2018-08-01T12:34:08+03:00",
+      "tender": {
+        "id": "20180801123408-3012-TENDERNO.PPRA/002/2018/2019",
+        "title": "PROVISION OF WIDE AREA NETWORK AND INTERNET SERVICES FOR A PERIOD OF TWO YEARS",
+        "procurementMethod": "open",
+        "tenderPeriod": {
+          "startDate": "2018-08-15T00:00:00+03:00",
+          "endDate": "2018-08-15T00:00:00+03:00"
+        },
+        "mainProcurementCategory": "works",
+        "awardCriteria": "costOnly"
+      },
+      "awards": [
+        {
+          "value": {
+            "amount": 1614720,
+            "currency": "KES"
+          },
+          "contractPeriod": {
+            "startDate": "2018-09-26T00:00:00+03:00",
+            "endDate": "2019-09-26T00:00:00+03:00"
+          },
+          "id": "20181213111310-51",
+          "title": "PROVISION OF WIDE AREA NETWORK AND INTERNET SERVICES FOR A PERIOD OF TWO YEARS",
+          "suppliers": [
+            {
+              "id": "117",
+              "name": "TELKOM KENYA LIMITED"
+            }
+          ]
+        }
+      ],
+      "contracts": [
+        {
+          "value": {
+            "amount": 1614720,
+            "currency": "KES"
+          },
+          "period": {
+            "startDate": "2018-09-26T00:00:00+03:00",
+            "endDate": "2019-09-26T00:00:00+03:00"
+          },
+          "awardID": "20181213111310-51",
+          "id": "20181213111310-51-PPRA/002/2018/2019",
+          "title": "PROVISION OF WIDE AREA NETWORK AND INTERNET SERVICES FOR A PERIOD OF TWO YEARS",
+          "dateSigned": "2018-09-26T00:00:00+03:00"
+        }
+      ],
+      "buyer": {
+        "id": "4992",
+        "name": "Public Procurement Regulatory Authority"
+      },
+      "parties": [
+        {
+          "id": "117",
+          "identifier": {
+            "scheme": "Bidders",
+            "id": "117",
+            "legalName": "TELKOM KENYA LIMITED"
+          },
+          "address": {
+            "locality": "KENYA",
+            "region": "KENYA",
+            "countryName": "KENYA",
+            "streetAddress": "LR NO. 209//5535, TELKOM PLAZA, RALPH BUNCHE ROAD",
+            "postalCode": "30301"
+          },
+          "roles": [
+            "supplier"
+          ],
+          "name": "TELKOM KENYA LIMITED",
+          "contactPoint": {
+            "name": "TELKOM KENYA LIMITED",
+            "email": "pmasimba@telkom.co.ke"
+          }
+        },
+        {
+          "id": "4992",
+          "name": "Public Procurement Regulatory Authority",
+          "roles": [
+            "buyer"
+          ]
+        }
+      ],
+      "tag": [
+        "contract"
+      ],
+      "initiationType": "tender",
+      "language": "en"
+    }
+  ]
+}

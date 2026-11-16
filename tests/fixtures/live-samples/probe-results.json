@@ -1,0 +1,499 @@
+[
+  {
+    "fiscal_year": "2018-2019",
+    "in_progress_fy": false,
+    "attempts": [
+      {
+        "attempt": 1,
+        "url": "https://tenders.go.ke/api/ocds/tenders?fy=2018-2019",
+        "checked_at": "2026-11-16T20:22:55.011624+00:00",
+        "http_status": 200,
+        "content_type": "application/json",
+        "size_bytes": 13319267,
+        "final_url": "https://tenders.go.ke/api/ocds/tenders?fy=2018-2019",
+        "redirects": [],
+        "sample_path": "tests/fixtures/live-samples/2018-2019-first-page-attempt-1.response.gz",
+        "content_encoding": null,
+        "shape": "release package",
+        "item_count": 11848,
+        "top_level_keys": [
+          "uri",
+          "version",
+          "publisher",
+          "publishedDate",
+          "releases",
+          "publicationPolicy"
+        ],
+        "pagination": {
+          "links.next": null,
+          "observed_fields": {}
+        },
+        "completeness": "not established",
+        "metadata": {
+          "publisher": {
+            "name": "Public Procurement Regulatory Authority"
+          },
+          "publishedDate": "2025-02-05T15:00:55+03:00"
+        },
+        "body_snippet": "{\"uri\":\"https:\\/\\/tenders.go.ke\\/ocds\",\"version\":\"1.1\",\"publisher\":{\"name\":\"Public Procurement Regulatory Authority\"},\"publishedDate\":\"2025-02-05T15:00:55+03:00\",\"releases\":[{\"ocid\":\"ocds-5whusi-129\",\"id\":\"20180801025230-TENDERNO.PPRA\\/01\\/2018\\/2019\",\"date\":\"2018-08-01T02:52:30+03:00\",\"tender\":{\"id\":\"20180801025230-3009-TENDERNO.PPRA\\/01\\/2018\\/2019\",\"title\":\"PROVISION OF WIDE AREA NETWORK AND INTERNET SERVICES FOR A PERIOD OF TWO YEARS \",\"procurementMethod\":\"open\",\"tenderPeriod\":{\"startDate\":\"",
+        "pagination_note": "No pagination mechanism observed; full-FY completeness is not established.",
+        "first_item_keys": [
+          "ocid",
+          "id",
+          "date",
+          "tender",
+          "buyer",
+          "parties",
+          "tag",
+          "initiationType",
+          "language"
+        ],
+        "stored_size_bytes": 1564820,
+        "storage_encoding": "gzip (lossless response body)",
+        "body_sha256": "4ffab29dc0ff21ea15154591d88a7ba8248b7369ea8747e9c4b1ec17d453409f"
+      }
+    ]
+  },
+  {
+    "fiscal_year": "2019-2020",
+    "in_progress_fy": false,
+    "attempts": [
+      {
+        "attempt": 1,
+        "url": "https://tenders.go.ke/api/ocds/tenders?fy=2019-2020",
+        "checked_at": "2026-11-16T20:23:45.455813+00:00",
+        "http_status": 200,
+        "content_type": "application/json",
+        "size_bytes": 18571678,
+        "final_url": "https://tenders.go.ke/api/ocds/tenders?fy=2019-2020",
+        "redirects": [],
+        "sample_path": "tests/fixtures/live-samples/2019-2020-first-page-attempt-1.response.gz",
+        "content_encoding": null,
+        "shape": "release package",
+        "item_count": 19746,
+        "top_level_keys": [
+          "uri",
+          "version",
+          "publisher",
+          "publishedDate",
+          "releases",
+          "publicationPolicy"
+        ],
+        "pagination": {
+          "links.next": null,
+          "observed_fields": {}
+        },
+        "completeness": "not established",
+        "metadata": {
+          "publisher": {
+            "name": "Public Procurement Regulatory Authority"
+          },
+          "publishedDate": "2025-02-05T15:01:19+03:00"
+        },
+        "body_snippet": "{\"uri\":\"https:\\/\\/tenders.go.ke\\/ocds\",\"version\":\"1.1\",\"publisher\":{\"name\":\"Public Procurement Regulatory Authority\"},\"publishedDate\":\"2025-02-05T15:01:19+03:00\",\"releases\":[{\"ocid\":\"ocds-5whusi-10460\",\"id\":\"20190128164723-PPRA\\/QT\\/12\\/2018-2019\",\"date\":\"2019-01-28T16:47:23+03:00\",\"tender\":{\"id\":\"20190128164723-3034-PPRA\\/QT\\/12\\/2018-2019\",\"title\":\"PROVISION OF GROUP PERSONAL ACCIDENT INSURANCE COVER TO BOARD AND STAFF MEMBERS\",\"procurementMethod\":\"open\",\"tenderPeriod\":{\"startDate\":\"2019-01-07",
+        "pagination_note": "No pagination mechanism observed; full-FY completeness is not established.",
+        "first_item_keys": [
+          "ocid",
+          "id",
+          "date",
+          "tender",
+          "buyer",
+          "parties",
+          "tag",
+          "initiationType",
+          "language"
+        ],
+        "stored_size_bytes": 2226120,
+        "storage_encoding": "gzip (lossless response body)",
+        "body_sha256": "770e0669a5e51a5cf45440fdcc63991882445246f39769b22fb43eeb01d7dbe7"
+      }
+    ]
+  },
+  {
+    "fiscal_year": "2020-2021",
+    "in_progress_fy": false,
+    "attempts": [
+      {
+        "attempt": 1,
+        "url": "https://tenders.go.ke/api/ocds/tenders?fy=2020-2021",
+        "checked_at": "2026-11-16T20:24:53.804922+00:00",
+        "http_status": 200,
+        "content_type": "application/json",
+        "size_bytes": 29564353,
+        "final_url": "https://tenders.go.ke/api/ocds/tenders?fy=2020-2021",
+        "redirects": [],
+        "sample_path": "tests/fixtures/live-samples/2020-2021-first-page-attempt-1.response.gz",
+        "content_encoding": null,
+        "shape": "release package",
+        "item_count": 26645,
+        "top_level_keys": [
+          "uri",
+          "version",
+          "publisher",
+          "publishedDate",
+          "releases",
+          "publicationPolicy"
+        ],
+        "pagination": {
+          "links.next": null,
+          "observed_fields": {}
+        },
+        "completeness": "not established",
+        "metadata": {
+          "publisher": {
+            "name": "Public Procurement Regulatory Authority"
+          },
+          "publishedDate": "2025-02-05T15:01:52+03:00"
+        },
+        "body_snippet": "{\"uri\":\"https:\\/\\/tenders.go.ke\\/ocds\",\"version\":\"1.1\",\"publisher\":{\"name\":\"Public Procurement Regulatory Authority\"},\"publishedDate\":\"2025-02-05T15:01:52+03:00\",\"releases\":[{\"ocid\":\"ocds-5whusi-33143\",\"id\":\"20200225150123-PPRA\\/QT\\/017\\/2019-2020\",\"date\":\"2020-02-25T15:01:23+03:00\",\"tender\":{\"id\":\"20200225150123-3074-PPRA\\/QT\\/017\\/2019-2020\",\"title\":\"PROCUREMENT OF ICT ACCESSORIES \",\"procurementMethod\":\"open\",\"tenderPeriod\":{\"startDate\":\"2020-01-23T00:00:00+03:00\",\"endDate\":\"2020-01-23T00:00:0",
+        "pagination_note": "No pagination mechanism observed; full-FY completeness is not established.",
+        "first_item_keys": [
+          "ocid",
+          "id",
+          "date",
+          "tender",
+          "awards",
+          "contracts",
+          "buyer",
+          "parties",
+          "tag",
+          "initiationType",
+          "language"
+        ],
+        "stored_size_bytes": 3344119,
+        "storage_encoding": "gzip (lossless response body)",
+        "body_sha256": "3cab8ec1168889db4d3ac5a8004667897e8759e36fc92f6da04a6adb0771e7c9"
+      }
+    ]
+  },
+  {
+    "fiscal_year": "2021-2022",
+    "in_progress_fy": false,
+    "attempts": [
+      {
+        "attempt": 1,
+        "url": "https://tenders.go.ke/api/ocds/tenders?fy=2021-2022",
+        "checked_at": "2026-11-16T20:26:38.979387+00:00",
+        "http_status": 200,
+        "content_type": "application/json",
+        "size_bytes": 45746784,
+        "final_url": "https://tenders.go.ke/api/ocds/tenders?fy=2021-2022",
+        "redirects": [],
+        "sample_path": "tests/fixtures/live-samples/2021-2022-first-page-attempt-1.response.gz",
+        "content_encoding": null,
+        "shape": "release package",
+        "item_count": 25767,
+        "top_level_keys": [
+          "uri",
+          "version",
+          "publisher",
+          "publishedDate",
+          "releases",
+          "publicationPolicy"
+        ],
+        "pagination": {
+          "links.next": null,
+          "observed_fields": {}
+        },
+        "completeness": "not established",
+        "metadata": {
+          "publisher": {
+            "name": "Public Procurement Regulatory Authority"
+          },
+          "publishedDate": "2025-02-05T15:02:30+03:00"
+        },
+        "body_snippet": "{\"uri\":\"https:\\/\\/tenders.go.ke\\/ocds\",\"version\":\"1.1\",\"publisher\":{\"name\":\"Public Procurement Regulatory Authority\"},\"publishedDate\":\"2025-02-05T15:02:30+03:00\",\"releases\":[{\"ocid\":\"ocds-5whusi-4249\",\"id\":\"20181012122147-904102\\/2021\\/2022\",\"date\":\"2018-10-12T12:21:47+03:00\",\"tender\":{\"id\":\"20181012122147-8283-904102\\/2021\\/2022\",\"title\":\"PROPOSED ERECTION AND COMPLETION OF LAND OFFICES AT NGONG TOWN, KAJIADO COUNTY MAIN WORKS\",\"procurementMethod\":\"open\",\"tenderPeriod\":{\"startDate\":\"2018-09-14T",
+        "pagination_note": "No pagination mechanism observed; full-FY completeness is not established.",
+        "first_item_keys": [
+          "ocid",
+          "id",
+          "date",
+          "tender",
+          "buyer",
+          "parties",
+          "tag",
+          "initiationType",
+          "language"
+        ],
+        "stored_size_bytes": 4817491,
+        "storage_encoding": "gzip (lossless response body)",
+        "body_sha256": "45976c89554a4724e84279f710824c2a8ac4553fa28cf36707bd3fbf790b3be7"
+      }
+    ]
+  },
+  {
+    "fiscal_year": "2022-2023",
+    "in_progress_fy": false,
+    "attempts": [
+      {
+        "attempt": 1,
+        "url": "https://tenders.go.ke/api/ocds/tenders?fy=2022-2023",
+        "checked_at": "2026-11-16T20:29:22.799086+00:00",
+        "http_status": 200,
+        "content_type": "application/json",
+        "size_bytes": 84517983,
+        "final_url": "https://tenders.go.ke/api/ocds/tenders?fy=2022-2023",
+        "redirects": [],
+        "sample_path": "tests/fixtures/live-samples/2022-2023-first-page-attempt-1.response.gz",
+        "content_encoding": null,
+        "shape": "release package",
+        "item_count": 48077,
+        "top_level_keys": [
+          "uri",
+          "version",
+          "publisher",
+          "publishedDate",
+          "releases",
+          "publicationPolicy"
+        ],
+        "pagination": {
+          "links.next": null,
+          "observed_fields": {}
+        },
+        "completeness": "not established",
+        "metadata": {
+          "publisher": {
+            "name": "Public Procurement Regulatory Authority"
+          },
+          "publishedDate": "2025-02-05T15:03:44+03:00"
+        },
+        "body_snippet": "{\"uri\":\"https:\\/\\/tenders.go.ke\\/ocds\",\"version\":\"1.1\",\"publisher\":{\"name\":\"Public Procurement Regulatory Authority\"},\"publishedDate\":\"2025-02-05T15:03:44+03:00\",\"releases\":[{\"ocid\":\"ocds-5whusi-51923\",\"id\":\"20210325101046-ORPP\\/T\\/02\\/2022-2023\",\"date\":\"2021-03-25T10:10:46+03:00\",\"tender\":{\"id\":\"20210325101046-58469-ORPP\\/T\\/02\\/2022-2023\",\"title\":\"PROVISION OF COMPREHENSIVE STAFF MEDICAL, GROUP PERSONAL ACCIDENT(WIBA) & GROUP LIFE ASSURANCE INSURANCE COVERS.\",\"procurementMethod\":\"open\",\"tender",
+        "pagination_note": "No pagination mechanism observed; full-FY completeness is not established.",
+        "first_item_keys": [
+          "ocid",
+          "id",
+          "date",
+          "tender",
+          "buyer",
+          "parties",
+          "tag",
+          "initiationType",
+          "language"
+        ],
+        "stored_size_bytes": 9842778,
+        "storage_encoding": "gzip (lossless response body)",
+        "body_sha256": "0e71ba619a0e16f41123c81ea170de05729e437514a776e2ee66b20857cc788f"
+      }
+    ]
+  },
+  {
+    "fiscal_year": "2023-2024",
+    "in_progress_fy": false,
+    "attempts": [
+      {
+        "attempt": 1,
+        "url": "https://tenders.go.ke/api/ocds/tenders?fy=2023-2024",
+        "checked_at": "2026-11-16T20:34:10.762145+00:00",
+        "http_status": 200,
+        "content_type": "application/json",
+        "size_bytes": 98162686,
+        "final_url": "https://tenders.go.ke/api/ocds/tenders?fy=2023-2024",
+        "redirects": [],
+        "sample_path": "tests/fixtures/live-samples/2023-2024-first-page-attempt-1.response.gz",
+        "content_encoding": null,
+        "shape": "release package",
+        "item_count": 57857,
+        "top_level_keys": [
+          "uri",
+          "version",
+          "publisher",
+          "publishedDate",
+          "releases",
+          "publicationPolicy"
+        ],
+        "pagination": {
+          "links.next": null,
+          "observed_fields": {}
+        },
+        "completeness": "not established",
+        "metadata": {
+          "publisher": {
+            "name": "Public Procurement Regulatory Authority"
+          },
+          "publishedDate": "2025-02-05T15:05:16+03:00"
+        },
+        "body_snippet": "{\"uri\":\"https:\\/\\/tenders.go.ke\\/ocds\",\"version\":\"1.1\",\"publisher\":{\"name\":\"Public Procurement Regulatory Authority\"},\"publishedDate\":\"2025-02-05T15:05:16+03:00\",\"releases\":[{\"ocid\":\"ocds-5whusi-064375\",\"id\":\"20210705160837-CGN\\/HEALTH\\/1361102\\/2023-2024\",\"date\":\"2021-07-05T16:08:37+03:00\",\"tender\":{\"id\":\"20210705160837-64375-CGN\\/HEALTH\\/1361102\\/2023-2024\",\"title\":\"SUPPLY  AND  DELIVERY OF MEDICAL EQUIPMENTS(AUTO CLAVE)FOR IHURURU REHABILITATION CENTRE\",\"procurementMethod\":\"open\",\"tenderPerio",
+        "pagination_note": "No pagination mechanism observed; full-FY completeness is not established.",
+        "first_item_keys": [
+          "ocid",
+          "id",
+          "date",
+          "tender",
+          "buyer",
+          "parties",
+          "tag",
+          "initiationType",
+          "language"
+        ],
+        "stored_size_bytes": 11202225,
+        "storage_encoding": "gzip (lossless response body)",
+        "body_sha256": "c21fcd14104249dd1d5c1ef05cadf58ca2e8c451f0ff1b324729f4536b794011"
+      }
+    ]
+  },
+  {
+    "fiscal_year": "2024-2025",
+    "in_progress_fy": false,
+    "attempts": [
+      {
+        "attempt": 1,
+        "url": "https://tenders.go.ke/api/ocds/tenders?fy=2024-2025",
+        "checked_at": "2026-11-16T20:40:04.310466+00:00",
+        "http_status": 200,
+        "content_type": "application/json",
+        "size_bytes": 64449228,
+        "final_url": "https://tenders.go.ke/api/ocds/tenders?fy=2024-2025",
+        "redirects": [],
+        "sample_path": "tests/fixtures/live-samples/2024-2025-first-page-attempt-1.response.gz",
+        "content_encoding": null,
+        "shape": "release package",
+        "item_count": 42147,
+        "top_level_keys": [
+          "uri",
+          "version",
+          "publisher",
+          "publishedDate",
+          "releases",
+          "publicationPolicy"
+        ],
+        "pagination": {
+          "links.next": null,
+          "observed_fields": {}
+        },
+        "completeness": "not established",
+        "metadata": {
+          "publisher": {
+            "name": "Public Procurement Regulatory Authority"
+          },
+          "publishedDate": "2025-07-01T00:00:28+03:00"
+        },
+        "body_snippet": "{\"uri\":\"https:\\/\\/tenders.go.ke\\/ocds\",\"version\":\"1.1\",\"publisher\":{\"name\":\"Public Procurement Regulatory Authority\"},\"publishedDate\":\"2025-07-01T00:00:28+03:00\",\"releases\":[{\"ocid\":\"ocds-5whusi-KyU\\/TN\\/SMC\\/001\\/2024\",\"id\":\"20240207111530-KyU\\/TN\\/SMC\\/001\\/2024\",\"date\":\"2024-02-07T11:15:30+03:00\",\"tender\":{\"id\":\"20240207111530-164365-KyU\\/TN\\/SMC\\/001\\/2024\",\"title\":\"TENDER FOR THE PROVISION OF COMPREHENSIVE IN-PATIENT AND OUT-PATIENT MEDICAL INSURANCE COVER TO KIRINYAGA UNIVERSITY\",\"procurem",
+        "pagination_note": "No pagination mechanism observed; full-FY completeness is not established.",
+        "first_item_keys": [
+          "ocid",
+          "id",
+          "date",
+          "tender",
+          "buyer",
+          "parties",
+          "tag",
+          "initiationType",
+          "language"
+        ],
+        "stored_size_bytes": 7590549,
+        "storage_encoding": "gzip (lossless response body)",
+        "body_sha256": "fa7d73b329f6668420a247940a694b7cdf7c7c2ff6e79c1d61a75dd50ba6f9c6"
+      }
+    ]
+  },
+  {
+    "fiscal_year": "2025-2026",
+    "in_progress_fy": false,
+    "attempts": [
+      {
+        "attempt": 1,
+        "url": "https://tenders.go.ke/api/ocds/tenders?fy=2025-2026",
+        "checked_at": "2026-11-16T20:44:01.799102+00:00",
+        "http_status": 200,
+        "content_type": "application/json",
+        "size_bytes": 29994418,
+        "final_url": "https://tenders.go.ke/api/ocds/tenders?fy=2025-2026",
+        "redirects": [],
+        "sample_path": "tests/fixtures/live-samples/2025-2026-first-page-attempt-1.response.gz",
+        "content_encoding": null,
+        "shape": "release package",
+        "item_count": 26004,
+        "top_level_keys": [
+          "uri",
+          "version",
+          "publisher",
+          "publishedDate",
+          "releases",
+          "publicationPolicy"
+        ],
+        "pagination": {
+          "links.next": null,
+          "observed_fields": {}
+        },
+        "completeness": "not established",
+        "metadata": {
+          "publisher": {
+            "name": "Public Procurement Regulatory Authority"
+          },
+          "publishedDate": "2026-06-30T23:59:28+03:00"
+        },
+        "body_snippet": "{\"uri\":\"https:\\/\\/tenders.go.ke\\/ocds\",\"version\":\"1.1\",\"publisher\":{\"name\":\"Public Procurement Regulatory Authority\"},\"publishedDate\":\"2026-06-30T23:59:28+03:00\",\"releases\":[{\"ocid\":\"ocds-5whusi-236830-MTTI\\/T\\/21\\/2025\\/2026\",\"id\":\"20250430151009-MTTI\\/T\\/21\\/2025\\/2026\",\"date\":\"2025-04-30T15:10:09+03:00\",\"tender\":{\"id\":\"20250430151009-236830-MTTI\\/T\\/21\\/2025\\/2026\",\"title\":\"SUPPLY AND DELIVERY OF LIQUID DETERGENTS\",\"procurementMethod\":\"open\",\"tenderPeriod\":{\"startDate\":\"2026-06-30T23:59:06+03",
+        "pagination_note": "No pagination mechanism observed; full-FY completeness is not established.",
+        "first_item_keys": [
+          "ocid",
+          "id",
+          "date",
+          "tender",
+          "buyer",
+          "parties",
+          "tag",
+          "initiationType",
+          "language"
+        ],
+        "stored_size_bytes": 3314427,
+        "storage_encoding": "gzip (lossless response body)",
+        "body_sha256": "1248bbaa5f6b27b4d0c6d3645fbc0a073bd011f70aa7d60cbe9c23cf4825f6de"
+      }
+    ]
+  },
+  {
+    "fiscal_year": "2026-2027",
+    "in_progress_fy": true,
+    "attempts": [
+      {
+        "attempt": 1,
+        "url": "https://tenders.go.ke/api/ocds/tenders?fy=2026-2027",
+        "checked_at": "2026-11-16T20:45:48.307438+00:00",
+        "http_status": 200,
+        "content_type": "application/json",
+        "size_bytes": 5992256,
+        "final_url": "https://tenders.go.ke/api/ocds/tenders?fy=2026-2027",
+        "redirects": [],
+        "sample_path": "tests/fixtures/live-samples/2026-2027-first-page-attempt-1.response.gz",
+        "content_encoding": null,
+        "shape": "release package",
+        "item_count": 7047,
+        "top_level_keys": [
+          "uri",
+          "version",
+          "publisher",
+          "publishedDate",
+          "releases",
+          "publicationPolicy"
+        ],
+        "pagination": {
+          "links.next": null,
+          "observed_fields": {}
+        },
+        "completeness": "not established",
+        "metadata": {
+          "publisher": {
+            "name": "Public Procurement Regulatory Authority"
+          },
+          "publishedDate": "2026-10-31T23:59:10+03:00"
+        },
+        "body_snippet": "{\"uri\":\"https:\\/\\/tenders.go.ke\\/ocds\",\"version\":\"1.1\",\"publisher\":{\"name\":\"Public Procurement Regulatory Authority\"},\"publishedDate\":\"2026-10-31T23:59:10+03:00\",\"releases\":[{\"ocid\":\"ocds-5whusi-290406-NGHS\\/T1\\/2026-2027\",\"id\":\"20260519114907-NGHS\\/T1\\/2026-2027\",\"date\":\"2026-05-19T11:49:07+03:00\",\"tender\":{\"id\":\"20260519114907-290406-NGHS\\/T1\\/2026-2027\",\"title\":\"FRESH BEEF\",\"procurementMethod\":\"open\",\"tenderPeriod\":{\"startDate\":\"2026-10-31T23:59:01+03:00\",\"endDate\":\"2026-06-03T10:00:00+03:00\"",
+        "pagination_note": "No pagination mechanism observed; full-FY completeness is not established.",
+        "first_item_keys": [
+          "ocid",
+          "id",
+          "date",
+          "tender",
+          "buyer",
+          "parties",
+          "tag",
+          "initiationType",
+          "language"
+        ],
+        "stored_size_bytes": 620712,
+        "storage_encoding": "gzip (lossless response body)",
+        "body_sha256": "21068ae52206c291e748d203325167f50429851e782f6a9a79af5d0a0f33419d"
+      }
+    ]
+  }
+]
