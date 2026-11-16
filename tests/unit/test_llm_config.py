@@ -73,7 +73,8 @@ async def test_missing_model_fails_before_generation(monkeypatch):
 
 
 @pytest.mark.anyio
-async def test_model_disappearing_after_preflight_has_clear_error(monkeypatch):
+async def test_model_disappearing_after_preflight_has_clear_error(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("LLM_MODEL", "removed-model")
     error = NotFoundError("model not found", response=httpx.Response(404, request=httpx.Request("POST", "http://localhost:11434/v1/chat/completions")), body=None)
     client = FakeClient([], error=error)
@@ -92,6 +93,39 @@ async def test_provider_omitting_usage_stays_null(monkeypatch, tmp_path):
     event = get_audit_logs("missing-usage")[0]
     assert event["outputs"]["input_tokens"] is None and event["outputs"]["output_tokens"] is None
     assert event["outputs"]["usage"] == "not reported"
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("reasoning", [None, 0, 7])
+async def test_reasoning_usage_is_reported_separately(monkeypatch, tmp_path, reasoning):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("LLM_REASONING_EFFORT", "low")
+    usage = SimpleNamespace(prompt_tokens=21, completion_tokens=10,
+                            completion_tokens_details=SimpleNamespace(reasoning_tokens=reasoning))
+    client = FakeClient([], usage=usage)
+    captured = {}
+    original = client.create
+
+    async def create(**kwargs):
+        captured.update(kwargs)
+        return await original(**kwargs)
+
+    client.create = create
+    monkeypatch.setattr(llm, "AsyncOpenAI", lambda **kwargs: client)
+    await llm.ask_json("reasoning-test", "system", "question", {})
+    event = get_audit_logs("reasoning-test")[0]
+    assert captured["reasoning_effort"] == "low"
+    assert event["outputs"]["reasoning_tokens"] == reasoning
+    assert event["tokens"]["total_tokens"] == 31
+    assert "reasoning" not in event["outputs"]
+
+
+@pytest.mark.anyio
+async def test_qwen_none_effort_rejected_with_gpt_oss_fallback(monkeypatch):
+    monkeypatch.setenv("LLM_REASONING_EFFORT", "none")
+    monkeypatch.setenv("LLM_FALLBACK_MODEL", "openai/gpt-oss-120b")
+    with pytest.raises(RuntimeError, match="LLM_REASONING_EFFORT.*unsupported"):
+        await llm.ask_json("not-created", "system", "question", {})
 
 
 def provider_error(status, retry_after=None):
@@ -129,6 +163,10 @@ async def test_three_primary_attempts_then_one_fallback(monkeypatch, tmp_path, s
     assert [e["tool"] for e in transitions] == ["retry", "retry", "fallback_model"]
     assert transitions[-1]["inputs"]["model"] == "fallback"
     assert sum(e["tool"] == "rate_limited" for e in events) == (3 if status == 429 else 0)
+    attempts = [e for e in events if e["tool"] == "llm_call"]
+    assert [e["inputs"]["model"] for e in attempts] == calls
+    assert [e["status"] for e in attempts] == ["error", "error", "error", "ok"]
+    assert all(e["outputs"]["input_tokens"] is None for e in attempts)
 
 
 @pytest.mark.anyio

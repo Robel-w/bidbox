@@ -135,8 +135,12 @@ def track_tokens(
     completion_tokens: int | None,
     model: str = "",
     latency_ms: float = 0.0,
+    reasoning_tokens: int | None = None,
+    status: str = "ok",
+    attempt: int | None = None,
+    http_status: int | None = None,
 ) -> dict[str, Any]:
-    """Record one LLM call; token counts are None when the provider did not report usage."""
+    """Record one LLM attempt; absent provider usage remains null."""
     reported = prompt_tokens is not None and completion_tokens is not None
     token_data = (
         {
@@ -151,9 +155,11 @@ def track_tokens(
         run_id=run_id,
         actor="agent",
         tool="llm_call",
-        inputs={"model": model},
+        inputs={"model": model, "attempt": attempt},
         outputs={
             "input_tokens": prompt_tokens,
+            "reasoning_tokens": reasoning_tokens,
+            "http_status": http_status,
             "output_tokens": completion_tokens,
             "latency_ms": round(latency_ms, 2),
             "usage": "reported" if reported else "not reported",
@@ -161,7 +167,7 @@ def track_tokens(
         },
         duration_ms=latency_ms,
         tokens=token_data,
-        status="ok",
+        status=status,
     )
     return event.model_dump()
 

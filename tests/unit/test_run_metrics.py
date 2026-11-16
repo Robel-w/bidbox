@@ -50,6 +50,20 @@ def test_unreported_usage_is_null_and_never_costed(monkeypatch: pytest.MonkeyPat
     assert any("not reported" in note for note in metrics["notes"])
 
 
+def test_attempt_and_reasoning_counts_are_not_tool_calls() -> None:
+    track_tokens(RUN, None, None, "primary", status="error", attempt=1)
+    append_audit_event(RUN, "agent", "rate_limited", {"model": "primary"}, {}, status="error")
+    append_audit_event(RUN, "agent", "retry", {"model": "primary"}, {}, status="retry")
+    append_audit_event(RUN, "agent", "fallback_model", {"model": "fallback"}, {}, status="retry")
+    track_tokens(RUN, 20, 10, "fallback", reasoning_tokens=7, attempt=4)
+    metrics = build_run_metrics(RUN)
+    assert metrics["model_calls"] == 2
+    assert metrics["tool_calls"]["count"] == 0
+    assert metrics["llm_calls"][1]["reasoning_tokens"] == 7
+    assert metrics["tokens"]["output_total"] is None
+    assert metrics["cost_per_outcome_usd"] is None
+
+
 def test_unconfigured_prices_give_no_cost() -> None:
     _sample_run()
     metrics = build_run_metrics(RUN)

@@ -57,6 +57,9 @@ def build_run_metrics(run_id: str) -> dict[str, Any]:
             "output_tokens": out.get("output_tokens", tokens.get("completion_tokens")),
             "latency_ms": out.get("latency_ms", e.get("duration_ms")),
             "usage": out.get("usage", "reported" if tokens else "not reported"),
+            "reasoning_tokens": out.get("reasoning_tokens"),
+            "status": e.get("status"),
+            "attempt": (e.get("inputs") or {}).get("attempt"),
         })
     models = sorted({c["model"] for c in llm_calls if c["model"]})
     model_calls = len(llm_calls)

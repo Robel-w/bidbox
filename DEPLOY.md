@@ -2,6 +2,8 @@
 
 The default hosted endpoint is Groq (`https://api.groq.com/openai/v1`) with `LLM_MODEL=qwen/qwen3.8-27b`. Set `LLM_API_KEY` through the host's secret manager, never in chat or a tracked file. Set `LLM_FALLBACK_MODEL=openai/gpt-oss-120b` to opt into that fallback. Qwen is listed as a preview model by Groq; availability must be checked against your account.
 
+Set `LLM_REASONING_EFFORT=low` to reduce reasoning effort on both configured Groq models; empty omits this parameter. Qwen also supports `none` and `default`, but GPT-OSS does not, so these settings cannot be combined with that fallback. Reasoning-token counts are recorded only when returned in provider usage, separately from output totals; raw reasoning is never logged. Every HTTP attempt is metered, with unknown usage left null, including failed attempts.
+
 ## Ollama alternative
 
 Set `LLM_BASE_URL` to your OpenAI-compatible endpoint and `LLM_MODEL` to an exact model ID returned by that endpoint's model list. The demo and evaluation runners check availability before starting an investigation and fail with the available IDs if the configured model is missing. For Ollama, install the chosen model with `ollama pull <model>` or choose an already installed model. A model being available does not guarantee a valid evidence review; invalid reviewer JSON is recorded as a failed review requiring manual verification.

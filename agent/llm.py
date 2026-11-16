@@ -11,7 +11,7 @@ from urllib.parse import urlsplit
 
 from audit.events import track_tokens
 from audit.logger import append_audit_event
-from openai import APIConnectionError, APIStatusError, AsyncOpenAI, NotFoundError
+from openai import APIConnectionError, APIError, APIStatusError, AsyncOpenAI, NotFoundError
 
 
 DEFAULT_MODEL = "qwen/qwen3.8-27b"
@@ -54,6 +54,16 @@ def retry_delay(header: str | None, backoff: float) -> float:
     return backoff
 
 
+def usage_counts(usage: Any) -> tuple[int | None, int | None, int | None]:
+    def field(value: Any, name: str) -> Any:
+        return value.get(name) if isinstance(value, dict) else getattr(value, name, None)
+
+    reasoning = field(field(usage, "completion_tokens_details"), "reasoning_tokens")
+    if reasoning is None:
+        reasoning = field(usage, "reasoning_tokens")
+    return field(usage, "prompt_tokens"), field(usage, "completion_tokens"), reasoning
+
+
 async def ask_json(
     run_id: str,
     system: str,
@@ -64,24 +74,35 @@ async def ask_json(
     model = os.getenv("LLM_MODEL", DEFAULT_MODEL)
     fallback = os.getenv("LLM_FALLBACK_MODEL", "").strip()
     models = [model] * 3 + ([fallback] if fallback and fallback != model else [])
-    started = time.perf_counter()
+    effort = os.getenv("LLM_REASONING_EFFORT", "").strip()
+    if effort and (effort not in ("none", "default", "low", "medium", "high")
+                   or (effort in ("none", "default") and any(m.startswith("openai/gpt-oss-") for m in models))):
+        raise RuntimeError("LLM_REASONING_EFFORT is unsupported by the configured models; use low, medium, high, or empty.")
     async with configured_client() as client:
         for index, model in enumerate(models):
+            started = time.perf_counter()
             try:
                 response = await client.chat.completions.create(
                     model=model,
                     temperature=0,
                     response_format={"type": "json_object"},
+                    **({"reasoning_effort": effort} if effort else {}),
                     messages=[
                         {"role": "system", "content": system},
                         {"role": "user", "content": user},
                     ],
                 )
                 break
-            except NotFoundError as exc:
-                raise RuntimeError(f"LLM_MODEL={model!r} is not installed or available; check LLM_MODEL and LLM_BASE_URL.") from exc
-            except APIStatusError as exc:
-                if exc.status_code != 429 and not 500 <= exc.status_code < 600:
+            except APIError as exc:
+                error_usage = exc.body.get("usage") if isinstance(exc.body, dict) else None
+                input_tokens, output_tokens, reasoning_tokens = usage_counts(error_usage)
+                track_tokens(run_id, input_tokens, output_tokens, model,
+                             latency_ms=(time.perf_counter() - started) * 1000,
+                             reasoning_tokens=reasoning_tokens, status="error", attempt=index + 1,
+                             http_status=getattr(exc, "status_code", None))
+                if isinstance(exc, NotFoundError):
+                    raise RuntimeError(f"LLM_MODEL={model!r} is not installed or available; check LLM_MODEL and LLM_BASE_URL.") from exc
+                if not isinstance(exc, APIStatusError) or (exc.status_code != 429 and not 500 <= exc.status_code < 600):
                     raise
                 if exc.status_code == 429:
                     append_audit_event(run_id, "agent", "rate_limited",
@@ -96,13 +117,15 @@ async def ask_json(
                                    inputs={"model": next_model, "previous_model": model, "attempt": index + 2},
                                    outputs={"http_status": exc.status_code, "delay_s": delay}, status="retry")
                 await asyncio.sleep(delay)
-    usage = response.usage
+    input_tokens, output_tokens, reasoning_tokens = usage_counts(response.usage)
     track_tokens(
         run_id,
-        usage.prompt_tokens if usage else None,
-        usage.completion_tokens if usage else None,
+        input_tokens,
+        output_tokens,
         getattr(response, "model", None) or model,
         latency_ms=(time.perf_counter() - started) * 1000,
+        reasoning_tokens=reasoning_tokens,
+        attempt=index + 1,
     )
     content = response.choices[0].message.content or "{}"
     try:
