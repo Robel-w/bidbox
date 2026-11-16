@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import httpx
 import pytest
-from openai import NotFoundError
+from openai import APIStatusError, NotFoundError
 
 from agent import llm
 from audit.logger import get_audit_logs
@@ -92,6 +92,74 @@ async def test_provider_omitting_usage_stays_null(monkeypatch, tmp_path):
     event = get_audit_logs("missing-usage")[0]
     assert event["outputs"]["input_tokens"] is None and event["outputs"]["output_tokens"] is None
     assert event["outputs"]["usage"] == "not reported"
+
+
+def provider_error(status, retry_after=None):
+    headers = {"Retry-After": retry_after} if retry_after else {}
+    response = httpx.Response(status, headers=headers, request=httpx.Request("POST", "https://api.groq.com/openai/v1/chat/completions"))
+    return APIStatusError("test provider error", response=response, body=None)
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("status", [429, 500, 503])
+async def test_three_primary_attempts_then_one_fallback(monkeypatch, tmp_path, status):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("LLM_MODEL", "primary")
+    monkeypatch.setenv("LLM_FALLBACK_MODEL", "fallback")
+    client = FakeClient([])
+    calls, delays = [], []
+
+    async def create(**kwargs):
+        calls.append(kwargs["model"])
+        if len(calls) <= 3:
+            raise provider_error(status, "3")
+        return SimpleNamespace(model="fallback", usage=None, choices=[SimpleNamespace(message=SimpleNamespace(content='{"checks": []}'))])
+
+    async def sleep(seconds):
+        delays.append(seconds)
+
+    client.create = create
+    monkeypatch.setattr(llm, "AsyncOpenAI", lambda **kwargs: client)
+    monkeypatch.setattr(llm.asyncio, "sleep", sleep)
+    await llm.ask_json("retry-test", "system", "question", {})
+    assert calls == ["primary", "primary", "primary", "fallback"]
+    assert delays == [3, 3, 4]
+    events = get_audit_logs("retry-test")
+    transitions = [e for e in events if e["tool"] in ("retry", "fallback_model")]
+    assert [e["tool"] for e in transitions] == ["retry", "retry", "fallback_model"]
+    assert transitions[-1]["inputs"]["model"] == "fallback"
+    assert sum(e["tool"] == "rate_limited" for e in events) == (3 if status == 429 else 0)
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("fallback,status,expected", [("fallback", 503, 4), ("", 429, 3), ("fallback", 400, 1)])
+async def test_retry_is_bounded_and_other_errors_do_not_fallback(monkeypatch, tmp_path, fallback, status, expected):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("LLM_FALLBACK_MODEL", fallback)
+    calls = []
+    client = FakeClient([])
+
+    async def create(**kwargs):
+        calls.append(kwargs["model"])
+        raise provider_error(status)
+
+    async def sleep(seconds):
+        pass
+
+    client.create = create
+    monkeypatch.setattr(llm, "AsyncOpenAI", lambda **kwargs: client)
+    monkeypatch.setattr(llm.asyncio, "sleep", sleep)
+    with pytest.raises(APIStatusError):
+        await llm.ask_json("bounded-test", "system", "question", {})
+    assert len(calls) == expected and client.closed
+
+
+def test_retry_after_http_date_and_invalid_header():
+    from datetime import datetime, timedelta, timezone
+    from email.utils import format_datetime
+    header = format_datetime(datetime.now(timezone.utc) + timedelta(seconds=60))
+    assert 58 < llm.retry_delay(header, 1) <= 60
+    assert llm.retry_delay("invalid", 2) == 2
 
 
 def test_hosted_client_requires_host_secret(monkeypatch):

@@ -11,7 +11,7 @@ from typing import Any
 
 from audit.logger import get_audit_logs
 
-NON_TOOL_EVENTS = {"llm_call", "recovery", "request_approval", "approval_gate", "source_verification", "evidence_review"}
+NON_TOOL_EVENTS = {"llm_call", "recovery", "request_approval", "approval_gate", "source_verification", "evidence_review", "rate_limited", "retry", "fallback_model"}
 
 
 def env_number(name: str) -> dict[str, Any]:
