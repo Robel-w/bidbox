@@ -95,7 +95,7 @@ def create_investigation_file_tool(
             "```",
             "",
             f"**Execution Cost:** {cost_info.cost_display} ({cost_info.note})",
-            f"**Total Tokens:** {cost_info.total_tokens}",
+            f"**Total Tokens:** {cost_info.total_tokens if cost_info.total_tokens is not None else 'not reported'}",
             "",
             "---",
             FOOTER_TEXT,

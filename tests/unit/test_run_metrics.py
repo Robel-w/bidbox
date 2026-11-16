@@ -50,6 +50,9 @@ def test_unreported_usage_is_null_and_never_costed(monkeypatch: pytest.MonkeyPat
     assert metrics["tokens"]["input_total"] is None
     assert metrics["cost_per_answer_usd"] is None and metrics["cost_per_outcome_usd"] is None
     assert any("not reported" in note for note in metrics["notes"])
+    cost = get_run_cost(RUN)
+    assert cost.total_tokens is None and cost.cost_usd is None and cost.cost_per_run is None
+    assert cost.model_dump()["cost_usd"] is None
 
 
 def test_attempt_and_reasoning_counts_are_not_tool_calls() -> None:

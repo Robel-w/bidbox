@@ -46,10 +46,10 @@ class RunCost(BaseModel):
     """Aggregated token consumption and financial cost for a run."""
 
     run_id: str
-    total_tokens: int = 0
-    prompt_tokens: int = 0
-    completion_tokens: int = 0
-    cost_usd: float = 0.0
-    cost_per_run: float = 0.0
+    total_tokens: int | None = None
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+    cost_usd: float | None = None
+    cost_per_run: float | None = None
     cost_display: str = "not configured"
     note: str = "LLM_PRICE_IN / LLM_PRICE_OUT not set"

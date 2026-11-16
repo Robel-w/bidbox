@@ -174,16 +174,16 @@ def track_tokens(
 def get_run_cost(run_id: str) -> RunCost:
     """Aggregate token usage and financial cost for a run based on environment pricing."""
     metrics = build_run_metrics(run_id)
-    total_prompt = metrics["tokens"]["input_total"] or 0
-    total_comp = metrics["tokens"]["output_total"] or 0
+    total_prompt = metrics["tokens"]["input_total"]
+    total_comp = metrics["tokens"]["output_total"]
     cost = metrics["list_price_cost_usd"]
     return RunCost(
         run_id=run_id,
-        total_tokens=total_prompt + total_comp,
+        total_tokens=total_prompt + total_comp if total_prompt is not None and total_comp is not None else None,
         prompt_tokens=total_prompt,
         completion_tokens=total_comp,
-        cost_usd=cost or 0.0,
-        cost_per_run=cost or 0.0,
+        cost_usd=cost,
+        cost_per_run=cost,
         cost_display=f"${cost:.8f} (list price)" if cost is not None else "not configured",
         note="; ".join(metrics["notes"]) if cost is None else metrics["working"]["cost_per_answer"],
     )
