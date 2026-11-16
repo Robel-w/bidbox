@@ -214,6 +214,12 @@ async def _invoke(tool: Any, arguments: dict[str, Any], inject_fault: bool) -> A
 	return await tool.ainvoke(arguments)
 
 
+def _contains_timeout(exc: BaseException) -> bool:
+	if isinstance(exc, BaseExceptionGroup):
+		return any(_contains_timeout(child) for child in exc.exceptions)
+	return isinstance(exc, TimeoutError)
+
+
 def _is_deterministic_tool_error(exc: BaseException) -> bool:
 	"""Errors reported by the tool itself (isError) would fail identically on retry."""
 	return isinstance(exc, (ToolException, LookupError))
@@ -242,9 +248,9 @@ async def call_tool(
 		except Exception as exc:
 			elapsed_ms = (time.perf_counter() - started) * 1000
 			# Cancellation inside the MCP transport can surface as an ExceptionGroup, not TimeoutError.
-			timed_out = isinstance(exc, TimeoutError) or deadline.expired()
+			timed_out = _contains_timeout(exc) or deadline.expired()
 			status = "timeout" if timed_out else "error"
-			error = f"no response within {timeout:g}s" if timed_out else f"{type(exc).__name__}: {exc}"[:300]
+			error = f"no response within {timeout:g}s" if deadline.expired() else f"{type(exc).__name__}: {exc}"[:300]
 			final = attempt == MAX_ATTEMPTS or _is_deterministic_tool_error(exc)
 			outputs: dict[str, Any] = {"error": error, "next": "give_up" if final else "retry"}
 			if inject:

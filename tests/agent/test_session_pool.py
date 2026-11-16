@@ -101,6 +101,22 @@ async def test_timeout_wrapped_by_transport_is_still_a_timeout(pooled, monkeypat
 
 
 @pytest.mark.anyio
+async def test_nested_transport_timeout_is_not_an_error(pooled) -> None:
+    async def timeout_once(call: int):
+        if call == 1:
+            raise ExceptionGroup("transport", [ExceptionGroup("request", [TimeoutError("MCP request expired")])])
+        return [{"type": "text", "text": '{"ok": true}'}]
+
+    opened = pooled(EchoTool(timeout_once))
+    tools = await investigator.load_tools()
+    await investigator.call_tool(tools, "nested-timeout", "echo", {})
+    assert [event["status"] for event in _events("nested-timeout")] == ["timeout", "ok"]
+    assert "no response within" not in _events("nested-timeout")[0]["outputs"]["error"]
+    assert len(opened) == 1
+    await investigator.close_tools()
+
+
+@pytest.mark.anyio
 async def test_real_bidbox_server_session_is_reused(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Two real stdio calls go through one server process, which loaded the store once at startup."""
     if not (REPO / "data" / "fixtures" / "releases.json").exists():
