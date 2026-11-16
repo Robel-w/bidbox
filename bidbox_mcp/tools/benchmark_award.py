@@ -1,7 +1,7 @@
 """Tool to benchmark award pricing against robust statistical baselines."""
 
 from audit.logger import audited
-from bidbox.store import awards_by_category, get_award
+from bidbox.store import awards_by_category, get_award, record_origin
 from bidbox.indicators import get_indicator
 from bidbox_mcp.schemas.evidence import FindingSource
 from bidbox_mcp.schemas.tender import AwardBenchmarkResult
@@ -51,6 +51,7 @@ def benchmark_award_tool(
             comparables_used=[
                 {"ocid": c["ocid"], "amount": c["amount"]} for c in comparables
             ],
+            origin=record_origin([rec, *comparables]),
             sources=sources,
         )
 
@@ -71,5 +72,6 @@ def benchmark_award_tool(
         iqr_band=benchmark.iqr_band,
         verdict=benchmark.verdict,
         comparables_used=sample_comparables,
+        origin=record_origin([rec, *comparables]),
         sources=sources,
     )

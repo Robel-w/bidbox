@@ -19,4 +19,5 @@ class SupplierInvestigationResult(BaseModel):
     buyer_concentration_share: float = 0.0
     top_buyer: str | None = None
     repeat_win_pattern: str = "Diversified"
+    origin: str | None = None
     sources: list[FindingSource] = Field(default_factory=list)

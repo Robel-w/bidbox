@@ -23,6 +23,7 @@ class TenderInspectionResult(BaseModel):
     classification_id: str
     classification_desc: str
     data_quality_flags: list[str] = Field(default_factory=list)
+    origin: str | None = None
     sources: list[FindingSource] = Field(default_factory=list)
 
 
@@ -40,4 +41,5 @@ class AwardBenchmarkResult(BaseModel):
     iqr_band: tuple[float, float] | None = None
     verdict: str  # normal, outlier_high, outlier_low, insufficient_comparables
     comparables_used: list[dict[str, Any]] = Field(default_factory=list)
+    origin: str | None = None
     sources: list[FindingSource] = Field(default_factory=list)

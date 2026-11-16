@@ -66,16 +66,19 @@ def approval_event(events: list[dict]) -> dict | None:
 
 
 def has_pending(events: list[dict]) -> bool:
-    pending = any(event.get("tool") == "request_approval" for event in events)
-    return pending and approval_event(events) is None
+    last_request = max((e.get("seq", -1) for e in events if e.get("tool") == "request_approval"), default=None)
+    if last_request is None:
+        return False
+    approval = approval_event(events)
+    return approval is None or approval.get("seq", -1) < last_request
 
 
 def run_status(report: dict, events: list[dict]) -> str:
+    if has_pending(events):
+        return "awaiting_approval"
     approval = approval_event(events)
     if approval:
         return "approved" if approval.get("inputs", {}).get("decision") == "approve" else "rejected"
-    if has_pending(events):
-        return "awaiting_approval"
     return "done" if report else "running"
 
 
@@ -186,7 +189,7 @@ def approve(run_id: str, request: ApprovalRequest) -> dict:
     events = read_events(audit_path)
     if not has_pending(events):
         raise HTTPException(status_code=409, detail="Run has no pending approval")
-    action = next(event.get("inputs", {}).get("action", "committee_review") for event in events if event.get("tool") == "request_approval")
+    action = next(event.get("inputs", {}).get("action", "committee_review") for event in reversed(events) if event.get("tool") == "request_approval")
     event = record_approval(run_id, action, request.approver_name, request.approver_role, request.decision, request.reason)
     return event
 

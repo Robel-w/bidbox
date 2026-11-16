@@ -35,6 +35,16 @@ def normalize_supplier_id(raw_id: str | None) -> tuple[str, str | None]:
     return cleaned, quality_flag
 
 
+def record_origin(records: list[dict[str, Any]]) -> str | None:
+    """Label indexed records as synthetic fixtures or live-portal downloads."""
+    flags = {bool(rec.get("synthetic")) for rec in records}
+    if not flags:
+        return None
+    if len(flags) > 1:
+        return "mixed"
+    return "synthetic" if flags == {True} else "live-portal"
+
+
 def init_db(conn: duckdb.DuckDBPyConnection | None = None) -> duckdb.DuckDBPyConnection:
     """Initialize DuckDB schema for OCDS awards indexing."""
     c = conn or duckdb.connect(":memory:")

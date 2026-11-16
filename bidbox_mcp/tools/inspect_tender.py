@@ -1,7 +1,7 @@
 """Tool to inspect a tender and its historical award details."""
 
 from audit.logger import audited
-from bidbox.store import get_award
+from bidbox.store import get_award, record_origin
 from bidbox_mcp.schemas.evidence import FindingSource
 from bidbox_mcp.schemas.tender import TenderInspectionResult
 
@@ -40,5 +40,6 @@ def inspect_tender_tool(ocid: str) -> TenderInspectionResult:
         classification_id=rec.get("classification_id", ""),
         classification_desc=rec.get("classification_desc", ""),
         data_quality_flags=flags,
+        origin=record_origin([rec]),
         sources=[source],
     )

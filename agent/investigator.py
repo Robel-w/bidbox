@@ -2,6 +2,7 @@
 
 import os
 import json
+import re
 import sys
 import time
 from pathlib import Path
@@ -10,6 +11,7 @@ from typing import Any
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
 from audit.logger import append_audit_event
+from bidbox.store import record_origin
 
 
 FILESYSTEM_VERSION = os.getenv("BIDBOX_FILESYSTEM_MCP_VERSION", "2025.1.14")
@@ -56,37 +58,87 @@ async def load_tools() -> dict[str, Any]:
 	return by_name
 
 
+_REDACT_KEY_PARTS = ("key", "token", "secret", "password", "authorization", "approver_name")
+
+
+def summarize_args(arguments: dict[str, Any]) -> dict[str, Any]:
+	"""Audit-safe argument summary: no secrets, no approver identity, no local paths."""
+	summary: dict[str, Any] = {}
+	for key, value in arguments.items():
+		if any(part in key.lower() for part in _REDACT_KEY_PARTS):
+			summary[key] = "[redacted]"
+		elif key == "path" and isinstance(value, str):
+			summary[key] = re.split(r"[\\/]", value)[-1]
+		elif isinstance(value, str):
+			summary[key] = value if len(value) <= 80 else value[:77] + "..."
+		elif isinstance(value, (list, tuple)):
+			summary[key] = f"list[{len(value)}]"
+		elif isinstance(value, dict):
+			summary[key] = f"object[{len(value)} keys]"
+		else:
+			summary[key] = value
+	return summary
+
+
+def data_origin(value: Any) -> str | None:
+	"""Origin label carried by a tool result, if the result exposes one."""
+	if isinstance(value, dict):
+		origin = value.get("origin")
+		return origin if isinstance(origin, str) else None
+	if isinstance(value, list):
+		return record_origin([item for item in value if isinstance(item, dict) and "synthetic" in item])
+	return None
+
+
+def _parse_result(result: Any) -> Any:
+	if isinstance(result, list) and len(result) == 1 and isinstance(result[0], dict):
+		text = result[0].get("text")
+		if isinstance(text, str):
+			try:
+				return json.loads(text)
+			except json.JSONDecodeError:
+				return text
+	return result.model_dump() if hasattr(result, "model_dump") else result
+
+
 async def call_tool(
 	tools: dict[str, Any],
 	run_id: str,
 	name: str,
 	arguments: dict[str, Any],
 ) -> Any:
-	"""Call one adapter-loaded tool and preserve a recovery breadcrumb."""
-	tool = tools[name]
+	"""Call one adapter-loaded tool and record the call in the run's audit log."""
+	args_summary = summarize_args(arguments)
 	started = time.perf_counter()
 	try:
-		result = await tool.ainvoke(arguments)
-		if isinstance(result, list) and len(result) == 1 and isinstance(result[0], dict):
-			text = result[0].get("text")
-			if isinstance(text, str):
-				try:
-					result = json.loads(text)
-				except json.JSONDecodeError:
-					result = text
-				elapsed_ms = (time.perf_counter() - started) * 1000
-				summary = str(result).replace("\n", " ")[:100]
-				print(f"tool={name} args={str(arguments)[:100]} result={summary} ms={elapsed_ms:.1f}", flush=True)
-				return result
+		if name not in tools:
+			raise LookupError(f"tool '{name}' is not available from any connected MCP server")
+		result = _parse_result(await tools[name].ainvoke(arguments))
 	except Exception as exc:
 		append_audit_event(
 			run_id,
 			"agent",
-			"mcp_tool_error",
-			{"tool": name, "arguments": arguments},
-			{"error": str(exc)},
+			name,
+			{"args_summary": args_summary},
+			{"error": f"{type(exc).__name__}: {exc}"[:300]},
+			duration_ms=(time.perf_counter() - started) * 1000,
+			status="error",
 		)
 		raise
+	elapsed_ms = (time.perf_counter() - started) * 1000
+	summary = str(result).replace("\n", " ")[:160]
+	append_audit_event(
+		run_id,
+		"agent",
+		name,
+		{"args_summary": args_summary},
+		{"result_summary": summary},
+		duration_ms=elapsed_ms,
+		status="ok",
+		origin=data_origin(result),
+	)
+	print(f"tool={name} args={args_summary} result={summary[:100]} ms={elapsed_ms:.1f}", flush=True)
+	return result
 
 
 def finding_from_tool_output(output: dict[str, Any]) -> dict[str, Any] | None:

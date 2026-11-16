@@ -2,7 +2,7 @@
 
 from audit.logger import audited
 from bidbox.indicators import get_indicator
-from bidbox.store import awards_by_supplier, normalize_supplier_id
+from bidbox.store import awards_by_supplier, normalize_supplier_id, record_origin
 from bidbox_mcp.schemas.evidence import FindingSource
 from bidbox_mcp.schemas.supplier import SupplierInvestigationResult
 
@@ -61,5 +61,6 @@ def investigate_supplier_tool(supplier_id: str) -> SupplierInvestigationResult:
         buyer_concentration_share=concentration.share,
         top_buyer=concentration.top_buyer,
         repeat_win_pattern=concentration.pattern,
+        origin=record_origin(awards),
         sources=sources,
     )
