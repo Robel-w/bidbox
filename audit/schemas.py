@@ -24,6 +24,8 @@ class AuditEvent(BaseModel):
     outputs: Any = None
     duration_ms: float = 0.0
     tokens: dict[str, int] | None = None
+    status: Literal["ok", "error", "timeout", "retry"] | None = None
+    origin: str | None = None
     prev_hash: str
     hash: str
 

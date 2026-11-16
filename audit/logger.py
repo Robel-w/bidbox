@@ -47,6 +47,8 @@ def append_audit_event(
     outputs: Any = None,
     duration_ms: float = 0.0,
     tokens: dict[str, int] | None = None,
+    status: str | None = None,
+    origin: str | None = None,
 ) -> AuditEvent:
     """Append a cryptographically chained audit event to reports/audit/<run_id>.jsonl."""
     log_dir = Path("reports/audit")
@@ -77,6 +79,8 @@ def append_audit_event(
         "outputs": _safe_serialize(outputs),
         "duration_ms": round(duration_ms, 2),
         "tokens": tokens,
+        "status": status,
+        "origin": origin,
         "prev_hash": prev_hash,
     }
 
@@ -179,6 +183,7 @@ def audited(
                     outputs=result,
                     duration_ms=duration_ms,
                     tokens=tokens,
+                    status="ok",
                 )
                 return result
 
@@ -208,6 +213,7 @@ def audited(
                 outputs=result,
                 duration_ms=duration_ms,
                 tokens=tokens,
+                status="ok",
             )
             return result
 

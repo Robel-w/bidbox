@@ -4,7 +4,7 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
-from audit.events import get_run_cost
+from audit.events import get_run_cost, require_report_approval
 from audit.logger import audited, get_audit_logs
 from bidbox_mcp.schemas.investigation import InvestigationFileResult
 from bidbox_mcp.tools.flag_finding import get_draft_flags
@@ -19,10 +19,9 @@ def create_investigation_file_tool(
     approver_role: str = "Procurement Review Officer",
 ) -> InvestigationFileResult:
     """Render finalized committee investigation Markdown and JSON report with governance signoff."""
-    if not approver_name or not approver_name.strip():
-        raise ValueError(
-            "Approver name is required: irreversible report generation requires a named human gate."
-        )
+    approval = require_report_approval(run_id, approver_name)
+    approver_name = str(approval["inputs"]["approver_name"]).strip()
+    approver_role = str(approval["inputs"].get("approver_role") or approver_role)
 
     out_dir = Path("reports/examples") / run_id
     out_dir.mkdir(parents=True, exist_ok=True)

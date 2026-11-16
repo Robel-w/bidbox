@@ -34,7 +34,7 @@ async def run(ocid: str, approver: str | None, role: str, approval_mode: str = "
 			if not approval:
 				raise TimeoutError(f"No web approval received within {approval_timeout} seconds")
 			inputs = approval.get("inputs", {})
-			result = await graph.ainvoke(Command(resume={"approver_name": inputs.get("approver_name"), "approver_role": inputs.get("approver_role"), "reason": inputs.get("reason", "")}), config)
+			result = await graph.ainvoke(Command(resume={"approver_name": inputs.get("approver_name"), "approver_role": inputs.get("approver_role"), "decision": inputs.get("decision"), "reason": inputs.get("reason", ""), "already_recorded": True}), config)
 		else:
 			name = approver or input(f"Approval required for {prompt['action']}. Approver name: ").strip()
 			result = await graph.ainvoke(Command(resume={"approver_name": name, "approver_role": role, "reason": "Reviewed for committee"}), config)

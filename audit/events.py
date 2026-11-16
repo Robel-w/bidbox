@@ -86,6 +86,48 @@ def is_approved(run_id: str, action: str) -> bool:
     return latest_decision == "approve"
 
 
+REPORT_ACTIONS = ("create_investigation_file", "flag_finding_and_create_investigation_file")
+
+
+class ApprovalRequiredError(PermissionError):
+    """Raised when an irreversible action lacks a matching recorded human approval."""
+
+
+def require_report_approval(run_id: str, approver_name: str | None) -> dict[str, Any]:
+    """Return the approval event authorizing the report, or log a refusal and raise."""
+    latest: dict[str, Any] | None = None
+    for item in get_audit_logs(run_id):
+        if item.get("tool") == "approval_gate" and item.get("inputs", {}).get("action") in REPORT_ACTIONS:
+            latest = item
+
+    claimed = (approver_name or "").strip()
+    recorded = (latest or {}).get("inputs", {})
+    reason: str | None = None
+    if not claimed:
+        reason = "Approver name is required: irreversible report generation requires a named human gate"
+    elif latest is None:
+        reason = "no recorded human approval exists for this run"
+    elif recorded.get("decision") != "approve":
+        reason = f"latest recorded decision is '{recorded.get('decision')}', not 'approve'"
+    elif not str(recorded.get("approver_name") or "").strip():
+        reason = "recorded approval has no approver name"
+    elif str(recorded["approver_name"]).strip().casefold() != claimed.casefold():
+        reason = "approver does not match the recorded approval"
+
+    if reason:
+        append_audit_event(
+            run_id=run_id,
+            actor="tool",
+            tool="create_investigation_file",
+            inputs={"run_id": run_id, "approver_supplied": bool(claimed)},
+            outputs={"status": "refused", "reason": reason},
+            status="error",
+        )
+        raise ApprovalRequiredError(f"create_investigation_file refused: {reason}.")
+    assert latest is not None
+    return latest
+
+
 def track_tokens(
     run_id: str,
     prompt_tokens: int,

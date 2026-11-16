@@ -16,26 +16,34 @@ from .recovery import recover
 from .state import InvestigationState
 
 
+REPORT_ACTION = "flag_finding_and_create_investigation_file"
+
+
 def recovery_route(state: InvestigationState) -> str:
 	return "recovery" if state.get("recovery_needed") and not state.get("recovery_attempted") else "human_gate"
 
 
+def approval_route(state: InvestigationState) -> str:
+	return "filer" if state.get("approval_decision") == "approve" else END
+
+
 async def human_gate(state: InvestigationState) -> dict[str, Any]:
 	"""Pause before any irreversible flag or report write."""
-	if not state.get("approver_name"):
-		pending = any(
-			event.get("tool") == "request_approval"
-			and event.get("outputs", {}).get("status") == "pending"
-			for event in get_audit_logs(state["run_id"])
-		)
-		if not pending:
-			request_approval(state["run_id"], "flag_finding_and_create_investigation_file", "Commit reviewed findings and prepare the committee investigation file.")
-		approval = interrupt({"run_id": state["run_id"], "action": "flag_finding_and_create_investigation_file", "summary": "Named human approval is required before committing findings."})
-		if not isinstance(approval, dict) or not approval.get("approver_name") or not approval.get("approver_role"):
-			raise ValueError("Resume payload must contain approver_name and approver_role")
-		record_approval(state["run_id"], "flag_finding_and_create_investigation_file", approval["approver_name"], approval["approver_role"], "approve", approval.get("reason", "Approved for committee review"))
-		return {"approver_name": approval["approver_name"], "approver_role": approval["approver_role"]}
-	return {"approver_name": state["approver_name"], "approver_role": state.get("approver_role")}
+	pending = any(
+		event.get("tool") == "request_approval"
+		and event.get("outputs", {}).get("status") == "pending"
+		for event in get_audit_logs(state["run_id"])
+	)
+	if not pending:
+		request_approval(state["run_id"], REPORT_ACTION, "Commit reviewed findings and prepare the committee investigation file.")
+	approval = interrupt({"run_id": state["run_id"], "action": REPORT_ACTION, "summary": "Named human approval is required before committing findings."})
+	if not isinstance(approval, dict) or not approval.get("approver_name") or not approval.get("approver_role"):
+		raise ValueError("Resume payload must contain approver_name and approver_role")
+	decision = str(approval.get("decision") or "approve").strip().lower()
+	# The web UI writes its own approval_gate event; re-recording would duplicate or overwrite it.
+	if not approval.get("already_recorded"):
+		record_approval(state["run_id"], REPORT_ACTION, approval["approver_name"], approval["approver_role"], decision, approval.get("reason") or "Approved for committee review")
+	return {"approver_name": approval["approver_name"], "approver_role": approval["approver_role"], "approval_decision": decision}
 
 
 async def filer(state: InvestigationState) -> dict[str, Any]:
@@ -71,6 +79,6 @@ def build_graph():
 		{"recovery": "recovery", "human_gate": "human_gate"},
 	)
 	graph.add_edge("recovery", "evidence_reviewer")
-	graph.add_edge("human_gate", "filer")
+	graph.add_conditional_edges("human_gate", approval_route, {"filer": "filer", END: END})
 	graph.add_edge("filer", END)
 	return graph.compile(checkpointer=MemorySaver())

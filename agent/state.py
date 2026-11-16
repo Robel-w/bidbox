@@ -22,4 +22,5 @@ class InvestigationState(TypedDict, total=False):
 	steps_used: int
 	approver_name: str | None
 	approver_role: str | None
+	approval_decision: str | None
 	report: dict[str, Any]

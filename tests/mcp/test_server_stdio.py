@@ -3,11 +3,14 @@
 import json
 import os
 import sys
+import uuid
 from pathlib import Path
 
 import pytest
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+
+from audit.events import record_approval
 
 
 @pytest.fixture
@@ -179,7 +182,26 @@ async def test_mcp_tools_on_fixtures(mcp_server_params: StdioServerParameters) -
             assert res_refused.isError
             assert "Approver name is required" in res_refused.content[0].text
 
-            # 5b. ACTION: create_investigation_file - SUCCEEDS WITH NAMED APPROVER
+            # 5a. A name alone is not enough: the tool checks the audit log for a recorded approval.
+            unapproved_run = f"mcp-test-unapproved-{uuid.uuid4().hex[:8]}"
+            res_unapproved = await session.call_tool(
+                "create_investigation_file",
+                arguments={"run_id": unapproved_run, "approver_name": "Dr. Beatrice Omwamba"},
+            )
+            assert res_unapproved.isError
+            assert "no recorded human approval" in res_unapproved.content[0].text
+            assert not Path("reports/examples", unapproved_run).exists()
+
+            record_approval(
+                "mcp-test-run",
+                "create_investigation_file",
+                "Dr. Beatrice Omwamba",
+                "Chief Oversight Examiner",
+                "approve",
+                "Reviewed in stdio integration test",
+            )
+
+            # 5b. ACTION: create_investigation_file - SUCCEEDS WITH RECORDED NAMED APPROVAL
             res_created = await session.call_tool(
                 "create_investigation_file",
                 arguments={

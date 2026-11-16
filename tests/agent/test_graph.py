@@ -1,6 +1,8 @@
 """Structural tests for the Phase 4 graph."""
 
-from agent.graph import build_graph
+from langgraph.graph import END
+
+from agent.graph import approval_route, build_graph
 
 
 def test_graph_has_recovery_branch_and_gate() -> None:
@@ -10,3 +12,9 @@ def test_graph_has_recovery_branch_and_gate() -> None:
     edges = {(edge.source, edge.target) for edge in graph.get_graph().edges}
     assert ("evidence_reviewer", "recovery") in edges
     assert ("evidence_reviewer", "human_gate") in edges
+
+
+def test_rejected_or_missing_decision_never_reaches_filer() -> None:
+    assert approval_route({"approval_decision": "approve"}) == "filer"
+    assert approval_route({"approval_decision": "reject"}) == END
+    assert approval_route({}) == END
