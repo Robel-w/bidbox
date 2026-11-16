@@ -33,6 +33,7 @@ def create_investigation_file_tool(
 
     flags = get_draft_flags(run_id)
     audit_calls = get_audit_logs(run_id)
+    review_summary = next((e["outputs"] for e in reversed(audit_calls) if e.get("tool") == "evidence_review"), None)
     now_str = datetime.now(UTC).isoformat()
     data_limitations = [*BASE_LIMITATIONS, *dict.fromkeys(limitations or [])]
 
@@ -47,8 +48,17 @@ def create_investigation_file_tool(
         "## Executive Summary",
         f"This file compiles {len(flags)} evidence-backed observation(s) for committee review.",
         "",
-        "## Findings",
+        "## Evidence Review",
     ]
+    if review_summary is not None:
+        lines.extend([
+            f"Candidates reviewed: {review_summary['candidate_count']}; source-verified: {review_summary['verified_count']}; retained: {review_summary['retained_count']}.",
+            f"Reviewer status: {review_summary['status']}. Reason: {review_summary['reason']}",
+            *[f"- Dropped: {item['finding'].get('code', 'unknown') if isinstance(item['finding'], dict) else item['finding']} — {item['reason']}" for item in review_summary.get("drops", [])],
+        ])
+    else:
+        lines.append("Independent reviewer counts and reason were not recorded. Manual evidence review is required.")
+    lines.extend(["", "## Findings"])
 
     if not flags:
         lines.append("*No draft findings were filed for this investigation.*")
@@ -106,6 +116,8 @@ def create_investigation_file_tool(
         "approver_role": approver_role,
         "generated_at_utc": now_str,
         "findings": [f.model_dump() for f in flags],
+        "review_summary": review_summary,
+        "dropped_findings": review_summary.get("drops", []) if review_summary else [],
         "data_limitations": data_limitations,
         "audit_calls": audit_calls,
         "footer": FOOTER_TEXT,

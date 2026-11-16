@@ -14,6 +14,7 @@ class InvestigationState(TypedDict, total=False):
 	draft_findings: list[dict[str, Any]]
 	findings: list[dict[str, Any]]
 	dropped_findings: list[dict[str, Any]]
+	review_summary: dict[str, Any]
 	limitations: list[str]
 	recovery_needed: bool
 	recovery_attempted: bool

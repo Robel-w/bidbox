@@ -11,6 +11,7 @@ from langgraph.types import Command
 from agent import evidence, investigator, planner
 from agent.graph import build_graph
 from audit.logger import get_audit_logs, verify_chain
+from audit.metrics import build_run_metrics
 from bidbox_mcp.tools.benchmark_award import benchmark_award_tool
 from bidbox_mcp.tools.create_investigation_file import create_investigation_file_tool
 from bidbox_mcp.tools.flag_finding import flag_finding_tool
@@ -49,7 +50,7 @@ async def fake_planner_llm(run_id: str, system: str, user: str, schema: dict) ->
 
 
 async def fake_reviewer_llm(run_id: str, system: str, user: str, schema: dict) -> dict:
-    return {"kept_codes": [f["code"] for f in json.loads(user)["findings"]], "drops": []}
+    return {"kept_codes": [f["code"] for f in json.loads(user)["findings"]], "drops": [], "reason": "Sourced objective observations retained."}
 
 
 @pytest.fixture
@@ -77,7 +78,7 @@ async def run_graph(run_id: str, decision: str = "approve") -> dict[str, Any]:
 
 
 def agent_calls(run_id: str) -> list[dict[str, Any]]:
-    return [e for e in get_audit_logs(run_id) if e["actor"] == "agent" and e.get("status")]
+    return [e for e in get_audit_logs(run_id) if e["actor"] == "agent" and e.get("status") and e["tool"] != "evidence_review"]
 
 
 @pytest.mark.anyio
@@ -162,3 +163,48 @@ async def test_rejected_run_files_nothing(offline_run: dict) -> None:
     assert "report" not in result
     assert "create_investigation_file" not in [e["tool"] for e in agent_calls("rejected-run")]
     assert not Path("reports/examples/rejected-run").exists()
+
+
+@pytest.mark.anyio
+async def test_zero_retained_report_explains_review(offline_run: dict, monkeypatch: pytest.MonkeyPatch) -> None:
+    async def drop_all(run_id, system, user, schema):
+        return {"kept_codes": [], "drops": [{"code": f["code"], "reason": "Scope needs manual verification."}
+                                             for f in json.loads(user)["findings"]],
+                "reason": "No observation retained: scope needs manual verification."}
+
+    monkeypatch.setattr(evidence, "ask_json", drop_all)
+    result = await run_graph("drop-all")
+    report = json.loads(Path(result["report"]["json_path"]).read_text(encoding="utf-8"))
+    summary = report["review_summary"]
+    assert summary["candidate_count"] == summary["verified_count"] == 1
+    assert summary["retained_count"] == 0 and summary["status"] == "ok"
+    text = Path(result["report"]["markdown_path"]).read_text(encoding="utf-8")
+    assert "Candidates reviewed: 1" in text and "retained: 0" in text
+    assert summary["reason"] in text and "Scope needs manual verification." in text
+    assert build_run_metrics("drop-all")["findings_count"] == 0
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("response", [
+    {"kept_codes": [], "drops": []},
+    {"kept_codes": [], "drops": [], "reason": "Nothing retained."},
+    {"kept_codes": ["INVENTED"], "drops": [], "reason": "Keep."},
+    {"kept_codes": "PRICE_OUTLIER_HIGH", "drops": [], "reason": "Keep."},
+    {"kept_codes": [], "drops": [{"code": "PRICE_OUTLIER_HIGH", "reason": ""}], "reason": "Drop."},
+    {"kept_codes": ["PRICE_OUTLIER_HIGH"], "drops": [{"code": "PRICE_OUTLIER_HIGH", "reason": "Drop."}], "reason": "Conflict."},
+])
+async def test_invalid_reviewer_fails_visibly(offline_run: dict, monkeypatch: pytest.MonkeyPatch, response: dict) -> None:
+    async def weak_reviewer(*args):
+        return response
+
+    monkeypatch.setattr(evidence, "ask_json", weak_reviewer)
+    result = await run_graph("weak-reviewer")
+    assert not result["findings"]
+    report = json.loads(Path(result["report"]["json_path"]).read_text(encoding="utf-8"))
+    assert report["review_summary"]["status"] == "failed"
+    assert report["review_summary"]["candidate_count"] == 1
+    assert "failed validation" in report["review_summary"]["reason"]
+    assert any("Manual evidence review is required" in limitation for limitation in report["data_limitations"])
+    review_event = next(e for e in get_audit_logs("weak-reviewer") if e["tool"] == "evidence_review")
+    assert review_event["status"] == "error"
+    assert "evidence_review" not in build_run_metrics("weak-reviewer")["tool_calls"]["by_tool"]

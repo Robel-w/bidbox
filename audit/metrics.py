@@ -11,7 +11,7 @@ from typing import Any
 
 from audit.logger import get_audit_logs
 
-NON_TOOL_EVENTS = {"llm_call", "recovery", "request_approval", "approval_gate", "source_verification"}
+NON_TOOL_EVENTS = {"llm_call", "recovery", "request_approval", "approval_gate", "source_verification", "evidence_review"}
 
 
 def env_number(name: str) -> dict[str, Any]:
@@ -140,6 +140,10 @@ def build_run_metrics(run_id: str) -> dict[str, Any]:
         "wall_time_s": _seconds(events[0] if events else None, events[-1] if events else None),
         "human_wait_s": _seconds(request, decision),
         "outcome_completed": report_done,
+        "findings_count": next((e["outputs"].get("findings_count") for e in reversed(events)
+                                if e.get("actor") == "tool" and e.get("tool") == "create_investigation_file"
+                                and isinstance(e.get("outputs"), dict) and e["outputs"].get("status") == "finalized"), None),
+        "review_summary": next((e["outputs"] for e in reversed(events) if e.get("tool") == "evidence_review"), None),
         "prices": {"LLM_PRICE_IN": price_in, "LLM_PRICE_OUT": price_out, "unit": "USD per 1M tokens"},
         "fees": {
             "TOOL_FEE_USD": {**tool_fee, "unit": "USD per tool call", "count": tool_call_count},

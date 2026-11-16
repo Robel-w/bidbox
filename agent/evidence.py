@@ -3,6 +3,9 @@
 import json
 from pathlib import PurePosixPath
 from pathlib import Path
+from typing import Annotated
+
+from pydantic import BaseModel, ConfigDict, StringConstraints, ValidationError
 
 from audit.logger import append_audit_event
 
@@ -12,6 +15,20 @@ from .llm import ask_json
 
 ACCUSATORY = ("fraud", "corrupt", "bribe", "collusion", "criminal", "winner", "award to")
 _FIXTURE_RECORDS: list[dict] | None = None
+ReviewText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, strict=True)]
+
+
+class ReviewDrop(BaseModel):
+	model_config = ConfigDict(extra="forbid", strict=True)
+	code: ReviewText
+	reason: ReviewText
+
+
+class ReviewResponse(BaseModel):
+	model_config = ConfigDict(extra="forbid", strict=True)
+	kept_codes: list[ReviewText]
+	drops: list[ReviewDrop]
+	reason: ReviewText
 
 
 def _cited_value(record: dict, field_path: str):
@@ -68,17 +85,43 @@ async def review_evidence(state: dict) -> dict:
 				break
 		if verified:
 			kept.append(finding)
+		else:
+			dropped.append({"finding": finding, "reason": limitations[-1]})
 
-	response = await ask_json(
-		state["run_id"],
-		"Review evidence independently. Return JSON {kept_codes: string[], drops: [{code,reason}]}. Keep only sourced, objective observations; remove overclaiming.",
-		json.dumps({"findings": kept, "limitations": limitations}),
-		{"kept_codes": [], "drops": []},
-	)
-	allowed_codes = set(response.get("kept_codes", []))
-	reviewed = [finding for finding in kept if finding["code"] in allowed_codes]
-	for item in response.get("drops", []):
-		dropped.append({"finding": item.get("code"), "reason": item.get("reason", "LLM review")})
-	if not reviewed and not dropped and state.get("tool_outputs"):
-		limitations.append("Independent review retained no supported finding.")
-	return {"findings": reviewed, "dropped_findings": dropped, "limitations": limitations, "insufficient_evidence": not bool(reviewed)}
+	status = "ok"
+	try:
+		response = await ask_json(
+			state["run_id"],
+			'Review evidence independently. Return only JSON with exactly these keys: '
+			'{"kept_codes": ["CODE"], "drops": [{"code": "CODE", "reason": "why dropped"}], "reason": "one-line review conclusion"}. '
+			'Use only codes present in findings. Account for EVERY input code exactly once, either kept or dropped. '
+			'Keep sourced, objective observations; drop overclaiming with a non-empty reason. '
+			'An empty finding list requires empty kept_codes and drops and an explanation in reason.',
+			json.dumps({"findings": kept, "limitations": limitations}),
+			ReviewResponse.model_json_schema(),
+		)
+		decision = ReviewResponse.model_validate(response)
+		decided_codes = decision.kept_codes + [item.code for item in decision.drops]
+		if len(decided_codes) != len(set(decided_codes)) or set(decided_codes) != {item["code"] for item in kept}:
+			raise ValueError("Each candidate code must be kept or dropped exactly once; unknown codes are not allowed")
+		reason = decision.reason
+		reviewed = [finding for finding in kept if finding["code"] in decision.kept_codes]
+		dropped.extend({"finding": item.code, "reason": item.reason} for item in decision.drops)
+	except (ValueError, ValidationError) as exc:
+		status = "failed"
+		detail = "; ".join(f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors()) if isinstance(exc, ValidationError) else str(exc)
+		reason = f"Reviewer output failed validation: {detail[:300]}"
+		reviewed = []
+		dropped.extend({"finding": item["code"], "reason": reason} for item in kept)
+		limitations.append(reason + ". Manual evidence review is required.")
+
+	summary = {
+		"candidate_count": len(state.get("draft_findings", [])),
+		"verified_count": len(kept),
+		"retained_count": len(reviewed),
+		"status": status,
+		"reason": reason,
+		"drops": dropped,
+	}
+	append_audit_event(state["run_id"], "agent", "evidence_review", {}, summary, status="error" if status == "failed" else "ok")
+	return {"findings": reviewed, "dropped_findings": dropped, "review_summary": summary, "limitations": limitations, "insufficient_evidence": not bool(reviewed)}
