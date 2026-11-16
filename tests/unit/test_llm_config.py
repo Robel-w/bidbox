@@ -73,6 +73,34 @@ async def test_missing_model_fails_before_generation(monkeypatch):
 
 
 @pytest.mark.anyio
+async def test_startup_checks_fallback_without_silently_replacing_primary(monkeypatch):
+    monkeypatch.setenv("LLM_MODEL", "primary")
+    monkeypatch.setenv("LLM_FALLBACK_MODEL", "fallback")
+    client = FakeClient(["primary"])
+    monkeypatch.setattr(llm, "AsyncOpenAI", lambda **kwargs: client)
+    with pytest.raises(RuntimeError, match="LLM_FALLBACK_MODEL.*fallback.*not installed"):
+        await llm.check_model_available()
+    assert client.requested_model is None and client.closed
+    client.ids.append("fallback")
+    await llm.check_model_available()
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("status", [401, 403, 503])
+async def test_model_list_failures_are_loud_and_do_not_generate(monkeypatch, status):
+    client = FakeClient([])
+
+    def models_list():
+        raise provider_error(status)
+
+    client.list = models_list
+    monkeypatch.setattr(llm, "AsyncOpenAI", lambda **kwargs: client)
+    with pytest.raises(RuntimeError, match=f"model-list check failed.*HTTP {status}.*LLM_API_KEY"):
+        await llm.check_model_available()
+    assert client.requested_model is None and client.closed
+
+
+@pytest.mark.anyio
 async def test_model_disappearing_after_preflight_has_clear_error(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("LLM_MODEL", "removed-model")

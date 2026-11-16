@@ -27,18 +27,24 @@ def configured_client() -> AsyncOpenAI:
 
 
 async def check_model_available() -> None:
-    model = os.getenv("LLM_MODEL", DEFAULT_MODEL)
+    required = {"LLM_MODEL": os.getenv("LLM_MODEL", DEFAULT_MODEL)}
+    fallback = os.getenv("LLM_FALLBACK_MODEL", "").strip()
+    if fallback:
+        required["LLM_FALLBACK_MODEL"] = fallback
     async with configured_client() as client:
         try:
             available = {item.id async for item in client.models.list()}
         except APIConnectionError as exc:
-            raise RuntimeError("Cannot reach LLM_BASE_URL; start the model server before running BidBox.") from exc
-        if model not in available:
-            listed = ", ".join(sorted(available)) or "none"
-            raise RuntimeError(
-                f"LLM_MODEL={model!r} is not installed or available at LLM_BASE_URL. "
-                f"Available models: {listed}. Install this model or set LLM_MODEL to an available model."
-            )
+            raise RuntimeError("Cannot reach LLM_BASE_URL; check the endpoint and network before running BidBox.") from exc
+        except APIStatusError as exc:
+            raise RuntimeError(f"Provider model-list check failed (HTTP {exc.status_code}); check LLM_API_KEY and account access.") from exc
+        for setting, model in required.items():
+            if model not in available:
+                listed = ", ".join(sorted(available)) or "none"
+                raise RuntimeError(
+                    f"{setting}={model!r} is not installed or available at LLM_BASE_URL. "
+                    f"Available models: {listed}. Set {setting} to an available model."
+                )
 
 
 def retry_delay(header: str | None, backoff: float) -> float:

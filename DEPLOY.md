@@ -10,7 +10,7 @@ Supply `LLM_PRICE_IN` and `LLM_PRICE_OUT` as USD per million tokens through the 
 
 ## Ollama alternative
 
-Set `LLM_BASE_URL` to your OpenAI-compatible endpoint and `LLM_MODEL` to an exact model ID returned by that endpoint's model list. The demo and evaluation runners check availability before starting an investigation and fail with the available IDs if the configured model is missing. For Ollama, install the chosen model with `ollama pull <model>` or choose an already installed model. A model being available does not guarantee a valid evidence review; invalid reviewer JSON is recorded as a failed review requiring manual verification.
+Set `LLM_BASE_URL` to your OpenAI-compatible endpoint and `LLM_MODEL` to an exact model ID returned by that endpoint's model list. The demo and evaluation runners fetch the provider model list before starting an investigation and fail with the available IDs if either the primary or configured fallback is missing. Authentication and connectivity failures also stop startup. The read-only committee viewer does not require a provider credential to replay existing audit logs. For Ollama, install the chosen model with `ollama pull <model>` or choose an already installed model. A model being available does not guarantee a valid evidence review; invalid reviewer JSON is recorded as a failed review requiring manual verification.
 
 ## Windows / NO_PROXY
 

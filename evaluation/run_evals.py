@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from agent.graph import build_graph
 from agent.investigator import close_tools
-from agent.llm import check_model_available
+from agent.llm import DEFAULT_MODEL, check_model_available
 from audit.logger import get_audit_logs
 from audit.metrics import write_run_metrics
 from evaluation.metrics import aggregate, score_case
@@ -93,7 +93,7 @@ async def run(output: Path, selected: set[str] | None = None, resume: bool = Fal
 		cases.append(case)
 	repeats = int(os.getenv("EVAL_RUNS", "2"))
 	timeout_seconds = float(os.getenv("EVAL_CASE_TIMEOUT", "240"))
-	result: dict[str, Any] = {"timestamp": datetime.now(UTC).isoformat(), "model": os.getenv("LLM_MODEL", "qwen2.5:7b-instruct"), "hardware": platform.platform(), "case_scores": {}, "aggregate": {}}
+	result: dict[str, Any] = {"timestamp": datetime.now(UTC).isoformat(), "model": os.getenv("LLM_MODEL", DEFAULT_MODEL), "hardware": platform.platform(), "case_scores": {}, "aggregate": {}}
 	if resume and output.exists():
 		result = json.loads(output.read_text(encoding="utf-8"))
 	for case in cases:
