@@ -16,6 +16,7 @@ from langgraph.types import Command
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from agent.graph import build_graph
+from agent.investigator import close_tools
 from audit.logger import get_audit_logs
 from audit.metrics import write_run_metrics
 from evaluation.metrics import aggregate, score_case
@@ -114,6 +115,7 @@ async def run(output: Path, selected: set[str] | None = None, resume: bool = Fal
 		result["case_scores"][case["_id"]] = score
 		result["aggregate"] = aggregate(result["case_scores"])
 		write_result(output, result)
+	await close_tools()
 	return result
 
 

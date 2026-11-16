@@ -6,11 +6,13 @@ import json
 import re
 import sys
 import time
+from contextlib import AsyncExitStack
 from pathlib import Path
 from typing import Any
 
 from langchain_core.tools import ToolException
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from langchain_mcp_adapters.tools import load_mcp_tools
 
 from audit.logger import append_audit_event
 from bidbox.store import record_origin
@@ -50,19 +52,87 @@ def mcp_client() -> MultiServerMCPClient:
 	)
 
 
+async def _open_mcp_sessions(stack: AsyncExitStack) -> dict[str, Any]:
+	"""Open one long-lived session per configured server and bind its tools to that session."""
+	client = mcp_client()
+	by_name: dict[str, Any] = {}
+	for server in client.connections:
+		session = await stack.enter_async_context(client.session(server))
+		for tool in await load_mcp_tools(session, server_name=server, handle_tool_errors=False):
+			by_name[tool.name.split("__")[-1]] = tool
+	return by_name
+
+
+_SESSION_FACTORY = _open_mcp_sessions
+
+
+class SessionPool:
+	"""Keeps MCP sessions open for the app's event loop; one owner task opens and closes them."""
+
+	def __init__(self) -> None:
+		self.loop = asyncio.get_running_loop()
+		self.tools: dict[str, Any] = {}
+		self.opened = 0
+		self._task: asyncio.Task | None = None
+		self._stop = asyncio.Event()
+
+	def alive(self) -> bool:
+		return self._task is not None and not self._task.done()
+
+	async def start(self) -> None:
+		ready, errors = asyncio.Event(), []
+		self._stop = asyncio.Event()
+		self._task = asyncio.create_task(self._own(ready, self._stop, errors))
+		await ready.wait()
+		if errors:
+			raise errors[0]
+
+	async def _own(self, ready: asyncio.Event, stop: asyncio.Event, errors: list[BaseException]) -> None:
+		try:
+			async with AsyncExitStack() as stack:
+				tools = await _SESSION_FACTORY(stack)
+				self.tools.clear()
+				self.tools.update(tools)
+				self.opened += 1
+				ready.set()
+				await stop.wait()
+		except Exception as exc:
+			errors.append(exc)
+		finally:
+			ready.set()
+
+	async def close(self) -> None:
+		if self.alive():
+			self._stop.set()
+			await asyncio.wait({self._task}, timeout=10)
+
+	async def reconnect(self) -> None:
+		await self.close()
+		await self.start()
+
+
+_POOL: SessionPool | None = None
+
+
 async def load_tools() -> dict[str, Any]:
-	"""Load tools from both configured MCP servers through the adapter."""
-	global _TOOLS_CACHE
+	"""Tools bound to long-lived MCP sessions, opened once per event loop and reopened if they die."""
+	global _POOL
 	if _TOOLS_CACHE is not None:
 		return _TOOLS_CACHE
-	client = mcp_client()
-	tools = await client.get_tools()
-	by_name: dict[str, Any] = {}
-	for tool in tools:
-		name = getattr(tool, "name", "")
-		by_name[name.split("__")[-1]] = tool
-	_TOOLS_CACHE = by_name
-	return by_name
+	if _POOL is None or _POOL.loop is not asyncio.get_running_loop():
+		_POOL = SessionPool()
+		await _POOL.start()
+	elif not _POOL.alive():
+		await _POOL.reconnect()
+	return _POOL.tools
+
+
+async def close_tools() -> None:
+	"""Shut down pooled MCP sessions (and their server processes) cleanly."""
+	global _POOL
+	if _POOL is not None and _POOL.loop is asyncio.get_running_loop():
+		await _POOL.close()
+	_POOL = None
 
 
 _REDACT_KEY_PARTS = ("key", "token", "secret", "password", "authorization", "approver_name")
@@ -162,24 +232,32 @@ async def call_tool(
 		inject = _should_inject_fault(run_id, name)
 		inputs = {"args_summary": args_summary, "attempt": attempt, "timeout_s": timeout}
 		started = time.perf_counter()
+		deadline = asyncio.timeout(timeout)
 		try:
 			if name not in tools:
 				raise LookupError(f"tool '{name}' is not available from any connected MCP server")
-			raw = await asyncio.wait_for(_invoke(tools[name], arguments, inject), timeout)
+			async with deadline:
+				raw = await _invoke(tools[name], arguments, inject)
 			result = _parse_result(raw)
 		except Exception as exc:
 			elapsed_ms = (time.perf_counter() - started) * 1000
-			timed_out = isinstance(exc, TimeoutError)
+			# Cancellation inside the MCP transport can surface as an ExceptionGroup, not TimeoutError.
+			timed_out = isinstance(exc, TimeoutError) or deadline.expired()
 			status = "timeout" if timed_out else "error"
 			error = f"no response within {timeout:g}s" if timed_out else f"{type(exc).__name__}: {exc}"[:300]
 			final = attempt == MAX_ATTEMPTS or _is_deterministic_tool_error(exc)
 			outputs: dict[str, Any] = {"error": error, "next": "give_up" if final else "retry"}
 			if inject:
 				outputs["injected_fault"] = "DEMO_FAULT_TOOL"
+			reconnect = not final and not timed_out and _POOL is not None and tools is _POOL.tools
+			if reconnect:
+				outputs["reconnect"] = True
 			append_audit_event(run_id, "agent", name, inputs, outputs, duration_ms=elapsed_ms, status=status)
 			print(f"tool={name} attempt={attempt} status={status} error={error[:100]}", flush=True)
 			if final:
 				raise ToolCallFailed(name, status, error) from exc
+			if reconnect:
+				await _POOL.reconnect()
 			continue
 		elapsed_ms = (time.perf_counter() - started) * 1000
 		summary = str(result).replace("\n", " ")[:160]

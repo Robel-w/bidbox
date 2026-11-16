@@ -1,7 +1,9 @@
 """DuckDB local storage and OCDS indexing layer."""
 
 import json
+import os
 import re
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -162,15 +164,30 @@ def load_data(
                     )
                 )
 
-    c.executemany(
-        """
-        INSERT OR REPLACE INTO awards_index VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-        )
-        """,
-        rows,
-    )
+    _bulk_upsert(c, rows)
     return c
+
+
+def _bulk_upsert(c: duckdb.DuckDBPyConnection, rows: list[tuple[Any, ...]]) -> None:
+    """Upsert rows by ocid via DuckDB's JSON reader; executemany took ~22 s for 600 rows."""
+    if not rows:
+        return
+    schema = c.execute("DESCRIBE awards_index").fetchall()
+    names = [col[0] for col in schema]
+    latest = {row[0]: row for row in rows}
+    fd, tmp = tempfile.mkstemp(suffix=".jsonl")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            for row in latest.values():
+                f.write(json.dumps(dict(zip(names, row))) + "\n")
+        columns = "{" + ",".join(f"'{col[0]}':'{col[1]}'" for col in schema) + "}"
+        path = tmp.replace("'", "''")
+        c.execute(
+            f"INSERT OR REPLACE INTO awards_index SELECT * FROM "
+            f"read_json('{path}', format='newline_delimited', columns={columns})"
+        )
+    finally:
+        os.remove(tmp)
 
 
 def ensure_store_loaded(

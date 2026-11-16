@@ -2,6 +2,7 @@
 
 from mcp.server.fastmcp import FastMCP
 
+from bidbox.store import ensure_store_loaded
 from bidbox_mcp.schemas.evidence import FindingSource
 from bidbox_mcp.schemas.investigation import (
     FlagFindingResult,
@@ -113,7 +114,8 @@ def create_investigation_file(
 
 
 def main() -> None:
-    """Run FastMCP server over standard I/O."""
+    """Load the award index once, then serve FastMCP over standard I/O."""
+    ensure_store_loaded()
     mcp.run(transport="stdio")
 
 
