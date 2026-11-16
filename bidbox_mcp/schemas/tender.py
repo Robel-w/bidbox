@@ -13,13 +13,13 @@ class TenderInspectionResult(BaseModel):
     ocid: str
     award_id: str
     title: str
-    status: str
+    status: str | None = None
     buyer_id: str | None = None
     buyer_name: str | None = None
-    amount: float
-    currency: str = "KES"
-    supplier_id: str
-    supplier_name: str
+    amount: float | None = None
+    currency: str | None = None
+    supplier_id: str | None = None
+    supplier_name: str | None = None
     classification_id: str
     classification_desc: str
     data_quality_flags: list[str] = Field(default_factory=list)

@@ -50,6 +50,8 @@ def record_origin(records: list[dict[str, Any]]) -> str | None:
 def init_db(conn: duckdb.DuckDBPyConnection | None = None) -> duckdb.DuckDBPyConnection:
     """Initialize DuckDB schema for OCDS awards indexing."""
     c = conn or duckdb.connect(":memory:")
+    if c.execute("SELECT count(*) FROM information_schema.tables WHERE table_name = 'awards_index'").fetchone()[0]:
+        return c
     c.execute(
         """
         CREATE TABLE IF NOT EXISTS awards_index (
@@ -72,7 +74,8 @@ def init_db(conn: duckdb.DuckDBPyConnection | None = None) -> duckdb.DuckDBPyCon
             item_description VARCHAR,
             source_url VARCHAR,
             synthetic BOOLEAN,
-            raw_json VARCHAR
+            raw_json VARCHAR,
+            award_position INTEGER
         )
         """
     )
@@ -80,11 +83,52 @@ def init_db(conn: duckdb.DuckDBPyConnection | None = None) -> duckdb.DuckDBPyCon
 
 
 def get_default_connection() -> duckdb.DuckDBPyConnection:
-    """Return or create thread-local default in-memory connection."""
     global _DEFAULT_CONN
     if _DEFAULT_CONN is None:
-        _DEFAULT_CONN = init_db()
+        from bidbox.ingest import connect_store, db_path
+
+        if db_path().exists():
+            _DEFAULT_CONN = connect_store(read_only=True)
+            load_live_awards(_DEFAULT_CONN)
+        else:
+            _DEFAULT_CONN = init_db()
     return _DEFAULT_CONN
+
+
+def load_live_awards(connection):
+    connection.execute(r"""
+        CREATE TEMP MACRO normalize_supplier(raw) AS
+            upper(regexp_replace(trim(regexp_replace(coalesce(raw,''),'[/\\?*#@!$%^&]+','','g')),'\s+',' ','g'));
+        CREATE TEMP MACRO supplier_quality(raw) AS CASE
+            WHEN coalesce(trim(raw),'') = '' THEN 'missing_id'
+            WHEN regexp_matches(raw,'[/\\?*#@!$%^&]') THEN 'malformed_id'
+            ELSE NULL END;
+    """)
+    connection.execute("""
+        CREATE TEMP TABLE awards_index AS
+        WITH expanded AS (
+            SELECT *, unnest(json_extract(raw_json,'$.awards[*]')) AS award,
+                generate_subscripts(json_extract(raw_json,'$.awards[*]'),1)-1 AS award_position
+            FROM procurement_records WHERE origin = 'live-portal' AND award_count > 0
+        ), extracted AS (
+            SELECT ocid, json_extract_string(raw_json,'$.id') AS release_id,
+                release_date AS date, buyer_id, buyer_name,
+                json_extract_string(award,'$.id') AS award_id,
+                coalesce(json_extract_string(award,'$.title'),title) AS title,
+                json_extract_string(award,'$.status') AS status,
+                try_cast(json_extract_string(award,'$.value.amount') AS DOUBLE) AS amount,
+                json_extract_string(award,'$.value.currency') AS currency,
+                json_extract_string(award,'$.suppliers[0].id') AS supplier_id,
+                json_extract_string(award,'$.suppliers[0].name') AS supplier_name,
+                coalesce(json_extract_string(award,'$.items[0].classification.id'),'') AS classification_id,
+                coalesce(json_extract_string(award,'$.items[0].classification.description'),'') AS classification_desc,
+                json_extract_string(award,'$.items[0].description') AS item_description,
+                source_url, false AS synthetic, raw_json, award_position
+            FROM expanded
+        )
+        SELECT *, normalize_supplier(supplier_id) AS normalized_supplier_id,
+            supplier_quality(supplier_id) AS supplier_quality_flag FROM extracted
+    """)
 
 
 def load_data(
@@ -118,7 +162,7 @@ def load_data(
             synthetic = bool(rel.get("synthetic", False))
 
             awards = rel.get("awards", [])
-            for awd in awards:
+            for position, awd in enumerate(awards):
                 award_id = awd.get("id", "")
                 title = awd.get("title", "")
                 status = awd.get("status", "active")
@@ -161,6 +205,7 @@ def load_data(
                         source_url,
                         synthetic,
                         json.dumps(rel),
+                        position,
                     )
                 )
 
@@ -193,36 +238,27 @@ def _bulk_upsert(c: duckdb.DuckDBPyConnection, rows: list[tuple[Any, ...]]) -> N
 def ensure_store_loaded(
     conn: duckdb.DuckDBPyConnection | None = None,
 ) -> duckdb.DuckDBPyConnection:
-    """Ensure awards index table is populated with fixture data."""
     c = conn or get_default_connection()
     init_db(c)
-    row = c.execute("SELECT count(*) FROM awards_index").fetchone()
-    count = row[0] if row else 0
-    if count == 0:
-        fixture_file = Path("data/fixtures/releases.json")
-        if not fixture_file.exists():
-            from scripts.seed_data import main as seed_main
-
-            seed_main()
-        load_data(fixture_file, conn=c)
     return c
 
 
 def get_award(
     ocid: str,
     conn: duckdb.DuckDBPyConnection | None = None,
+    *, award_id: str | None = None,
 ) -> dict[str, Any] | None:
-    """Fetch a single award record by OCID."""
     c = conn or get_default_connection()
     ensure_store_loaded(c)
     result = c.execute(
-        "SELECT * FROM awards_index WHERE ocid = ?", [ocid]
+        "SELECT * FROM awards_index WHERE ocid = ? AND (? IS NULL OR award_id = ?) ORDER BY award_position LIMIT 1",
+        [ocid, award_id, award_id],
     ).fetchone()
     if not result:
         return None
-
-    cols = [desc[0] for desc in c.description]
-    return dict(zip(cols, result))
+    record = dict(zip([desc[0] for desc in c.description], result))
+    record["award_count"] = len(json.loads(record["raw_json"]).get("awards") or [])
+    return record
 
 
 def broader_cpv_prefixes(classification_id: str) -> list[str]:
@@ -242,6 +278,8 @@ def awards_by_category(
     prefix: bool = False,
 ) -> list[dict[str, Any]]:
     """Fetch awards in a classification (or CPV prefix) and currency, optionally excluding one OCID."""
+    if not classification_id or not currency:
+        return []
     c = conn or get_default_connection()
     ensure_store_loaded(c)
     match = "classification_id LIKE ? || '%'" if prefix else "classification_id = ?"

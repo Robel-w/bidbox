@@ -26,9 +26,8 @@ mcp = FastMCP("bidbox")
         "for a specific OCDS tender or award by its OCID."
     ),
 )
-def inspect_tender(ocid: str) -> TenderInspectionResult:
-    """Inspect a tender/award by OCID."""
-    return inspect_tender_tool(ocid=ocid)
+def inspect_tender(ocid: str, award_id: str | None = None) -> TenderInspectionResult:
+    return inspect_tender_tool(ocid=ocid, award_id=award_id)
 
 
 @mcp.tool(
@@ -54,9 +53,10 @@ def investigate_supplier(supplier_id: str) -> SupplierInvestigationResult:
 def benchmark_award(
     ocid: str,
     min_comparables: int = 3,
+    award_id: str | None = None,
 ) -> AwardBenchmarkResult:
     """Benchmark award price against historical peer comparables."""
-    return benchmark_award_tool(ocid=ocid, min_comparables=min_comparables)
+    return benchmark_award_tool(ocid=ocid, min_comparables=min_comparables, award_id=award_id)
 
 
 @mcp.tool(

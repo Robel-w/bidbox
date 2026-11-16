@@ -11,15 +11,18 @@ from bidbox_mcp.schemas.tender import AwardBenchmarkResult
 def benchmark_award_tool(
     ocid: str,
     min_comparables: int = 3,
+    award_id: str | None = None,
 ) -> AwardBenchmarkResult:
     """Benchmark award price against historical peers using robust stats (median, MAD, IQR)."""
-    rec = get_award(ocid)
+    rec = get_award(ocid, award_id=award_id)
     if not rec:
         raise ValueError(f"Procurement record with OCID '{ocid}' not found.")
 
     class_id = rec.get("classification_id", "")
-    currency = rec.get("currency", "KES")
-    target_amount = float(rec.get("amount", 0.0))
+    currency = rec.get("currency")
+    if rec.get("amount") is None or not currency:
+        raise ValueError("Award value or currency not reported; no benchmark can be computed")
+    target_amount = float(rec["amount"])
 
     level = "exact"
     tried = [level]
@@ -37,7 +40,7 @@ def benchmark_award_tool(
         FindingSource(
             ocid=rec["ocid"],
             award_id=rec["award_id"],
-            field_path="awards[0].value.amount",
+            field_path=f"awards[{rec['award_position']}].value.amount",
             source_url=rec.get("source_url", "data/fixtures/releases.json"),
         )
     ]

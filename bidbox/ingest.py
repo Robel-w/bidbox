@@ -32,6 +32,7 @@ def connect_store(read_only: bool = False):
     if not read_only:
         path.parent.mkdir(parents=True, exist_ok=True)
     connection = duckdb.connect(str(path), read_only=read_only)
+    connection.execute("SET enable_progress_bar = false")
     if not read_only:
         initialize(connection)
     return connection

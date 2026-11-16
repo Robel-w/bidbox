@@ -1,7 +1,9 @@
 """Independent evidence review and borrowed-source verification."""
 
 import json
-from pathlib import PurePosixPath
+import re
+
+from bidbox.data import get_process
 from pathlib import Path
 from typing import Annotated
 
@@ -33,11 +35,15 @@ class ReviewResponse(BaseModel):
 
 def _cited_value(record: dict, field_path: str):
 	"""Resolve the small OCDS field-path subset emitted by BidBox tools."""
-	if field_path == "awards[0].value.amount":
-		return record.get("awards", [{}])[0].get("value", {}).get("amount")
-	if field_path == "awards[0].suppliers":
-		return record.get("awards", [{}])[0].get("suppliers")
-	return None
+	match = re.fullmatch(r"awards\[(\d+)\]\.(value.amount|suppliers)", field_path)
+	if not match:
+		return None
+	awards = record.get("awards") or []
+	position = int(match[1])
+	if position >= len(awards):
+		return None
+	award = awards[position]
+	return (award.get("value") or {}).get("amount") if match[2] == "value.amount" else award.get("suppliers")
 
 
 async def review_evidence(state: dict) -> dict:
@@ -57,27 +63,36 @@ async def review_evidence(state: dict) -> dict:
 		verified = True
 		for source in finding["sources"]:
 			try:
-				if PurePosixPath(source["source_url"]).name != "releases.json":
-					raise ValueError("source is outside the allowed fixture")
-				reader = "read_text_file" if "read_text_file" in tools else "read_file"
-				if _FIXTURE_RECORDS is None:
-					raw = await call_tool(
-						tools,
-						state["run_id"],
-						reader,
-						{"path": str(Path("data/fixtures/releases.json").resolve())},
-					)
-					_FIXTURE_RECORDS = raw if isinstance(raw, list) else json.loads(raw)
-				records = _FIXTURE_RECORDS
-				match = next((item for item in records if item.get("ocid") == source["ocid"]), None)
-				if not match:
-					raise ValueError("cited OCID not found in fixture")
+				process = get_process(source["ocid"])
+				if process:
+					if source["source_url"] != process["source_url"]:
+						raise ValueError("citation URL differs from the downloaded release provenance")
+					match = process["record"]
+				else:
+					allowed = {"data/fixtures/releases.json", str(Path("data/fixtures/releases.json").resolve())}
+					if source["source_url"] not in allowed:
+						raise ValueError("cited live OCID not found; no synthetic fallback")
+					reader = "read_text_file" if "read_text_file" in tools else "read_file"
+					if _FIXTURE_RECORDS is None:
+						raw = await call_tool(tools, state["run_id"], reader, {"path": str(Path("data/fixtures/releases.json").resolve())})
+						_FIXTURE_RECORDS = raw if isinstance(raw, list) else json.loads(raw)
+					match = next((item for item in _FIXTURE_RECORDS if item.get("ocid") == source["ocid"]), None)
+					if not match:
+						raise ValueError("cited OCID not found in explicit sandbox fixture")
+				award_ids = {str(award.get("id")) for award in match.get("awards") or []}
+				if source.get("award_id") not in award_ids:
+					raise ValueError("cited award ID not found in the source process")
+				position = re.match(r"awards\[(\d+)\](?:\.|$)", source["field_path"])
+				if not position or int(position[1]) >= len(match.get("awards") or []) or str(match["awards"][int(position[1])].get("id")) != source["award_id"]:
+					raise ValueError("cited award field position does not match award ID")
 				if "claim_value" in finding:
 					cited_value = _cited_value(match, source["field_path"])
 					if cited_value != finding["claim_value"]:
 						raise ValueError(
 							f"cited field value {cited_value!r} does not match claim {finding['claim_value']!r}"
 						)
+				if process:
+					append_audit_event(state["run_id"], "agent", "source_verification", {"source": source}, {"verified": True, "basis": "archived downloaded release", "ingested_at": process["ingested_at"]}, origin="live-portal")
 			except Exception as exc:
 				verified = False
 				limitations.append(f"Source verification skipped or failed: {exc}")
@@ -123,5 +138,5 @@ async def review_evidence(state: dict) -> dict:
 		"reason": reason,
 		"drops": dropped,
 	}
-	append_audit_event(state["run_id"], "agent", "evidence_review", {}, summary, status="error" if status == "failed" else "ok")
+	append_audit_event(state["run_id"], "agent", "evidence_review", {}, {**summary, "findings": reviewed, "contract": state.get("tender"), "limitations": limitations}, status="error" if status == "failed" else "ok")
 	return {"findings": reviewed, "dropped_findings": dropped, "review_summary": summary, "limitations": limitations, "insufficient_evidence": not bool(reviewed)}

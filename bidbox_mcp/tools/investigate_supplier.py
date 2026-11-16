@@ -16,8 +16,12 @@ def investigate_supplier_tool(supplier_id: str) -> SupplierInvestigationResult:
     if not awards and supplier_id != norm_id:
         awards = awards_by_supplier(supplier_id)
 
+    if not awards:
+        raise ValueError("Supplier not found in the selected data; no synthetic fallback")
+    if any(a.get("amount") is None or not a.get("currency") for a in awards) or len({a["currency"] for a in awards}) != 1:
+        raise ValueError("Supplier award values are missing or use different currencies; no total can be computed")
     award_count = len(awards)
-    total_val = sum(float(a.get("amount", 0.0)) for a in awards)
+    total_val = sum(float(a["amount"]) for a in awards)
     sup_name = awards[0]["supplier_name"] if awards else "Unknown Supplier"
     currency = awards[0]["currency"] if awards else "KES"
 
@@ -33,19 +37,8 @@ def investigate_supplier_tool(supplier_id: str) -> SupplierInvestigationResult:
             FindingSource(
                 ocid=a["ocid"],
                 award_id=a["award_id"],
-                field_path="awards[0].suppliers",
+                field_path=f"awards[{a['award_position']}].suppliers",
                 source_url=a.get("source_url", "data/fixtures/releases.json"),
-            )
-        )
-
-    # Fallback source if supplier has 0 awards
-    if not sources:
-        sources.append(
-            FindingSource(
-                ocid="N/A",
-                award_id="N/A",
-                field_path="suppliers",
-                source_url="data/fixtures/releases.json",
             )
         )
 
