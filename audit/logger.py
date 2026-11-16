@@ -77,7 +77,8 @@ def append_audit_event(
         "tool": tool,
         "inputs": _safe_serialize(inputs or {}),
         "outputs": _safe_serialize(outputs),
-        "duration_ms": round(duration_ms, 2),
+        # float() so the hashed value matches what the AuditEvent model serialises (120 vs 120.0).
+        "duration_ms": float(round(duration_ms, 2)),
         "tokens": tokens,
         "status": status,
         "origin": origin,

@@ -2,6 +2,7 @@
 
 import json
 import os
+import time
 from typing import Any
 
 from audit.events import track_tokens
@@ -19,8 +20,10 @@ async def ask_json(
         api_key=os.getenv("OPENAI_API_KEY", "local-not-required"),
         base_url=os.getenv("LLM_BASE_URL", "http://localhost:11434/v1"),
     )
+    model = os.getenv("LLM_MODEL", "qwen2.5:7b-instruct")
+    started = time.perf_counter()
     response = await client.chat.completions.create(
-        model=os.getenv("LLM_MODEL", "qwen2.5:7b-instruct"),
+        model=model,
         temperature=0,
         response_format={"type": "json_object"},
         messages=[
@@ -29,13 +32,13 @@ async def ask_json(
         ],
     )
     usage = response.usage
-    if usage:
-        track_tokens(
-            run_id,
-            int(usage.prompt_tokens or 0),
-            int(usage.completion_tokens or 0),
-            os.getenv("LLM_MODEL", "qwen2.5:7b-instruct"),
-        )
+    track_tokens(
+        run_id,
+        usage.prompt_tokens if usage else None,
+        usage.completion_tokens if usage else None,
+        getattr(response, "model", None) or model,
+        latency_ms=(time.perf_counter() - started) * 1000,
+    )
     content = response.choices[0].message.content or "{}"
     try:
         return json.loads(content)

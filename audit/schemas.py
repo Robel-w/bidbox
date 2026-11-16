@@ -51,5 +51,5 @@ class RunCost(BaseModel):
     completion_tokens: int = 0
     cost_usd: float = 0.0
     cost_per_run: float = 0.0
-    cost_display: str = "$0.00"
-    note: str = "Local model (open weights): $0.00"
+    cost_display: str = "not configured"
+    note: str = "LLM_PRICE_IN / LLM_PRICE_OUT not set"

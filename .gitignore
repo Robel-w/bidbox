@@ -14,3 +14,4 @@ data/fixtures/*
 !data/fixtures/.gitkeep
 reports/audit/*
 !reports/audit/mcp-test-run.jsonl
+runs/*

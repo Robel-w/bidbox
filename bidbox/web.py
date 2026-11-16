@@ -140,7 +140,7 @@ def run_detail(run_id: str) -> dict:
         "dropped_findings": report.get("dropped_findings", []),
         "limitations": report.get("data_limitations", []),
         "tokens": cost.total_tokens,
-        "cost_per_run": cost.cost_per_run,
+        "cost_per_run": None if cost.cost_display == "not configured" else cost.cost_per_run,
         "cost_note": cost.note,
         "report_path": str(report_path),
         "chain_error": error,

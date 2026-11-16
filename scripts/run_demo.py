@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from agent.graph import build_graph
 from audit.logger import get_audit_logs, verify_chain
+from audit.metrics import write_run_metrics
 
 
 async def run(ocid: str, approver: str | None, role: str, approval_mode: str = "cli", approval_timeout: int = 900) -> None:
@@ -42,6 +43,7 @@ async def run(ocid: str, approver: str | None, role: str, approval_mode: str = "
 	path = f"reports/audit/{run_id}.jsonl"
 	print(f"report: {report.get('markdown_path', 'not generated')}")
 	print(f"audit: {verify_chain(path)}; events={len(get_audit_logs(run_id))}")
+	print(f"metrics: {write_run_metrics(run_id)}")
 
 
 def main() -> None:

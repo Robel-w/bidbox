@@ -4,6 +4,7 @@ import os
 from typing import Any, Literal, cast
 
 from audit.logger import append_audit_event, get_audit_logs
+from audit.metrics import env_number
 from audit.schemas import ApprovalDecision, RunCost
 
 
@@ -130,24 +131,37 @@ def require_report_approval(run_id: str, approver_name: str | None) -> dict[str,
 
 def track_tokens(
     run_id: str,
-    prompt_tokens: int,
-    completion_tokens: int,
+    prompt_tokens: int | None,
+    completion_tokens: int | None,
     model: str = "",
+    latency_ms: float = 0.0,
 ) -> dict[str, Any]:
-    """Record LLM token consumption in the audit log."""
-    total = prompt_tokens + completion_tokens
-    token_data = {
-        "prompt_tokens": prompt_tokens,
-        "completion_tokens": completion_tokens,
-        "total_tokens": total,
-    }
+    """Record one LLM call; token counts are None when the provider did not report usage."""
+    reported = prompt_tokens is not None and completion_tokens is not None
+    token_data = (
+        {
+            "prompt_tokens": int(prompt_tokens or 0),
+            "completion_tokens": int(completion_tokens or 0),
+            "total_tokens": int(prompt_tokens or 0) + int(completion_tokens or 0),
+        }
+        if reported
+        else None
+    )
     event = append_audit_event(
         run_id=run_id,
         actor="agent",
         tool="llm_call",
         inputs={"model": model},
-        outputs={"tokens": token_data},
+        outputs={
+            "input_tokens": prompt_tokens,
+            "output_tokens": completion_tokens,
+            "latency_ms": round(latency_ms, 2),
+            "usage": "reported" if reported else "not reported",
+            "tokens": token_data,
+        },
+        duration_ms=latency_ms,
         tokens=token_data,
+        status="ok",
     )
     return event.model_dump()
 
@@ -172,17 +186,9 @@ def get_run_cost(run_id: str) -> RunCost:
     total_tokens = total_prompt + total_comp
 
     model = os.getenv("LLM_MODEL", "qwen2.5:7b-instruct")
-    price_in_str = os.getenv("COST_PER_1M_INPUT_TOKENS", "0.0")
-    price_out_str = os.getenv("COST_PER_1M_OUTPUT_TOKENS", "0.0")
+    price_in, price_out = env_number("LLM_PRICE_IN"), env_number("LLM_PRICE_OUT")
 
-    try:
-        price_in = float(price_in_str)
-        price_out = float(price_out_str)
-    except ValueError:
-        price_in = 0.0
-        price_out = 0.0
-
-    if price_in == 0.0 and price_out == 0.0:
+    if not (price_in["configured"] and price_out["configured"]):
         return RunCost(
             run_id=run_id,
             total_tokens=total_tokens,
@@ -190,13 +196,13 @@ def get_run_cost(run_id: str) -> RunCost:
             completion_tokens=total_comp,
             cost_usd=0.0,
             cost_per_run=0.0,
-            cost_display="$0.00",
-            note=f"Local model (Ollama / {model}): $0.00 (open weights)",
+            cost_display="not configured",
+            note=f"Model {model}: LLM_PRICE_IN / LLM_PRICE_OUT not set, so no cost is shown.",
         )
 
     cost_usd = round(
-        (total_prompt * price_in + total_comp * price_out) / 1_000_000.0,
-        4,
+        (total_prompt * price_in["value"] + total_comp * price_out["value"]) / 1_000_000.0,
+        6,
     )
     return RunCost(
         run_id=run_id,
@@ -205,6 +211,6 @@ def get_run_cost(run_id: str) -> RunCost:
         completion_tokens=total_comp,
         cost_usd=cost_usd,
         cost_per_run=cost_usd,
-        cost_display=f"${cost_usd:.4f}",
-        note=f"API pricing ({model}): ${cost_usd:.4f}",
+        cost_display=f"${cost_usd:.6f}",
+        note=f"{model} at ${price_in['value']}/1M in, ${price_out['value']}/1M out (LLM tokens only)",
     )

@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from agent.graph import build_graph
 from audit.logger import get_audit_logs
+from audit.metrics import write_run_metrics
 from evaluation.metrics import aggregate, score_case
 
 
@@ -43,6 +44,7 @@ async def run_case(case: dict[str, Any], runs: int) -> list[dict[str, Any]]:
 			result = await graph.ainvoke(Command(resume={"approver_name": "eval-harness (automated)", "approver_role": "automated evaluation", "reason": "NOT a human approval; evaluation only"}), config)
 		findings = result.get("findings", [])
 		logs = get_audit_logs(run_id)
+		write_run_metrics(run_id)
 		results.append({
 			"attempt": attempt,
 			"findings": findings,
