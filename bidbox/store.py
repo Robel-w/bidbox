@@ -208,17 +208,29 @@ def get_award(
     return dict(zip(cols, result))
 
 
+def broader_cpv_prefixes(classification_id: str) -> list[str]:
+    """CPV prefixes from the next level up to the division (2 digits), narrowest first."""
+    digits = classification_id.split("-")[0].strip()
+    if not digits.isdigit():
+        return []
+    significant = digits.rstrip("0")
+    return [significant[:n] for n in range(len(significant) - 1, 1, -1)]
+
+
 def awards_by_category(
     classification_id: str,
     currency: str = "KES",
     conn: duckdb.DuckDBPyConnection | None = None,
+    exclude_ocid: str | None = None,
+    prefix: bool = False,
 ) -> list[dict[str, Any]]:
-    """Fetch all awards matching classification and currency."""
+    """Fetch awards in a classification (or CPV prefix) and currency, optionally excluding one OCID."""
     c = conn or get_default_connection()
     ensure_store_loaded(c)
+    match = "classification_id LIKE ? || '%'" if prefix else "classification_id = ?"
     cursor = c.execute(
-        "SELECT * FROM awards_index WHERE classification_id = ? AND currency = ?",
-        [classification_id, currency],
+        f"SELECT * FROM awards_index WHERE {match} AND currency = ? AND ocid IS DISTINCT FROM ?",
+        [classification_id, currency, exclude_ocid],
     )
     cols = [desc[0] for desc in c.description]
     return [dict(zip(cols, row)) for row in cursor.fetchall()]

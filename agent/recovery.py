@@ -2,26 +2,37 @@
 
 from audit.logger import append_audit_event
 
-from .investigator import call_tool, finding_from_tool_output, load_tools
+
+def _benchmark_limitation(output: dict) -> str:
+	levels = ", ".join(output.get("classification_levels_tried") or ["exact"])
+	return (
+		f"Price benchmark not possible: {output.get('comparable_count', 0)} peer award(s) found "
+		f"(classification levels tried: {levels}); {output.get('min_comparables', 3)} required. "
+		"No price observation is made for this award."
+	)
 
 
 async def recover(state: dict) -> dict:
-	"""Retry once with relaxed benchmark parameters, otherwise record a limitation."""
-	if state.get("recovery_attempted"):
-		append_audit_event(state["run_id"], "agent", "recovery", {}, {"status": "exhausted"})
-		return {"limitations": list(state.get("limitations", [])) + ["Recovery exhausted; evidence was insufficient for a supported flag."], "insufficient_evidence": True}
-	tools = await load_tools()
-	outputs = list(state.get("tool_outputs", []))
-	findings = list(state.get("draft_findings", []))
-	try:
-		result = await call_tool(tools, state["run_id"], "benchmark_award", {"ocid": state["ocid"], "min_comparables": 1})
-		value = result.model_dump() if hasattr(result, "model_dump") else result
-		outputs.append({"tool": "benchmark_award", "inputs": {"min_comparables": 1}, "output": value})
-		draft = finding_from_tool_output(value)
-		if draft:
-			findings.append(draft)
-		append_audit_event(state["run_id"], "agent", "recovery", {"min_comparables": 1}, {"status": "retried"})
-		return {"tool_outputs": outputs, "draft_findings": findings, "recovery_attempted": True, "recovery_needed": False}
-	except Exception as exc:
-		append_audit_event(state["run_id"], "agent", "recovery", {}, {"status": "failed", "error": str(exc)})
-		return {"recovery_attempted": True, "limitations": list(state.get("limitations", [])) + [f"Recovery failed: {exc}"], "insufficient_evidence": True}
+	"""Record why evidence is insufficient; never relax the comparability threshold."""
+	limitations = list(state.get("limitations", []))
+	added: list[str] = []
+	for item in state.get("tool_outputs", []):
+		output = item.get("output") or {}
+		if item.get("tool") == "benchmark_award" and output.get("verdict") == "insufficient_comparables":
+			added.append(_benchmark_limitation(output))
+	for flag in state.get("tender", {}).get("data_quality_flags", []):
+		added.append(f"Data-quality flag on the award record: {flag}. Related observations need manual verification.")
+	limitations.extend(item for item in added if item not in limitations)
+	append_audit_event(
+		state["run_id"],
+		"agent",
+		"recovery",
+		{"trigger": "insufficient_comparables_or_data_quality"},
+		{"status": "limitations_recorded", "limitations": added},
+	)
+	return {
+		"recovery_attempted": True,
+		"recovery_needed": False,
+		"limitations": limitations,
+		"insufficient_evidence": not state.get("findings"),
+	}

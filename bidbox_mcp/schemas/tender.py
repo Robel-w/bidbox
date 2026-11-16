@@ -35,6 +35,9 @@ class AwardBenchmarkResult(BaseModel):
     currency: str = "KES"
     target_amount: float
     comparable_count: int
+    classification_level: str = "exact"
+    classification_levels_tried: list[str] = Field(default_factory=list)
+    min_comparables: int = 3
     median: float | None = None
     mad: float | None = None
     modified_z_score: float | None = None
