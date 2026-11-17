@@ -122,9 +122,30 @@ def create_investigation_file(
 
 
 def main() -> None:
-    """Load the award index once, then serve FastMCP over standard I/O."""
+    """Load the award index once, register connector tools, then serve FastMCP over stdio."""
     ensure_store_loaded()
+    register_connector_tools()
     mcp.run(transport="stdio")
+
+
+def register_connector_tools() -> int:
+    """Expose every connector action as an MCP tool; the planner discovers them via tools/list."""
+    from typing import Any
+
+    from bidbox.connectors.registry import load_registry
+
+    registry = load_registry()
+    for spec in registry.tool_specs():
+        def make_connector_tool(spec=spec):
+            def connector_tool(run_id: str, params: dict[str, Any] | None = None) -> dict:
+                connector = load_registry().get(spec["connector"])
+                result = connector.perform(str(run_id), spec["action"], dict(params or {}))
+                return {"connector": spec["connector"], "action": spec["action"], "result": result}
+
+            return connector_tool
+
+        mcp.tool(name=spec["name"], description=spec["description"])(make_connector_tool())
+    return len(registry.tool_specs())
 
 
 if __name__ == "__main__":

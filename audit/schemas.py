@@ -18,13 +18,13 @@ class AuditEvent(BaseModel):
     seq: int
     ts_utc: str
     run_id: str
-    actor: Literal["agent", "human", "tool"]
+    actor: Literal["agent", "human", "tool", "connector"]
     tool: str | None = None
     inputs: dict[str, Any] = Field(default_factory=dict)
     outputs: Any = None
     duration_ms: float = 0.0
     tokens: dict[str, int] | None = None
-    status: Literal["ok", "error", "timeout", "retry"] | None = None
+    status: Literal["ok", "error", "timeout", "retry", "rate_limited", "planned"] | None = None
     origin: str | None = None
     prev_hash: str
     hash: str

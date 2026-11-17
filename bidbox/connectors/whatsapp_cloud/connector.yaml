@@ -1,0 +1,33 @@
+name: whatsapp_cloud
+kind: messaging
+target_mode: sandbox          # intent: Meta WhatsApp Cloud API sandbox first
+description: "PLANNED: WhatsApp Cloud API notifications (approval links, report copies). Manifest and adapter interface only; no behaviour is implemented yet."
+credentials: [WA_PHONE_NUMBER_ID, WA_ACCESS_TOKEN]
+data_class: personal
+actions:
+  - name: send_approval_link
+    description: "PLANNED: WhatsApp an approval link plus case id."
+    consequential: false
+    input_schema:
+      type: object
+      properties:
+        to: {type: string, description: "Recipient WhatsApp number"}
+        link: {type: string, description: "Signed approval link"}
+        case_id: {type: string, description: "Short case id"}
+      required: [to, link, case_id]
+  - name: send_report_copy
+    description: "PLANNED: WhatsApp case content; consequential once implemented."
+    consequential: true
+    input_schema:
+      type: object
+      properties:
+        to: {type: string, description: "Recipient WhatsApp number"}
+        case_id: {type: string, description: "Short case id"}
+        summary: {type: string, description: "Report summary text"}
+      required: [to, case_id, summary]
+limits: {timeout_s: 30, retries: 1, rate_per_min: 30}
+field_allowlist: [case_id, link, status, recipients]
+next_week_checklist:
+  - "Create a Meta developer app and a WhatsApp business account"
+  - "Set WA_PHONE_NUMBER_ID and WA_ACCESS_TOKEN on the host"
+  - "[FILL by human: who owns the Meta business account]"

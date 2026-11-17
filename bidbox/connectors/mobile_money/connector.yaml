@@ -1,0 +1,21 @@
+name: mobile_money
+kind: payments
+target_mode: sandbox          # intent: M-Pesa-style Daraja sandbox first
+description: "PLANNED: mobile-money payments (M-Pesa style) for fee verification or payment-linked notifications. Manifest and adapter interface only; no payment behaviour exists. Payment actions are always consequential."
+credentials: [MM_CONSUMER_KEY, MM_CONSUMER_SECRET]
+data_class: personal
+actions:
+  - name: query_transaction
+    description: "PLANNED: look up one transaction by reference. Consequential once implemented."
+    consequential: true
+    input_schema:
+      type: object
+      properties:
+        reference: {type: string, description: "Transaction reference"}
+      required: [reference]
+limits: {timeout_s: 30, retries: 1, rate_per_min: 30}
+field_allowlist: [reference, status, amount, currency]
+next_week_checklist:
+  - "Register on the provider's developer portal and get sandbox keys"
+  - "Agree the payment reconciliation workflow with finance"
+  - "[FILL by human: finance owner of the paybill/till]"

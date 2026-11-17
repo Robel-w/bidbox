@@ -1,0 +1,22 @@
+name: rest_connector
+kind: data_source
+target_mode: live
+description: "Generic REST integration: base URL + auth header from env, endpoints mapped to actions in YAML. Covers most ministry/county REST and mobile-money style APIs with no new code."
+credentials: [REST_CONNECTOR_AUTH_HEADER]   # env NAME whose value is the full auth header (e.g. "Bearer x")
+data_class: internal
+actions:
+  - name: fetch
+    description: "Fetch a mapped endpoint; the endpoint key must exist in mapping.yaml."
+    consequential: false
+    input_schema:
+      type: object
+      properties:
+        endpoint: {type: string, description: "Endpoint key from mapping.yaml"}
+        query: {type: object, description: "Query parameters"}
+      required: [endpoint]
+limits: {timeout_s: 30, retries: 1, rate_per_min: 60}
+field_allowlist: []
+next_week_checklist:
+  - "Set REST_CONNECTOR_BASE_URL and REST_CONNECTOR_AUTH_HEADER on the host"
+  - "Fill mapping.yaml with the institution's real endpoints and field names"
+  - "[FILL by human: who grants API access at the institution]"

@@ -1,0 +1,21 @@
+name: sms_inbound_approval
+kind: messaging
+target_mode: sandbox          # intent: reply YES/NO by SMS or a USSD prompt
+description: "PLANNED: inbound SMS/USSD approvals (reply YES or NO). Manifest and adapter interface only; no inbound provider, parsing, or identity binding is implemented yet."
+credentials: [AT_USERNAME, AT_API_KEY]
+data_class: personal
+actions:
+  - name: poll_replies
+    description: "PLANNED: poll inbound replies for YES/NO approvals bound to a signed link token."
+    consequential: false
+    input_schema:
+      type: object
+      properties:
+        case_id: {type: string, description: "Short case id"}
+      required: [case_id]
+limits: {timeout_s: 30, retries: 1, rate_per_min: 30}
+field_allowlist: [case_id, reply, from_masked]
+next_week_checklist:
+  - "Enable an inbound SMS short code or USSD channel with the provider"
+  - "Define how a reply is cryptographically bound to the signed link token"
+  - "[FILL by human: who owns the short code at the institution]"

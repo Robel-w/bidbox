@@ -1,0 +1,23 @@
+name: sql_readonly_connector
+kind: records
+target_mode: live
+description: "Read-only SQL access with an allow-list of query templates in YAML. No free SQL from the model. Covers ministry and hospital-style databases."
+credentials: [SQL_READONLY_PASSWORD]   # env NAME only; user comes from SQL_READONLY_USER
+data_class: internal
+actions:
+  - name: query
+    description: "Run one named template from queries.yaml with bound parameters. Free SQL is refused."
+    consequential: false
+    input_schema:
+      type: object
+      properties:
+        name: {type: string, description: "Template name from queries.yaml"}
+        params: {type: object, description: "Named parameters bound to the template"}
+      required: [name]
+limits: {timeout_s: 30, retries: 1, rate_per_min: 60}
+field_allowlist: []
+next_week_checklist:
+  - "Provision a read-only DB role for BidBox at the institution"
+  - "Set SQL_READONLY_DSN / SQL_READONLY_USER / SQL_READONLY_PASSWORD on the host"
+  - "Fill queries.yaml with approved templates over allow-listed tables or views"
+  - "[FILL by human: DBA who approves the read-only role]"

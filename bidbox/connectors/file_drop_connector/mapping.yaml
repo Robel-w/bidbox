@@ -1,0 +1,3 @@
+# Column mapping for dropped CSV exports. required columns must exist; extra columns are kept.
+required: [ocid, title, buyer_name, amount, currency]
+optional: [supplier_name, award_date, source_url]

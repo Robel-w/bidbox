@@ -1,0 +1,21 @@
+name: county_ifmis
+kind: registry
+target_mode: live           # intent: a county/ ministry IFMIS production database
+description: "PLANNED: county/ ministry IFMIS integration. Manifest and adapter interface only; use rest_connector or sql_readonly_connector configured for the specific IFMIS until this adapter exists."
+credentials: [IFMIS_API_TOKEN]
+data_class: internal
+actions:
+  - name: fetch_award
+    description: "PLANNED: fetch one award record by reference from IFMIS."
+    consequential: false
+    input_schema:
+      type: object
+      properties:
+        reference: {type: string, description: "IFMIS award reference"}
+      required: [reference]
+limits: {timeout_s: 30, retries: 1, rate_per_min: 30}
+field_allowlist: [reference, title, amount, currency, supplier_name, status]
+next_week_checklist:
+  - "Identify which county/ ministry IFMIS instance and its API or DB access route"
+  - "Request a read-only integration account"
+  - "[FILL by human: who sponsors access at the county/ ministry]"

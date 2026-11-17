@@ -1,0 +1,30 @@
+name: file_drop_connector
+kind: file_drop
+target_mode: sandbox          # institutions usually start with CSV/Excel exports
+description: "Imports CSV (Excel planned) exports from systems with no API. Columns validated against mapping.yaml. Sandbox until pointed at a real drop folder."
+credentials: []
+data_class: internal
+actions:
+  - name: list_files
+    description: "List importable CSV files in the drop folder with row counts."
+    consequential: false
+    input_schema:
+      type: object
+      properties: {}
+      required: []
+  - name: read_file
+    description: "Read one CSV file from the drop folder, validated against the column mapping."
+    consequential: false
+    input_schema:
+      type: object
+      properties:
+        file: {type: string, description: "File name inside the drop folder", example: "awards_export.csv"}
+        limit: {type: integer, description: "Max rows to return (default 50)"}
+      required: [file]
+limits: {timeout_s: 30, retries: 0, rate_per_min: 60}
+field_allowlist: []
+next_week_checklist:
+  - "Agree a shared drop folder (or SFTP account) with the source-system owner"
+  - "Set FILE_DROP_DIR on the host to that folder"
+  - "Fill mapping.yaml with the real export columns"
+  - "[FILL by human: who exports and drops the files at the institution]"

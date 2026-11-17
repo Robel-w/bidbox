@@ -1,0 +1,12 @@
+# Map institution endpoints to connector actions. Only endpoints listed here are reachable.
+base_url_env: REST_CONNECTOR_BASE_URL
+endpoints:
+  example_status:
+    path: /status
+    method: GET
+    fields: [status, version]        # only these response fields may leave the system
+# Add real endpoints here, e.g.:
+#   award_list:
+#     path: /api/v1/awards
+#     method: GET
+#     fields: [id, title, amount, currency, supplier]

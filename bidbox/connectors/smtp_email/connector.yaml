@@ -1,0 +1,33 @@
+name: smtp_email
+kind: messaging
+target_mode: live
+description: "SMTP email notifications: approval requests and report copies. Real sends only; never faked. not_configured when the host has no SMTP credentials."
+credentials: [SMTP_USERNAME, SMTP_PASSWORD]
+data_class: personal
+actions:
+  - name: send_approval_link
+    description: "Email one approver a signed, expiring, single-use approval link plus the case id. No case content."
+    consequential: false
+    input_schema:
+      type: object
+      properties:
+        to: {type: string, description: "Approver email address"}
+        link: {type: string, description: "The signed approval link"}
+        case_id: {type: string, description: "Short case id"}
+      required: [to, link, case_id]
+  - name: send_report_copy
+    description: "Email case content to a recipient. Consequential: needs a recorded human approval."
+    consequential: true
+    input_schema:
+      type: object
+      properties:
+        to: {type: string, description: "Recipient email address"}
+        case_id: {type: string, description: "Short case id"}
+        summary: {type: string, description: "Report summary text"}
+      required: [to, case_id, summary]
+limits: {timeout_s: 30, retries: 1, rate_per_min: 30}
+field_allowlist: [case_id, link, status, recipients, message_id]
+next_week_checklist:
+  - "Create a dedicated mailbox or SMTP relay account for BidBox"
+  - "Set SMTP_HOST / SMTP_PORT / SMTP_USERNAME / SMTP_PASSWORD on the host"
+  - "[FILL by human: IT owner of the relay account]"

@@ -1,0 +1,10 @@
+# Named, parameterised query templates. Only these run; free SQL from the model is refused.
+# Only allow-listed tables or views may appear. Parameters bind by name (:name).
+allow_listed_tables: [procurement_records, fiscal_membership]
+templates:
+  awards_by_buyer:
+    sql: "SELECT ocid, title, buyer_name, award_count, tender_amount, currency FROM procurement_records WHERE buyer_name = :buyer LIMIT 50"
+    description: "Award-bearing processes for one buyer name"
+  fiscal_membership:
+    sql: "SELECT ocid, fiscal_year FROM fiscal_membership WHERE ocid = :ocid LIMIT 20"
+    description: "Fiscal-year membership for one ocid"

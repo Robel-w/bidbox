@@ -1,0 +1,30 @@
+name: ocds_source
+kind: data_source
+target_mode: live          # intent: the Kenya PPIP OCDS feed; badge shows what was actually verified
+description: "The real OCDS publisher feed (Kenya PPIP) or any OCDS publisher by URL, served from the local DuckDB ingest store."
+credentials: []            # the public feed needs no credentials
+data_class: public
+actions:
+  - name: search_awards
+    description: "Search award-bearing contract processes by ocid, buyer or title. Returns origin and fiscal years per hit."
+    consequential: false
+    input_schema:
+      type: object
+      properties:
+        query: {type: string, description: "Free text: ocid, buyer name or title"}
+        limit: {type: integer, description: "Max hits (1-50)"}
+      required: []
+  - name: get_award
+    description: "Read one contract process record by ocid with its origin and source URL."
+    consequential: false
+    input_schema:
+      type: object
+      properties:
+        ocid: {type: string, description: "The OCDS ocid of the process", example: "ocds-5whusi-310248-GWS/QUOTE/002/2026/2027"}
+      required: [ocid]
+limits: {timeout_s: 30, retries: 1, rate_per_min: 120}
+field_allowlist: []        # publisher data is public; nothing filtered
+next_week_checklist:
+  - "Confirm the PPIP bulk-download URL with the publisher (data.open-contracting.org registry page)"
+  - "Schedule a nightly `bidbox ingest --all-fy` on the host"
+  - "[FILL by human: who owns the PPIP account at the institution]"
