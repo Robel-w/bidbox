@@ -60,7 +60,9 @@ class ConnectorEntry:
             "credentials": [{"name": name, "present": bool(os_present(name))}
                             for name in manifest.credentials],
             "actions": [{"name": a.name, "consequential": a.consequential,
-                         "approval_required": a.consequential} for a in manifest.actions],
+                         "approval_required": a.consequential,
+                         "mode": a.resolved_mode(manifest.kind),
+                         "enforced_at": "Connector.perform → require_connector_approval" if a.consequential else None} for a in manifest.actions],
             "field_allowlist": manifest.field_allowlist,
             "next_week_checklist": manifest.next_week_checklist,
             "limits": manifest.limits.model_dump(),
@@ -140,6 +142,7 @@ class Registry:
                 specs.append({"name": tool_name, "description": description,
                               "connector": entry.name, "action": action.name,
                               "consequential": action.consequential, "planned": planned,
+                              "mode": action.resolved_mode(entry.manifest.kind),
                               "input_schema": action.input_schema})
         return specs
 

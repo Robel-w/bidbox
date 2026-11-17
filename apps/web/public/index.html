@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#03195b">
   <title>BidBox · Committee review</title>
   <link rel="stylesheet" href="/style.css">
+  <script src="/strings.js" defer></script>
   <script src="/app.js" defer></script>
 </head>
 <body>
@@ -17,18 +18,38 @@
         <a href="#ask" data-nav="ask">Review</a>
         <a href="#economics" data-nav="economics">Economics</a>
         <a href="#integrations" data-nav="integrations">Integrations</a>
+        <a href="/connectors">Connectors</a>
+        <a href="#architecture" data-nav="architecture">Architecture</a>
+        <a href="#history" data-nav="history">Replay archive</a>
       </nav>
       <span id="approval-header" class="header-note" hidden>Independent review</span>
     </div>
   </header>
+  <div class="workspace-banner" aria-hidden="true"><canvas id="dither-canvas" data-seed="7" data-h="180"></canvas></div>
   <main id="main" class="page" tabindex="-1">
     <div id="data-status" class="data-status" role="status" aria-live="polite">Loading publisher data status…</div>
     <div id="page-notice" class="notice" role="status" aria-live="polite" hidden></div>
     <section id="ask-screen" data-screen="ask" aria-labelledby="ask-title">
       <div class="intro">
-        <p class="eyebrow">Evidence before decisions</p>
+        <p class="eyebrow">Evidence before decisions · Office of the Auditor-General</p>
         <h1 id="ask-title">A second look.<br>A clearer record.</h1>
         <p class="intro-copy">Check the evidence. Understand the limits.<br>Leave a decision others can follow.</p>
+      </div>
+
+      <div class="card regional-card" style="margin-bottom: 24px; padding: 20px 22px; border-left: 3px solid var(--accent);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+          <strong>Regional Audit Officer · Mombasa &amp; Kilifi Hub</strong>
+          <span class="status-chip ok">780 auditee clients · 84 staff (~9 clients / officer)</span>
+        </div>
+        <p class="helper" style="margin: 4px 0 14px;">Covers regional schools, referral hospitals, water companies, and vocational centres. The procurement evaluation committee has 30 days under the law to check awards; BidBox provides the automated first look before the Approver signs off via SMS.</p>
+        <div class="examples-label" style="margin: 0 0 8px;">Target auditee sectors (click to filter live records):</div>
+        <div id="sector-chips" class="example-chips" style="margin-bottom: 0;">
+          <button type="button" class="example-chip sector-btn" data-q="Kilifi">Kilifi Schools &amp; CDF</button>
+          <button type="button" class="example-chip sector-btn" data-q="Mombasa">Mombasa County</button>
+          <button type="button" class="example-chip sector-btn" data-q="Hospital">County Referral Hospitals</button>
+          <button type="button" class="example-chip sector-btn" data-q="Water">Water &amp; Sanitation Co.</button>
+          <button type="button" class="example-chip sector-btn" data-q="Vocational">Vocational &amp; Technical</button>
+        </div>
       </div>
       <form id="ask-form" class="card ask-card">
         <label for="award-query">Which contract process would you like to check?</label>
@@ -40,13 +61,16 @@
         <p id="search-feedback" class="helper" role="status" aria-live="polite"></p>
       </form>
       <section class="recent-section" aria-labelledby="published-title"><h2 id="published-title">Published contract processes</h2><div id="live-results" class="review-list" aria-live="polite"></div><p class="helper">Publisher records, not automated findings. No sandbox fallback.</p></section>
-      <details class="recent-section"><summary>Recorded investigations · REPLAY</summary><div id="ask-badges" class="badge-row" hidden></div>
-      <section aria-labelledby="recent-title">
-        <div class="section-heading"><h2 id="recent-title">Recorded reviews</h2><span class="quiet-label">Latest review per award</span></div>
-        <div id="runs" class="review-list" aria-live="polite"><div class="list-loading"><span class="spinner" aria-hidden="true"></span> Loading recorded reviews</div></div>
-        <button id="show-more" class="text-button" type="button" hidden>Show more reviews <span data-icon="chevron-down" aria-hidden="true"></span></button>
-      </section></details>
+      <section class="recent-section" aria-labelledby="cases-title"><h2 id="cases-title">Recent cases</h2><div id="cases" class="review-list" aria-live="polite"></div></section>
       <div class="principle-note"><span data-icon="shield" aria-hidden="true"></span><p>Observations for human review. Not allegations, and never an award decision.</p></div>
+    </section>
+
+    <section id="history-screen" data-screen="history" hidden aria-labelledby="recent-title">
+      <p class="eyebrow">Separate replay archive</p><h1 id="recent-title">Recorded reviews</h1>
+      <p class="intro-copy">REPLAY — not live. Archived investigations never start from live intake.</p>
+      <div id="ask-badges" class="badge-row" hidden></div>
+      <div id="runs" class="review-list" aria-live="polite"></div>
+      <button id="show-more" class="text-button" type="button" hidden>Show more reviews</button>
     </section>
 
     <section id="process-screen" data-screen="process" hidden aria-labelledby="process-title">
@@ -75,7 +99,8 @@
         <details class="tool-details"><summary><span data-icon="code" aria-hidden="true"></span> View tool log <span id="log-count" class="muted"></span></summary><div id="tool-log"></div></details>
       </section>
       <div id="run-next" class="next-action"></div>
-      <p class="helper">This is a recorded audit, not a new live investigation. Updates appear only when the requester’s runner records more work.</p>
+      <div id="run-downloads" class="download-actions"></div>
+      <p id="run-context" class="helper"></p>
     </section>
 
     <section id="approval-screen" data-screen="approval" hidden aria-labelledby="approval-title">
@@ -135,6 +160,13 @@
 
     <section id="integrations-screen" data-screen="integrations" hidden aria-labelledby="integrations-title">
       <p class="eyebrow">Connections & capabilities</p><h1 id="integrations-title">What’s connected.<br>What’s still planned.</h1><p class="intro-copy">A clear boundary between working local tools and features that are not available yet.</p><div id="integrations" class="card integration-card"><span class="spinner" aria-hidden="true"></span> Loading configuration</div>
+    </section>
+    <section id="architecture-screen" data-screen="architecture" hidden aria-labelledby="architecture-title">
+      <p class="eyebrow">Registry and audit evidence</p><h1 id="architecture-title">How the system works.</h1>
+      <p class="intro-copy">Architecture is generated from installed connectors. Sequences show recorded events, not a suggested workflow.</p>
+      <h2>Current architecture</h2><div id="architecture-diagram" class="diagram" tabindex="0" aria-label="Architecture diagram, scroll to explore"></div>
+      <label for="sequence-run">Recorded run</label><select id="sequence-run"><option value="">Choose a run</option></select>
+      <div id="sequence-diagram" class="diagram" tabindex="0" aria-label="Run sequence diagram, scroll to explore"></div>
     </section>
     <footer class="page-footer"><span>bidbox</span><span>Calm, clear, defensible.</span></footer>
   </main>

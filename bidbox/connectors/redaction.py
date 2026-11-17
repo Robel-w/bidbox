@@ -28,6 +28,8 @@ def redact_text(value: str) -> str:
     for name, secret in os.environ.items():
         if len(secret) >= 4 and re.search(r"KEY|SECRET|TOKEN|PASSWORD|CREDENTIAL|AUTH_HEADER|DSN|APPROVER_EMAIL|APPROVER_PHONE|SMTP_USERNAME|AT_USERNAME", name):
             text = text.replace(secret, MASK)
+    if re.fullmatch(r"[a-f0-9]{64}", text):
+        return text
     text = _ASSIGNMENT.sub(lambda m: f"{m.group(1)}{m.group(2)}{MASK}", text)
     text = _BEARER.sub(f"Bearer {MASK}", text)
     text = _KEY_PREFIX.sub(MASK, text)
@@ -41,12 +43,10 @@ def redact_text(value: str) -> str:
 def redact(value: Any) -> Any:
     """Recursively redact every string in a JSON-like structure, preserving shape."""
     if isinstance(value, str):
-        if re.fullmatch(r"[a-f0-9]{64}", value):
-            return value
         return redact_text(value)
     if isinstance(value, dict):
         return {key: MASK if isinstance(item, str) and re.fullmatch(
-            r"(?i)(api[_-]?key|secret|token|password|passwd|pwd|authorization)", str(key)
+            r"(?i)(api[_-]?key|secret|token|password|passwd|pwd|authorization|link)", str(key)
         ) else redact(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
         return [redact(item) for item in value]

@@ -21,7 +21,7 @@ const icons = {
   connection: ['M8 12h8', 'M7 8a4 4 0 0 0 0 8', 'M17 8a4 4 0 0 1 0 8'],
 };
 let runs = [], published = [], initialPublished = [], current = null, data = null, screen = 'ask', source = null;
-let routeVersion = 0, shownRuns = 4, searchResults = null, pendingDecision = null;
+let routeVersion = 0, shownRuns = 4, searchResults = null, pendingDecision = null, invitationToken = null;
 let refreshBusy = false, refreshQueued = false, refreshTimer = null;
 
 function node(tag, className, value) {
@@ -107,6 +107,7 @@ function status(run) {
   if (run.status === 'rejected') return ['Rejected', 'review', 'minus'];
   if (run.file_created) return ['File created', 'ok', 'check'];
   if (run.status === 'approved') return ['Decision recorded', 'ok', 'check'];
+  if (S[run.status]) return [S[run.status], ['failed', 'interrupted'].includes(run.status) ? 'review' : '', 'clock'];
   return ['Recorded progress', '', 'replay'];
 }
 function badges(id, detail, includeState = true) {
@@ -116,7 +117,7 @@ function badges(id, detail, includeState = true) {
   if (origin === 'sandbox' || origin === 'mixed') element.append(chip(origin === 'mixed' ? 'SANDBOX: includes sandbox data' : 'SANDBOX data', 'sandbox', 'flask'));
   else if (origin === 'live') element.append(chip('LIVE data · recorded publisher', '', 'link'));
   else element.append(chip('SANDBOX: data origin unverified', 'sandbox', 'alert'));
-  element.append(chip('REPLAY', 'recorded', 'replay'));
+  if (detail.replay) element.append(chip(S.replay, 'recorded', 'replay'));
   if (includeState) element.append(chip(...status(detail)));
 }
 function shortTitle(run) {
@@ -127,7 +128,7 @@ function eligibleRuns() {
 }
 function renderRuns() {
   const seen = new Set();
-  const latest = eligibleRuns().filter(run => {
+  const latest = eligibleRuns().filter(run => run.replay).filter(run => {
     const key = run.ocid || run.run_id;
     if (seen.has(key)) return false;
     seen.add(key); return true;
@@ -138,7 +139,7 @@ function renderRuns() {
   if (available.length) {
     const origins = new Set(available.map(run => run.origin));
     const origin = origins.size === 1 ? available[0].origin : origins.has('sandbox') || origins.has('mixed') ? 'mixed' : 'not recorded';
-    badges('ask-badges', { origin }, false);
+    badges('ask-badges', { origin, replay: true }, false);
   }
   if (!available.length) {
     const empty = node('div', 'empty-state');
@@ -181,7 +182,7 @@ function renderPublished() {
 }
 async function loadPublisher() {
   try {
-    const [status, result] = await Promise.all([api('/api/data/status'), api('/api/data/search?limit=12')]);
+    const [status, result] = await Promise.all([api('/api/data/status'), api('/api/data/search?limit=12&awards_only=true')]);
     const wrap = $('data-status'); wrap.replaceChildren(chip(status.label, status.label === 'MIXED' || status.label === 'SANDBOX DATA' ? 'sandbox' : '', 'link'));
     wrap.append(node('p', 'helper', `${number(status.counts['live'])} live processes · ${number(status.counts.sandbox)} sandbox records · Publisher data as of ${stamp(status.data_as_of)}`));
     if (status.current_fy_partial) wrap.append(node('p', 'helper partial-warning', 'FY 2026–2027 is in progress and partial. Download completion does not establish full-year coverage.'));
@@ -224,9 +225,27 @@ function renderProcess(process) {
   sourceCard.append(node('p', 'helper', `Source publication: ${stamp(process.source_publication_date)} · Ingested: ${stamp(process.ingested_at)}. This is an archived download, not a fresh portal check.`));
   if (awards.length && !awards.some(award => award.items?.length)) sourceCard.append(node('p', 'helper', 'Award item classifications are not reported. No price comparables or benchmark has been invented.'));
   sourceCard.append(node('p', 'helper', 'Full fiscal-year coverage is not independently established. Differing releases with the same date have no established chronological ordering.'));
+  if (awards.length) {
+    const choices = node('div', 'download-actions');
+    ['price', 'supplier history', 'price and supplier history'].forEach(check => {
+      const button = node('button', 'button secondary', `Review ${check}`); button.type = 'button';
+      button.onclick = () => startCase(`Review ${check} for ${process.ocid}`, process.ocid, button);
+      choices.append(button);
+    });
+    sourceCard.append(choices);
+  }
+}
+function renderCases() {
+  const list = $('cases'); list.replaceChildren();
+  runs.filter(run => !run.replay).slice(0, 12).forEach(run => {
+    const link = node('a', 'review-row'); link.href = `#review/${encodeURIComponent(run.run_id)}`;
+    const copy = node('span'); copy.append(node('span', 'review-row-title', shortTitle(run)), node('span', 'review-row-meta', `${run.run_id} · ${stamp(run.started_at)}`));
+    link.append(copy, chip(...status(run))); list.append(link);
+  });
+  if (!list.childNodes.length) list.append(node('p', 'helper', S.noCases));
 }
 async function loadRuns() {
-  try { runs = await api('/api/runs'); renderRuns(); renderExamples(); if (screen === 'economics' && !current) renderEconomicsPicker(); }
+  try { runs = await api('/api/runs'); renderRuns(); renderCases(); renderExamples(); if (screen === 'economics' && !current) renderEconomicsPicker(); }
   catch (error) {
     $('runs').replaceChildren(node('div', 'empty-state', error.message));
     const retry = node('button', 'text-button', 'Try loading reviews again'); retry.type = 'button'; retry.onclick = loadRuns; $('runs').append(retry);
@@ -282,9 +301,9 @@ function connection(label, symbol = 'connection') {
   $('connection-status').replaceChildren(symbol === 'spinner' ? node('span', 'spinner') : icon(symbol), node('span', '', label));
 }
 function connectStream(detail) {
-  if (source || !detail) return;
+  if (source || !detail || ['done', 'rejected', 'failed', 'interrupted'].includes(detail.phase)) return;
   const id = detail.run_id; let seen = Math.max(-1, ...detail.events.map(event => event.seq));
-  source = new EventSource(`/api/runs/${encodeURIComponent(id)}/events`);
+  source = new EventSource(`/api/runs/${encodeURIComponent(id)}/events?seq=${seen}`);
   connection('Connecting to audit updates', 'spinner');
   source.onopen = () => { if (current === id) connection('Audit updates connected'); };
   source.onerror = () => { if (current === id) connection('Updates paused · reconnecting', 'clock'); };
@@ -307,7 +326,9 @@ async function refresh(id) {
       if (pendingDecision?.uncertain && (decisionMatches(updated, pendingDecision) || (updated.status === 'awaiting_approval' && updated.request?.seq === pendingDecision.request_seq))) {
         pendingDecision = null; $('decision-confirm').hidden = true;
       }
-      data = updated; renderCurrent(); connection('Audit updates connected');
+      data = updated; renderCurrent();
+      if (['done', 'rejected', 'failed', 'interrupted'].includes(updated.phase)) { stopStream(); connection('Recorded work complete'); }
+      else { connectStream(updated); connection('Audit updates connected'); }
     }
   } catch (error) { if (current === id) { notice(error.message, 'review'); connection('Could not refresh', 'clock'); } }
   finally { refreshBusy = false; if (refreshQueued) { refreshQueued = false; refresh(current); } }
@@ -329,6 +350,8 @@ function buildTimeline(detail) {
     { title: decision ? 'Committee decision recorded' : 'Waiting for approval', done: !!decision, review: !!gate && !decision, waiting: !!gate && !decision, copy: decision ? `${decision.inputs?.decision === 'reject' ? 'Rejected' : 'Approved'} by ${decision.inputs?.approver_name || 'name not recorded'}.` : gate ? 'A different person must review the evidence and record a decision.' : 'No committee request has been recorded.' },
     { title: filed ? 'File created' : 'File creation', done: filed, copy: filed ? 'The recorded review file is available below.' : detail.status === 'rejected' ? 'This decision does not authorize a new file.' : decision ? 'Decision saved. File creation has not been confirmed; the requester’s runner must continue.' : 'No file is created before a named committee decision.' },
   ];
+  const plan = events.find(event => event.tool === 'plan');
+  if (plan) steps.unshift({ title: S.plan, done: true, copy: JSON.stringify(plan.outputs) });
   const list = $('timeline'); list.replaceChildren();
   steps.forEach(step => {
     const item = node('li', `timeline-step ${step.done ? 'complete' : step.review ? 'review' : ''}`);
@@ -344,6 +367,8 @@ function renderLogs(detail) {
     const entry = node('details', 'log-entry'), heading = node('summary');
     const state = event.status === 'ok' ? ['Recorded', 'ok', 'check'] : ['timeout', 'error'].includes(event.status) ? [event.status === 'timeout' ? 'Timed out' : 'Needs review', 'review', 'alert'] : event.status === 'retry' ? ['Retry', 'review', 'replay'] : ['Recorded', '', 'file'];
     heading.append(chip(...state), node('span', '', event.tool || 'Audit event'));
+    if (event.injected) heading.append(chip(S.fault, 'review', 'flask'));
+    if (['rate_limited', 'retry', 'fallback_model'].includes(event.tool)) heading.append(chip(event.tool.replaceAll('_', ' '), 'review', 'clock'));
     if (event.inputs?.model) heading.append(node('span', 'muted', event.inputs.model));
     entry.append(heading, node('p', 'helper', `${stamp(event.ts_utc)} · ${event.duration_ms == null ? 'Duration not recorded' : `${number(event.duration_ms)} ms`} · ${event.actor || 'Actor not recorded'}`), node('pre', '', JSON.stringify({ inputs: event.inputs, outputs: event.outputs }, null, 2)));
     $('tool-log').append(entry);
@@ -362,13 +387,32 @@ function renderReview(detail) {
   buildTimeline(detail); renderLogs(detail);
   const action = $('run-next'); action.replaceChildren();
   if (detail.status === 'awaiting_approval') {
-    action.append(routeLink('Open independent approval screen', `#approval/${encodeURIComponent(detail.run_id)}`), node('p', '', 'This screen contains the evidence and limitations a separate approver needs. Invitations are not sent by this viewer.'));
+    action.append(routeLink('Open independent approval screen', `#approval/${encodeURIComponent(detail.run_id)}`), node('p', '', detail.signed_approval_required ? S.signedRequired : 'Review the full evidence and limitations before recording a decision.'));
   } else if (detail.report_available && detail.status !== 'rejected') action.append(routeLink('Read the review file', `#report/${encodeURIComponent(detail.run_id)}`));
   else if (detail.approval) action.append(routeLink('See the recorded decision', `#approval/${encodeURIComponent(detail.run_id)}`));
   else action.append(routeLink('View the recorded evidence', `#report/${encodeURIComponent(detail.run_id)}`, 'button secondary'));
   $('counter-tokens').textContent = detail.tokens == null ? 'Tokens not reported' : `${number(detail.tokens)} tokens`;
   $('counter-cost').textContent = detail.cost_per_run == null ? 'List price not configured' : `${cost(detail.cost_per_run)} list price`;
   $('counter-link').href = `#economics/${encodeURIComponent(detail.run_id)}`;
+  if (detail.error) action.append(node('p', 'form-error', detail.error));
+  if (detail.notification) action.append(node('p', 'helper', `Approval notification: ${detail.notification.status}. ${detail.notification.detail || ''}`));
+  $('run-context').textContent = detail.replay ? S.replay : S.liveRun;
+  $('run-downloads').replaceChildren(downloads(detail));
+}
+function downloads(detail) {
+  const wrap = node('div', 'download-actions'), base = `/api/runs/${encodeURIComponent(detail.run_id)}`;
+  [[S.auditDownload, 'audit/download'], [S.metricsDownload, 'metrics/download']].forEach(([label, path]) => {
+    const link = routeLink(label, `${base}/${path}`, 'button secondary', 'file'); link.download = ''; wrap.append(link);
+  });
+  const verify = node('button', 'button secondary', S.verify), feedback = node('span', 'helper');
+  feedback.setAttribute('role', 'status'); verify.type = 'button';
+  verify.onclick = async () => {
+    verify.disabled = true;
+    try { const result = await api(`${base}/verify`); feedback.textContent = result.valid ? S.valid : `${S.invalid}: ${result.error || ''}`; }
+    catch (error) { feedback.textContent = error.message; }
+    finally { verify.disabled = false; }
+  };
+  wrap.append(verify, feedback); return wrap;
 }
 function findingMessage(finding) { return finding.statement || finding.message || 'Observation text was not recorded.'; }
 function findingDetail(label, value) {
@@ -414,13 +458,15 @@ function renderApproval(detail) {
   const contract = detail.contract || {};
   if (typeof contract.amount === 'number') context.append(node('div', 'award-number', amount(contract.amount, contract.currency)), node('p', 'helper', detail.context_source === 'current fixture' ? 'Value from the current synthetic fixture, not an archived review snapshot.' : 'Value recorded during the review.'));
   if (contract.sources?.length) context.append(sourceLinks(contract.sources, detail));
+  context.append(node('p', 'helper', S.hash), node('p', 'content-hash helper', detail.report_hash));
   $('approval-evidence').replaceChildren();
-  detail.findings.slice(0, 2).forEach(finding => {
-    const item = node('div', 'mini-finding'); item.append(node('p', '', findingMessage(finding)), sourceLinks(finding.sources, detail)); $('approval-evidence').append(item);
+  detail.findings.forEach(finding => {
+    const item = node('div', 'mini-finding');
+    item.append(node('p', '', findingMessage(finding)), findingDetail('Rationale', finding.rationale), findingDetail('Uncertainty', finding.uncertainty), findingDetail('Follow-up', finding.follow_up), sourceLinks(finding.sources, detail));
+    $('approval-evidence').append(item);
   });
   if (!detail.findings.length) $('approval-evidence').append(emptyFindings(detail));
-  if (detail.findings.length > 2) $('approval-evidence').append(routeLink(`Read all ${detail.findings.length} observations`, `#report/${encodeURIComponent(detail.run_id)}`, 'text-button'));
-  $('approval-limits').replaceChildren(listLimitations(detail, true));
+  $('approval-limits').replaceChildren(listLimitations(detail));
   const pending = detail.status === 'awaiting_approval';
   if (pendingDecision && pendingDecision.request_seq !== detail.request?.seq) { pendingDecision = null; $('decision-confirm').hidden = true; }
   $('approval-form').hidden = !pending || !!pendingDecision;
@@ -439,6 +485,9 @@ function renderApproval(detail) {
     $('requester-context').textContent = detail.requester_name ? `Requested by ${detail.requester_name}${detail.requester_role ? ` · ${detail.requester_role}` : ''}. You must be a different person.` : 'Requester identity was not recorded. Confirm that you are reviewing independently.';
     $('approve').disabled = detail.evidence_missing || !detail.chain_verified;
     $('reject').disabled = !detail.chain_verified;
+    if (detail.signed_approval_required && !invitationToken) {
+      $('approval-form').hidden = true; $('approval-state').append(node('p', 'form-error', S.signedRequired));
+    }
   }
 }
 function renderReport(detail) {
@@ -484,6 +533,7 @@ function renderEconomicsPicker() {
   eligibleRuns().slice(0, 6).forEach(run => { const link = node('a', 'review-row', shortTitle(run)); link.href = `#economics/${encodeURIComponent(run.run_id)}`; link.append(icon('chevron-right')); list.append(link); });
   if (!list.childNodes.length) list.append(node('p', 'helper', 'No recorded award review is available yet.'));
   wrap.append(list);
+  renderAggregate();
 }
 function renderEconomics(detail) {
   $('economics-select').replaceChildren(); $('economics-content').hidden = false;
@@ -508,14 +558,83 @@ function renderEconomics(detail) {
   $('economics-notes').replaceChildren(...m.notes.map(note => node('p', '', note)));
 }
 async function renderIntegrations() {
+  const wrap = $('integrations'); wrap.replaceChildren(node('p', 'helper', 'Checking connector configuration…'));
   try {
-    const result = await api('/api/capabilities'); $('integrations').replaceChildren();
-    result.integrations.forEach(integration => {
-      const row = node('div', 'integration-row'), heading = node('div', 'section-heading');
-      const badge = integration.status === 'sandbox' ? ['Sandbox', 'sandbox', 'flask'] : integration.status === 'available' ? ['Available locally', 'ok', 'check'] : integration.status === 'configured' ? ['Configured · not verified', '', 'connection'] : integration.status === 'planned' ? ['Planned', '', 'clock'] : ['Not configured', 'review', 'minus'];
-      heading.append(node('h2', '', integration.name), chip(...badge)); row.append(heading, node('p', '', integration.detail)); $('integrations').append(row);
+    const result = await api('/api/integrations'); wrap.replaceChildren(node('p', 'helper', S.noTestSend));
+    const groups = [...new Set(result.integrations.map(item => item.kind || 'invalid'))];
+    groups.forEach(kind => {
+      wrap.append(node('h2', 'integration-group', kind.replaceAll('_', ' ')));
+      result.integrations.filter(item => (item.kind || 'invalid') === kind).forEach(item => {
+        const row = node('article', 'integration-row'), heading = node('div', 'section-heading');
+        const tone = item.status === 'live' ? 'ok' : item.status === 'sandbox' ? 'sandbox' : ['error', 'not_configured'].includes(item.status) ? 'review' : '';
+        heading.append(node('h3', '', item.name), chip(item.status.replaceAll('_', ' '), tone, 'connection'));
+        row.append(heading, node('p', '', item.detail), node('p', 'helper', `Intended: ${item.target_mode || S.missing} · Data: ${item.data_class || S.missing} · Last checked: ${stamp(item.last_check)} · ${item.latency_ms == null ? 'Latency not reported' : `${number(item.latency_ms)} ms`}`));
+        (item.credentials || []).forEach(credential => row.append(node('p', 'helper', `${credential.name}: ${credential.present ? 'present' : 'missing'}`)));
+        const checklist = node('details'); checklist.append(node('summary', '', S.checklist));
+        (item.next_week_checklist || []).forEach(step => checklist.append(node('p', 'helper', typeof step === 'string' ? step : JSON.stringify(step))));
+        checklist.append(node('p', 'helper', `Outbound fields: ${(item.field_allowlist || []).join(', ') || 'none'}`));
+        if (item.data_class === 'personal') checklist.append(node('p', 'helper', `Disabled until BIDBOX_ENABLE_PERSONAL_${item.name.toUpperCase()}=1 on the host.`));
+        row.append(checklist);
+        const policy = node('details'); policy.append(node('summary', '', S.actions));
+        (item.actions || []).forEach(action => policy.append(node('p', 'helper', `${action.name} · ${action.mode} · approval ${action.approval_required ? 'required at Connector.perform' : 'not required'}`)));
+        row.append(policy);
+        if (item.status !== 'planned') {
+          const button = node('button', 'button secondary', S.testConnection), feedback = node('pre', 'helper');
+          button.type = 'button'; feedback.setAttribute('role', 'status');
+          button.onclick = async () => {
+            button.disabled = true; button.textContent = S.testing;
+            try { feedback.textContent = JSON.stringify(await api(`/api/integrations/${encodeURIComponent(item.name)}/test`, {method: 'POST'}), null, 2); }
+            catch (error) { feedback.textContent = error.message; }
+            finally { button.disabled = false; button.textContent = S.testConnection; }
+          };
+          row.append(button, feedback);
+        }
+        wrap.append(row);
+      });
     });
-  } catch (error) { $('integrations').replaceChildren(node('p', 'helper', error.message)); }
+    const guide = node('details', 'integration-row'); guide.append(node('summary', '', S.addSystem));
+    result.add_a_system.steps.forEach(step => guide.append(node('p', 'helper', `${step.n}. ${step.text}`), node('pre', '', step.command)));
+    guide.append(node('p', 'helper', result.add_a_system.note)); wrap.append(guide);
+    wrap.append(node('h2', 'integration-group', 'Built-in approval boundary'), node('p', 'helper', 'create_investigation_file requires a named approval for this run and the current report hash. Enforcement: require_report_approval in the tool, not the UI. Rejection creates nothing.'));
+  } catch (error) { wrap.replaceChildren(node('p', 'helper', error.message)); }
+}
+async function renderAggregate() {
+  try {
+    const result = await api('/api/economics');
+    if (screen !== 'economics' || current) return;
+    const card = node('section', 'card table-card'); card.append(node('h2', '', S.working), node('p', 'helper', S.outcome), dataTable([
+      ['All cases', number(result.runs)], ['Approved files', number(result.outcomes)], ['Total cost', cost(result.total_cost_usd)], ['Cost per outcome', cost(result.cost_per_outcome_usd)],
+      ['Model calls / outcome (all cases)', number(result.calls_per_outcome)], ['Worst completed-run calls', number(result.worst_completed_run_calls)],
+      ['KES per outcome', result.cost_per_outcome_kes == null ? S.missing : number(result.cost_per_outcome_kes)], ['FX date', result.fx.date || S.missing],
+      ['Model comparison', S.notMeasured], ['Cache benefit', S.notMeasured]
+    ]), node('p', 'helper', result.working)); $('economics-select').prepend(card);
+  } catch (error) { if (screen === 'economics' && !current) $('economics-select').prepend(node('p', 'helper', error.message)); }
+}
+async function drawDiagram(path, id) {
+  const wrap = $(id); wrap.replaceChildren(node('p', 'helper', 'Generating from recorded metadata…'));
+  try {
+    const result = await api(path), parsed = new DOMParser().parseFromString(result.svg, 'image/svg+xml');
+    if (parsed.querySelector('parsererror') || parsed.documentElement.localName !== 'svg') throw new Error('Invalid generated diagram');
+    const allowed = new Set(['svg', 'defs', 'marker', 'polygon', 'rect', 'text', 'line', 'path', 'g', 'title']);
+    for (const element of parsed.querySelectorAll('*')) {
+      if (!allowed.has(element.localName) || [...element.attributes].some(attribute => /^(on|href|style)/i.test(attribute.localName))) throw new Error('Unexpected content in generated diagram');
+    }
+    const svg = document.importNode(parsed.documentElement, true);
+    svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', id === 'architecture-diagram' ? S.architecture : S.sequence);
+    wrap.replaceChildren(svg);
+  } catch (error) { wrap.replaceChildren(node('p', 'helper', error.message)); }
+}
+async function renderArchitecture() {
+  drawDiagram('/api/architecture', 'architecture-diagram');
+  const select = $('sequence-run'); select.replaceChildren(node('option', '', 'Choose a run')); select.firstChild.value = '';
+  try {
+    const available = await api('/api/runs');
+    available.forEach(run => { const option = node('option', '', `${run.replay ? S.replay + ' · ' : ''}${run.run_id}`); option.value = run.run_id; select.append(option); });
+  } catch (error) { $('sequence-diagram').replaceChildren(node('p', '', error.message)); }
+  select.onchange = () => {
+    if (select.value) drawDiagram(`/api/runs/${encodeURIComponent(select.value)}/sequence`, 'sequence-diagram');
+    else $('sequence-diagram').replaceChildren(node('p', '', S.noSequence));
+  }; select.onchange();
 }
 function renderCurrent() {
   if (!data) return;
@@ -529,7 +648,9 @@ function renderCurrent() {
 async function navigate() {
   const version = ++routeVersion;
   let parts; try { parts = (location.hash.slice(1) || 'ask').split('/').map(decodeURIComponent); } catch (_) { parts = ['ask']; }
-  const view = ['ask', 'process', 'review', 'approval', 'report', 'economics', 'integrations'].includes(parts[0]) ? parts[0] : 'ask';
+  if (!location.hash && location.pathname === '/architecture') parts = ['architecture'];
+  const view = ['ask', 'process', 'review', 'approval', 'report', 'economics', 'integrations', 'architecture', 'history'].includes(parts[0]) ? parts[0] : 'ask';
+  invitationToken = view === 'approval' ? parts[2] || null : null;
   const id = ['process', 'review', 'approval', 'report', 'economics'].includes(view) ? parts[1] || null : null;
   const changed = current !== id;
   if (changed) {
@@ -539,7 +660,8 @@ async function navigate() {
   setView(view); notice('');
   $('main').setAttribute('aria-busy', 'false');
   document.title = 'BidBox · Committee review';
-  if (view === 'ask') { renderRuns(); return; }
+  if (view === 'ask' || view === 'history') { loadRuns(); return; }
+  if (view === 'architecture') { await renderArchitecture(); return; }
   if (view === 'integrations') { await renderIntegrations(); return; }
   if (view === 'economics' && !id) { renderEconomicsPicker(); return; }
   if (view === 'process') {
@@ -621,24 +743,72 @@ async function submitDecision() {
     }
   }
 }
-$('ask-form').addEventListener('submit', async event => {
-  event.preventDefault(); const query = $('award-query').value.trim();
-  if (!query) return;
-  const button = $('ask-submit'); button.disabled = true; button.replaceChildren(node('span', 'spinner'), node('span', '', 'Searching publisher data…'));
-  $('search-feedback').textContent = 'Searching downloaded live records. No reference will be guessed.';
+let intakeBusy = false;
+async function startCase(question, ocid, button) {
+  if (intakeBusy) return;
+  intakeBusy = true; const label = button.textContent; button.disabled = true; button.textContent = S.starting;
+  $('search-feedback').textContent = S.starting;
   try {
-    const result = await api(`/api/data/search?q=${encodeURIComponent(query)}&limit=20`);
-    if ($('award-query').value.trim() !== query) return;
-    published = result.hits; renderPublished();
-    if (published.length === 1) { location.hash = `process/${encodeURIComponent(published[0].ocid)}`; return; }
-    $('search-feedback').textContent = published.length ? `${published.length} matches returned (maximum 20). Choose the exact published process below.` : 'Not found in live data. No sandbox record or guessed ID has been substituted.';
-    $('published-title').setAttribute('tabindex', '-1'); $('published-title').focus();
-  } catch (error) { $('search-feedback').textContent = error.message; }
-  finally { button.disabled = false; button.replaceChildren(node('span', '', 'Find this process'), icon('arrow-right')); }
+    const result = await api('/api/cases', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({question, ...(ocid ? {ocid} : {})})});
+    if (result.run_id) { await loadRuns(); location.hash = `review/${encodeURIComponent(result.run_id)}`; return; }
+    if (result.status === 'tender_stage') {
+      $('search-feedback').textContent = S.tender; location.hash = `process/${encodeURIComponent(result.candidates[0].ocid)}`; return;
+    }
+    const message = result.status === 'ambiguous' ? S.choose : S.notFound;
+    $('search-feedback').textContent = message;
+    if (screen !== 'ask') notice(message, 'review');
+    if (result.status === 'ambiguous') {
+      const list = $('live-results'); list.replaceChildren();
+      result.candidates.forEach(candidate => {
+        const choice = node('button', 'example-chip full-width', `${shortTitle(candidate)} · ${candidate.ocid}`); choice.type = 'button';
+        choice.onclick = () => startCase(question, candidate.ocid, choice); list.append(choice);
+      });
+      $('published-title').textContent = 'Choose the exact process'; $('published-title').tabIndex = -1; $('published-title').focus();
+    }
+  } catch (error) {
+    const message = `${error.message} ${S.unknownOutcome}`; $('search-feedback').textContent = message;
+    if (screen !== 'ask') notice(message, 'review');
+    loadRuns();
+  } finally { intakeBusy = false; button.disabled = false; button.textContent = label; }
+}
+$('ask-form').addEventListener('submit', event => {
+  event.preventDefault(); const query = $('award-query').value.trim();
+  if (query) startCase(query, null, $('ask-submit'));
 });
+let searchDebounce = null;
+async function performLiveSearch(q) {
+  if (!q) {
+    searchResults = null; shownRuns = 4;
+    $('recent-title').textContent = 'Recorded reviews';
+    renderRuns();
+    published = initialPublished;
+    renderPublished();
+    $('published-title').textContent = 'Published contract processes';
+    return;
+  }
+  try {
+    const result = await api(`/api/data/search?q=${encodeURIComponent(q)}&limit=12&awards_only=true`);
+    published = result.hits;
+    renderPublished();
+    $('published-title').textContent = `Published contracts for "${q}" (${published.length} found)`;
+  } catch (err) {
+    $('search-feedback').textContent = err.message;
+  }
+}
 $('award-query').addEventListener('input', () => {
   $('search-feedback').textContent = '';
-  if (!$('award-query').value) { searchResults = null; shownRuns = 4; $('recent-title').textContent = 'Recorded reviews'; renderRuns(); published = initialPublished; renderPublished(); }
+  const query = $('award-query').value.trim();
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => performLiveSearch(query), 220);
+});
+document.querySelectorAll('.sector-btn').forEach(btn => {
+  btn.onclick = () => {
+    const q = btn.dataset.q;
+    $('award-query').value = q;
+    $('search-feedback').textContent = '';
+    performLiveSearch(q);
+    $('award-query').focus();
+  };
 });
 $('show-more').onclick = () => { shownRuns += 6; renderRuns(); };
 $('approval-form').addEventListener('submit', event => {
@@ -653,7 +823,7 @@ $('approval-form').addEventListener('submit', event => {
   if (data.requester_name && data.requester_name.trim().toLowerCase() === name.toLowerCase()) {
     $('decision-error').textContent = 'The approver must be a different person from the requester.'; $('decision-error').hidden = false; return;
   }
-  pendingDecision = { approver_name: name, approver_role: role, decision, reason, independent_reviewer: true, request_seq: data.request.seq };
+  pendingDecision = { approver_name: name, approver_role: role, decision, reason, independent_reviewer: true, request_seq: data.request.seq, report_hash: data.report_hash, invitation_token: invitationToken };
   fillConfirm(pendingDecision);
 });
 $('edit-decision').onclick = () => { pendingDecision = null; $('decision-confirm').hidden = true; $('approval-form').hidden = false; $('approve').focus(); };
@@ -663,6 +833,50 @@ document.querySelector('.skip-link').addEventListener('click', event => {
 });
 window.addEventListener('hashchange', () => { navigate(); window.scrollTo({ top: 0 }); });
 window.addEventListener('pagehide', stopStream);
+$('ask-help').textContent = S.intake;
+$('ask-submit').textContent = S.start;
+$('award-query').maxLength = 2000;
+$('award-query').placeholder = 'Review price or supplier history for a reference or buyer';
+function initDither() {
+  const c = document.getElementById('dither-canvas');
+  if (!c) return;
+  const RM = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const PAL = [[10,63,184],[10,85,216],[76,141,255],[169,200,255],[234,242,255]];
+  const B = [0,32,8,40,2,34,10,42,48,16,56,24,50,18,58,26,12,44,4,36,14,46,6,38,60,28,52,20,62,30,54,22,3,35,11,43,1,33,9,41,51,19,59,27,49,17,57,25,15,47,7,39,13,45,5,37,63,31,55,23,61,29,53,21];
+  const h = (x,y,s) => { let n = Math.sin(x*127.1+y*311.7+s*74.7)*43758.5453; return n - Math.floor(n); };
+  const vn = (x,y,s) => {
+    const i = Math.floor(x), j = Math.floor(y), u = x-i, v = y-j, a = u*u*(3-2*u), b = v*v*(3-2*v);
+    return (h(i,j,s)*(1-a)+h(i+1,j,s)*a)*(1-b) + (h(i,j+1,s)*(1-a)+h(i+1,j+1,s)*a)*b;
+  };
+  const fbm = (x,y,s) => { let t = 0, a = .5; for(let o=0; o<4; o++){ t += a*vn(x,y,s+o); x *= 2; y *= 2; a /= 2; } return t; };
+  const seed = +(c.dataset.seed || 7), H = +(c.dataset.h || 140), g = c.getContext('2d');
+  let W, hh, im, off = 0, vis = false, last = 0, frame = 0;
+  function draw() {
+    if (!im) return;
+    const d = im.data;
+    for (let y = 0; y < hh; y++) for (let x = 0; x < W; x++) {
+      let v = fbm((x + off) * .045, y * .06, seed); v = (v - .2) * 1.6;
+      const t = (B[(y & 7) * 8 + (x & 7)] + .5) / 64 - .5; v = Math.min(.999, Math.max(0, v + t * .55));
+      const p = PAL[Math.floor(v * 5)], k = (y * W + x) * 4;
+      d[k] = p[0]; d[k+1] = p[1]; d[k+2] = p[2]; d[k+3] = 255;
+    }
+    g.putImageData(im, 0, 0);
+  }
+  function resize() {
+    W = Math.max(40, Math.round((c.parentElement.clientWidth || 600) / 4)); hh = Math.round(H / 4);
+    c.width = W; c.height = hh; im = g.createImageData(W, hh); draw();
+  }
+  resize();
+  new ResizeObserver(resize).observe(c.parentElement);
+  if (RM) return;
+  const f = n => { if (!vis) return; if (n - last > 41) { last = n; off += .35; draw(); } frame = requestAnimationFrame(f); };
+  new IntersectionObserver(e => {
+    const v = e[0].isIntersecting;
+    if (v && !vis) { vis = true; frame = requestAnimationFrame(f); }
+    else if (!v) { vis = false; cancelAnimationFrame(frame); }
+  }).observe(c);
+}
+initDither();
 hydrateIcons();
 loadPublisher();
 loadRuns();

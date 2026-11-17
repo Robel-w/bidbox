@@ -138,6 +138,7 @@ async def test_failed_tool_is_retried_once_then_run_continues_with_limitation(of
 
 @pytest.mark.anyio
 async def test_demo_fault_times_out_once_then_recovers(offline_run: dict, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEMO_MODE", "1")
     monkeypatch.setenv("DEMO_FAULT_TOOL", "benchmark_award")
     monkeypatch.setenv("TOOL_TIMEOUT_S", "0.2")
     result = await run_graph("demo-fault-run")

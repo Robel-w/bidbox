@@ -4,7 +4,9 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
-from audit.events import get_run_cost, require_report_approval
+from audit.events import get_run_cost, require_report_approval, report_content, ApprovalRequiredError
+from bidbox_mcp.schemas.investigation import DraftFlag
+from bidbox.connectors.redaction import redact
 from audit.logger import audited, get_audit_logs
 from bidbox_mcp.schemas.investigation import InvestigationFileResult
 from bidbox_mcp.tools.flag_finding import get_draft_flags
@@ -28,10 +30,17 @@ def create_investigation_file_tool(
     approver_name = str(approval["inputs"]["approver_name"]).strip()
     approver_role = str(approval["inputs"].get("approver_role") or approver_role)
 
+    approved = report_content(run_id)
+    if "contract" in approved and limitations is not None and redact(limitations) != approved.get("limitations", []):
+        raise ApprovalRequiredError("Report limitations differ from the approved content")
+    flags = get_draft_flags(run_id)
+    if "contract" in approved:
+        flags = [DraftFlag(flag_id=f"REVIEW-{index}", run_id=run_id, ocid=approved["contract"]["ocid"],
+                           type=f["category"], severity=f.get("severity", "medium"), statement=f["message"],
+                           rationale=f["rationale"], uncertainty=f["uncertainty"], follow_up=f["follow_up"], sources=f["sources"])
+                 for index, f in enumerate(approved.get("findings", []), 1)]
     out_dir = Path("reports/examples") / run_id
     out_dir.mkdir(parents=True, exist_ok=True)
-
-    flags = get_draft_flags(run_id)
     audit_calls = get_audit_logs(run_id)
     review_summary = next((e["outputs"] for e in reversed(audit_calls) if e.get("tool") == "evidence_review"), None)
     now_str = datetime.now(UTC).isoformat()
@@ -112,6 +121,8 @@ def create_investigation_file_tool(
 
     json_payload = {
         "run_id": run_id,
+        "report_hash": approval["inputs"]["report_hash"],
+        "origin": (approved.get("contract") or {}).get("origin"),
         "approver_name": approver_name,
         "approver_role": approver_role,
         "generated_at_utc": now_str,

@@ -122,7 +122,7 @@ async def review_evidence(state: dict) -> dict:
 		reason = decision.reason
 		reviewed = [finding for finding in kept if finding["code"] in decision.kept_codes]
 		dropped.extend({"finding": item.code, "reason": item.reason} for item in decision.drops)
-	except (ValueError, ValidationError) as exc:
+	except Exception as exc:
 		status = "failed"
 		detail = "; ".join(f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors()) if isinstance(exc, ValidationError) else str(exc)
 		reason = f"Reviewer output failed validation: {detail[:300]}"

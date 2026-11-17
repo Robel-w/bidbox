@@ -56,6 +56,9 @@ class AfricasTalkingSms(Connector):
 
     def _send(self, payload: dict[str, Any]) -> dict[str, Any]:
         username, api_key = self._credentials()
+        import re
+        if not re.fullmatch(r"\+[1-9]\d{7,14}", payload["to"]):
+            raise ConnectorError("not_configured", "APPROVER_PHONE must be an international phone number")
         url = f"https://{self._host()}/v1/messaging"
         body = {
             "username": username,
@@ -80,7 +83,9 @@ class AfricasTalkingSms(Connector):
             raise ConnectorError("upstream_error", f"send failed: {exc}") from exc
         receivers = (((data or {}).get("SMSMessageData") or {}).get("Recipients")) or []
         status = str(receivers[0].get("status")) if receivers and isinstance(receivers[0], dict) else "unknown"
-        return {"status": status, "recipients": [mask_contact(payload["to"])], "provider": self._host()}
+        if status != "Success":
+            raise ConnectorError("upstream_error", f"SMS was not accepted by the provider: {status}")
+        return {"status": "accepted", "recipients": [mask_contact(payload["to"])], "provider": self._host(), "delivery": "not confirmed"}
 
     def act(self, action: str, params: dict[str, Any]) -> Any:
         if action == "send_approval_link":

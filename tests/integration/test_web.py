@@ -27,7 +27,7 @@ async def test_sse_exposes_provider_transitions_with_model(tmp_path: Path, monke
     received = []
     for _ in names:
         message = await anext(response.body_iterator)
-        received.append(json.loads(message.removeprefix("data: ").strip()))
+        received.append(json.loads(next(line[6:] for line in message.splitlines() if line.startswith("data: "))))
     await response.body_iterator.aclose()
     assert [e["tool"] for e in received] == list(names)
     assert all(e["inputs"]["model"] == "test-model" for e in received)

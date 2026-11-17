@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BidBox - a first look at every contract award</title>
+<link rel="stylesheet" href="/landing.css">
+<script src="/landing.js" defer></script>
+</head><body>
+<div class="landing-topbar">
+  <a class="landing-brand" href="/">bidbox</a>
+  <div class="landing-toplinks">
+    <a href="#how">How it works</a>
+    <a href="#integrations">Integrations</a>
+    <a href="/connectors">Connectors</a>
+    <a href="/app" class="top-cta">Audit Officer Workspace</a>
+  </div>
+</div>
+<nav id="nav" aria-label="Page"><a href="#how">How it works</a><a href="#integrations">Integrations</a><a href="#trust">Trust</a><a href="#faq">FAQ</a><a href="#pilot">Pilot</a><a href="/connectors">Connectors</a><a class="o" href="/app" title="Live Audit Officer Workspace">Audit Officer Workspace</a></nav>
+
+<header id="hero"><div class="banner" aria-hidden="true"><canvas data-seed="3" data-h="300"></canvas>
+<svg id="stars" preserveAspectRatio="none" viewBox="0 0 1000 300" fill="none" stroke="#EAF2FF" stroke-opacity=".5" stroke-width=".8"><polyline points="60,70 190,130 330,60 470,150 610,80 760,140 930,60" vector-effect="non-scaling-stroke"/><polyline points="190,130 250,230 470,150" vector-effect="non-scaling-stroke"/><polyline points="760,140 830,230 930,60" vector-effect="non-scaling-stroke"/>
+<g fill="#fff" stroke="none"><path d="M60 64l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/><path d="M470 143l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/><path d="M930 53l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/><circle cx="190" cy="130" r="2.5"/><circle cx="330" cy="60" r="2.5"/><circle cx="610" cy="80" r="2.5"/><circle cx="760" cy="140" r="2.5"/><circle cx="250" cy="230" r="2"/><circle cx="830" cy="230" r="2"/></g></svg></div>
+<div class="hw rv"><h1>Give every contract award a first look.<em>A person makes the final call.</em></h1>
+<p class="sub">BidBox finds an award in public procurement data, compares it with similar awards, and prepares a review file with sources. Nothing is filed until a named person approves.</p>
+<div class="row"><a class="btn" href="/app">Audit Officer Workspace <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a class="btn sec" href="/connectors">View connectors <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a class="lnk" href="#pilot">Join the pilot list <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+<div id="badge" role="status"></div></div></header>
+
+<section id="how"><h2 class="rv">From question to review file.<em>In plain words.</em></h2>
+<div class="cards">
+<article class="card rv"><div class="tile"><canvas data-seed="11" data-h="150"></canvas><svg class="i" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg></div><div class="b"><small>01 Before the review</small><h3>Ask in plain words</h3></div></article>
+<article class="card rv"><div class="tile"><canvas data-seed="27" data-h="150"></canvas><svg class="i" viewBox="0 0 24 24"><path d="M12 4v16M5 8h14M5 8l-3 7h6zM19 8l-3 7h6z"/></svg></div><div class="b"><small>02 During</small><h3>It compares and cites sources</h3></div></article>
+<article class="card rv"><div class="tile"><canvas data-seed="42" data-h="150"></canvas><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg></div><div class="b"><small>03 After</small><h3>A named person approves</h3></div></article>
+</div></section>
+
+<section><h2 class="rv">See it work.</h2>
+<div class="card frame rv"><div class="bar"><i></i><i></i><i></i><div class="tabs" role="tablist" aria-label="Application screenshots" id="st"></div></div><div class="shot" id="shot" role="tabpanel"></div>
+<div class="cap"><span>Recorded run</span><a class="lnk" href="/app#history">Open the audit log <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div></div></section>
+
+<section id="integrations"><h2 class="rv">Plug into the systems you already run.<em>A folder and a config file.</em></h2>
+<div class="two"><p class="sticky rv">A connector is a folder with a manifest. Point BidBox at a source, say which fields matter, and keep secrets out of the file. Every result carries a label showing whether it came from live or sandbox data.</p>
+<div id="steps"></div></div>
+<div class="term rv"><div class="bar"><div class="tabs" role="tablist" aria-label="Connector example" id="tt"></div><button class="cp" id="cp">Copy</button></div><pre id="tp" role="tabpanel" aria-live="off"></pre></div>
+<div class="chips" id="chips"></div>
+<div class="conn-cta rv"><p>See every installed connector, test its connection live, and add new data sources — no code change needed in the agent.</p><a class="btn" href="/connectors">Open connectors gallery <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div></section>
+
+<section id="trust"><h2 class="rv">People stay in charge.</h2>
+<div class="feat rv"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg><div><h3>Approval enforced inside the tool</h3><p>Filing is blocked in the tool itself until a named person signs off.</p></div></div>
+<div class="feat rv"><svg class="i" viewBox="0 0 24 24"><path d="M9 15l6-6M8 11l-2 2a3.5 3.5 0 005 5l2-2M16 13l2-2a3.5 3.5 0 00-5-5l-2 2"/></svg><div><h3>Tamper-evident audit log</h3><p>Each step is chained to the last, so edits show.</p><p><a class="lnk" href="/app">Verify a run</a></p></div></div>
+<div class="feat rv"><svg class="i" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/></svg><div><h3>Credentials kept in the host secret store</h3><p>Config files only name a secret, never hold it.</p></div></div>
+<div class="feat rv"><svg class="i" viewBox="0 0 24 24"><path d="M3 12l9-9h8v8l-9 9z"/><circle cx="15.5" cy="8.5" r="1"/></svg><div><h3>Every result labelled live or sandbox</h3><p>You always know what kind of data you are reading.</p></div></div></section>
+
+<section><h2 class="rv">Why this matters.</h2>
+<div class="nums"><p class="rv"><em>780</em> clients and <em>84</em> staff across Mombasa and Kilifi audit offices. <a href="https://www.google.com/search?q=Eastleigh+Voice+Mombasa+Kilifi+audit+780+clients+84+staff">Eastleigh Voice, 2026</a></p>
+<p class="rv"><em>34,500+</em> buying bodies and about <em>3,000</em> procurement professionals. <a href="https://www.google.com/search?q=PPRA+MAPS+2024">PPRA MAPS 2024</a></p>
+<p class="rv"><em>Sh10bn</em> flagged in <em>32</em> counties. <a href="https://www.google.com/search?q=People+Daily+Sh10bn+32+counties+flagged">People Daily</a></p></div></section>
+
+<section><h2 class="rv">What it costs to run.</h2>
+<div class="card cost rv"><dl id="eco"><dt>Model</dt><dd>-</dd><dt>Tokens per answer</dt><dd>-</dd><dt>Cost per completed review (USD)</dt><dd>-</dd><dt>Cost per completed review (KES)</dt><dd>-</dd></dl>
+<p>Pilot pricing is agreed with partner institutions.</p><a class="btn" href="#pilot">Request pilot</a></div></section>
+
+<section id="faq"><h2 class="rv">Questions, answered.</h2><div class="faq rv" id="fq"></div></section>
+
+<section id="pilot"><h2 class="rv">Join the pilot list.</h2><p class="sub rv">Tell us who you are and we will write back.</p>
+<form id="f" class="rv"><input type="text" name="name" placeholder="Name" aria-label="Name" required autocomplete="name"><input type="text" name="institution" placeholder="Institution" aria-label="Institution" required><input type="text" name="role" placeholder="Role" aria-label="Role" required><input type="email" name="email" placeholder="Email" aria-label="Email" required autocomplete="email">
+<label class="c"><input type="checkbox" name="consent" required> I agree to be contacted about the BidBox pilot.</label><button class="btn" type="submit">Send</button><div id="msg" role="status"></div></form></section>
+
+<footer>(c) 2026 BidBox <a href="/app">Audit Officer Workspace</a><a href="/app#history">Audit log</a><a href="/connectors">Connectors</a></footer>
+</body></html>

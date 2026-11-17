@@ -2,7 +2,7 @@
 
 **Run ID:** `eval-ocds-synth-kenya-000202-0`  
 **Authorized By:** eval-harness (automated) (automated evaluation)  
-**Generated At (UTC):** 2026-10-14T23:10:18.494722+00:00  
+**Generated At (UTC):** 2026-11-01T15:21:38.602812+00:00  
 
 ## Executive Summary
 This file compiles 0 evidence-backed observation(s) for committee review.
@@ -14,7 +14,7 @@ This file compiles 0 evidence-backed observation(s) for committee review.
 - An anomaly constitutes a flag for human verification, not misconduct or liability.
 
 ## Tool-Call Audit Appendix
-Total logged actions in run: 4
+Total logged actions in run: 8
 
 ```json
 [
@@ -113,12 +113,117 @@ Total logged actions in run: 4
     "tokens": null,
     "prev_hash": "3833894f00df04198f8fa81c4ae43ea4178b1af205a00273cad75442aefedeab",
     "hash": "1ffefd224600464d6efef5aae165d93f10bf32a0370953123ab87b6fd12914e4"
+  },
+  {
+    "seq": 4,
+    "ts_utc": "2026-10-14T23:10:18.496543+00:00",
+    "run_id": "eval-ocds-synth-kenya-000202-0",
+    "actor": "tool",
+    "tool": "create_investigation_file",
+    "inputs": {
+      "args": [],
+      "kwargs": {
+        "run_id": "eval-ocds-synth-kenya-000202-0",
+        "approver_name": "eval-harness (automated)",
+        "approver_role": "automated evaluation"
+      }
+    },
+    "outputs": {
+      "run_id": "eval-ocds-synth-kenya-000202-0",
+      "markdown_path": "reports\\examples\\eval-ocds-synth-kenya-000202-0\\investigation_report.md",
+      "json_path": "reports\\examples\\eval-ocds-synth-kenya-000202-0\\investigation_report.json",
+      "approver_name": "eval-harness (automated)",
+      "approver_role": "automated evaluation",
+      "status": "finalized",
+      "findings_count": 0
+    },
+    "duration_ms": 8.68,
+    "tokens": null,
+    "prev_hash": "1ffefd224600464d6efef5aae165d93f10bf32a0370953123ab87b6fd12914e4",
+    "hash": "db54def562f6b3df6836fd08c315f1ce103b603c71d5562080d5924fed4cc9c6"
+  },
+  {
+    "seq": 5,
+    "ts_utc": "2026-11-01T15:20:07.095585+00:00",
+    "run_id": "eval-ocds-synth-kenya-000202-0",
+    "actor": "agent",
+    "tool": "llm_call",
+    "inputs": {
+      "model": "llama3.2:latest"
+    },
+    "outputs": {
+      "tokens": {
+        "prompt_tokens": 255,
+        "completion_tokens": 39,
+        "total_tokens": 294
+      }
+    },
+    "duration_ms": 0.0,
+    "tokens": {
+      "prompt_tokens": 255,
+      "completion_tokens": 39,
+      "total_tokens": 294
+    },
+    "prev_hash": "db54def562f6b3df6836fd08c315f1ce103b603c71d5562080d5924fed4cc9c6",
+    "hash": "6c60c3c58e27156e6b37783150df541fa537375b8e2565aea8fcd176e9e89735"
+  },
+  {
+    "seq": 6,
+    "ts_utc": "2026-11-01T15:21:37.109644+00:00",
+    "run_id": "eval-ocds-synth-kenya-000202-0",
+    "actor": "agent",
+    "tool": "llm_call",
+    "inputs": {
+      "model": "llama3.2:latest"
+    },
+    "outputs": {
+      "tokens": {
+        "prompt_tokens": 67,
+        "completion_tokens": 11,
+        "total_tokens": 78
+      }
+    },
+    "duration_ms": 0.0,
+    "tokens": {
+      "prompt_tokens": 67,
+      "completion_tokens": 11,
+      "total_tokens": 78
+    },
+    "prev_hash": "6c60c3c58e27156e6b37783150df541fa537375b8e2565aea8fcd176e9e89735",
+    "hash": "874dc9bb72ecc023e64f675fec12f139b01f500ecd3cd613ee0fd3f671dd4688"
+  },
+  {
+    "seq": 7,
+    "ts_utc": "2026-11-01T15:21:37.135118+00:00",
+    "run_id": "eval-ocds-synth-kenya-000202-0",
+    "actor": "human",
+    "tool": "approval_gate",
+    "inputs": {
+      "action": "flag_finding_and_create_investigation_file",
+      "approver_name": "eval-harness (automated)",
+      "approver_role": "automated evaluation",
+      "decision": "approve",
+      "reason": "NOT a human approval; evaluation only"
+    },
+    "outputs": {
+      "run_id": "eval-ocds-synth-kenya-000202-0",
+      "action": "flag_finding_and_create_investigation_file",
+      "approver_name": "eval-harness (automated)",
+      "approver_role": "automated evaluation",
+      "decision": "approve",
+      "reason": "NOT a human approval; evaluation only",
+      "ts_utc": ""
+    },
+    "duration_ms": 0.0,
+    "tokens": null,
+    "prev_hash": "874dc9bb72ecc023e64f675fec12f139b01f500ecd3cd613ee0fd3f671dd4688",
+    "hash": "33da785cb8f7e5c7309b66c6cb8f1b18d66503c234c8d837de299b5e903c0f71"
   }
 ]
 ```
 
 **Execution Cost:** $0.00 (Local model (Ollama / qwen2.5:7b-instruct): $0.00 (open weights))
-**Total Tokens:** 372
+**Total Tokens:** 744
 
 ---
 Prepared for committee decision. No award decision is made or implied.

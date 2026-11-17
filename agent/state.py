@@ -7,6 +7,8 @@ class InvestigationState(TypedDict, total=False):
 	"""Serializable state carried between graph nodes."""
 
 	run_id: str
+	user_request: str
+	sandbox: bool
 	ocid: str
 	tender: dict[str, Any]
 	plan: dict[str, Any]

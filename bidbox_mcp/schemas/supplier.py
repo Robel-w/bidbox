@@ -1,5 +1,7 @@
 """Supplier history and integrity schemas."""
 
+from datetime import UTC, datetime
+
 from pydantic import BaseModel, Field
 
 from bidbox_mcp.schemas.evidence import FindingSource

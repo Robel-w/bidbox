@@ -2,7 +2,7 @@
   "run_id": "eval-ocds-synth-kenya-000003-0",
   "approver_name": "eval-harness (automated)",
   "approver_role": "automated evaluation",
-  "generated_at_utc": "2026-10-14T23:06:14.194180+00:00",
+  "generated_at_utc": "2026-11-01T15:14:22.656627+00:00",
   "findings": [],
   "data_limitations": [
     "Historical completed awards only",
@@ -79,6 +79,216 @@
       "tokens": null,
       "prev_hash": "64ed67ad4bb4096adb01c0a5316f44aa92156f19f06af5a30a587fb6169fdd79",
       "hash": "68c3fb138ff2c97677ab227f8e21eb7247ab9cab3894470232b503ab04f3aa28"
+    },
+    {
+      "seq": 3,
+      "ts_utc": "2026-10-14T23:06:14.195410+00:00",
+      "run_id": "eval-ocds-synth-kenya-000003-0",
+      "actor": "tool",
+      "tool": "create_investigation_file",
+      "inputs": {
+        "args": [],
+        "kwargs": {
+          "run_id": "eval-ocds-synth-kenya-000003-0",
+          "approver_name": "eval-harness (automated)",
+          "approver_role": "automated evaluation"
+        }
+      },
+      "outputs": {
+        "run_id": "eval-ocds-synth-kenya-000003-0",
+        "markdown_path": "reports\\examples\\eval-ocds-synth-kenya-000003-0\\investigation_report.md",
+        "json_path": "reports\\examples\\eval-ocds-synth-kenya-000003-0\\investigation_report.json",
+        "approver_name": "eval-harness (automated)",
+        "approver_role": "automated evaluation",
+        "status": "finalized",
+        "findings_count": 0
+      },
+      "duration_ms": 9.45,
+      "tokens": null,
+      "prev_hash": "68c3fb138ff2c97677ab227f8e21eb7247ab9cab3894470232b503ab04f3aa28",
+      "hash": "dc1ff4856fa705af1ee7b218275d89886577890473dbf13a8558f352f072ca93"
+    },
+    {
+      "seq": 4,
+      "ts_utc": "2026-11-01T14:51:59.419129+00:00",
+      "run_id": "eval-ocds-synth-kenya-000003-0",
+      "actor": "agent",
+      "tool": "llm_call",
+      "inputs": {
+        "model": "llama3.2:latest"
+      },
+      "outputs": {
+        "tokens": {
+          "prompt_tokens": 252,
+          "completion_tokens": 41,
+          "total_tokens": 293
+        }
+      },
+      "duration_ms": 0.0,
+      "tokens": {
+        "prompt_tokens": 252,
+        "completion_tokens": 41,
+        "total_tokens": 293
+      },
+      "prev_hash": "dc1ff4856fa705af1ee7b218275d89886577890473dbf13a8558f352f072ca93",
+      "hash": "f018ec3a730eab4a36d9f4a0dc989aea528c86205d72636678c61cb38bda302b"
+    },
+    {
+      "seq": 5,
+      "ts_utc": "2026-11-01T14:54:19.337077+00:00",
+      "run_id": "eval-ocds-synth-kenya-000003-0",
+      "actor": "agent",
+      "tool": "llm_call",
+      "inputs": {
+        "model": "llama3.2:latest"
+      },
+      "outputs": {
+        "tokens": {
+          "prompt_tokens": 409,
+          "completion_tokens": 353,
+          "total_tokens": 762
+        }
+      },
+      "duration_ms": 0.0,
+      "tokens": {
+        "prompt_tokens": 409,
+        "completion_tokens": 353,
+        "total_tokens": 762
+      },
+      "prev_hash": "f018ec3a730eab4a36d9f4a0dc989aea528c86205d72636678c61cb38bda302b",
+      "hash": "103c6c25afe5035bc75dabf99250ae0c9fe0765a3af1bb5cbd3b646b6dbf50bb"
+    },
+    {
+      "seq": 6,
+      "ts_utc": "2026-11-01T14:54:19.366070+00:00",
+      "run_id": "eval-ocds-synth-kenya-000003-0",
+      "actor": "human",
+      "tool": "approval_gate",
+      "inputs": {
+        "action": "flag_finding_and_create_investigation_file",
+        "approver_name": "eval-harness (automated)",
+        "approver_role": "automated evaluation",
+        "decision": "approve",
+        "reason": "NOT a human approval; evaluation only"
+      },
+      "outputs": {
+        "run_id": "eval-ocds-synth-kenya-000003-0",
+        "action": "flag_finding_and_create_investigation_file",
+        "approver_name": "eval-harness (automated)",
+        "approver_role": "automated evaluation",
+        "decision": "approve",
+        "reason": "NOT a human approval; evaluation only",
+        "ts_utc": ""
+      },
+      "duration_ms": 0.0,
+      "tokens": null,
+      "prev_hash": "103c6c25afe5035bc75dabf99250ae0c9fe0765a3af1bb5cbd3b646b6dbf50bb",
+      "hash": "61994358942c0aad102bcf3943b71df0ca9d701489deb9caa20413982c8d3e48"
+    },
+    {
+      "seq": 7,
+      "ts_utc": "2026-11-01T14:54:20.888171+00:00",
+      "run_id": "eval-ocds-synth-kenya-000003-0",
+      "actor": "tool",
+      "tool": "create_investigation_file",
+      "inputs": {
+        "args": [],
+        "kwargs": {
+          "run_id": "eval-ocds-synth-kenya-000003-0",
+          "approver_name": "eval-harness (automated)",
+          "approver_role": "automated evaluation"
+        }
+      },
+      "outputs": {
+        "run_id": "eval-ocds-synth-kenya-000003-0",
+        "markdown_path": "reports\\examples\\eval-ocds-synth-kenya-000003-0\\investigation_report.md",
+        "json_path": "reports\\examples\\eval-ocds-synth-kenya-000003-0\\investigation_report.json",
+        "approver_name": "eval-harness (automated)",
+        "approver_role": "automated evaluation",
+        "status": "finalized",
+        "findings_count": 0
+      },
+      "duration_ms": 12.9,
+      "tokens": null,
+      "prev_hash": "61994358942c0aad102bcf3943b71df0ca9d701489deb9caa20413982c8d3e48",
+      "hash": "7ff124d8d4dc5fe192c12df530f7a84329890977afb94d54883ae4d9d56c5569"
+    },
+    {
+      "seq": 8,
+      "ts_utc": "2026-11-01T15:12:04.471253+00:00",
+      "run_id": "eval-ocds-synth-kenya-000003-0",
+      "actor": "agent",
+      "tool": "llm_call",
+      "inputs": {
+        "model": "llama3.2:latest"
+      },
+      "outputs": {
+        "tokens": {
+          "prompt_tokens": 252,
+          "completion_tokens": 41,
+          "total_tokens": 293
+        }
+      },
+      "duration_ms": 0.0,
+      "tokens": {
+        "prompt_tokens": 252,
+        "completion_tokens": 41,
+        "total_tokens": 293
+      },
+      "prev_hash": "7ff124d8d4dc5fe192c12df530f7a84329890977afb94d54883ae4d9d56c5569",
+      "hash": "f3a10a3b3fcd220e601225fc22e99cb6acf261fa9ea43d1023cb8489476bcd93"
+    },
+    {
+      "seq": 9,
+      "ts_utc": "2026-11-01T15:14:20.121794+00:00",
+      "run_id": "eval-ocds-synth-kenya-000003-0",
+      "actor": "agent",
+      "tool": "llm_call",
+      "inputs": {
+        "model": "llama3.2:latest"
+      },
+      "outputs": {
+        "tokens": {
+          "prompt_tokens": 409,
+          "completion_tokens": 353,
+          "total_tokens": 762
+        }
+      },
+      "duration_ms": 0.0,
+      "tokens": {
+        "prompt_tokens": 409,
+        "completion_tokens": 353,
+        "total_tokens": 762
+      },
+      "prev_hash": "f3a10a3b3fcd220e601225fc22e99cb6acf261fa9ea43d1023cb8489476bcd93",
+      "hash": "362e9c6de4bf495c2e08c8282b68cd3f81e6ceaee6b5ba6e25ea2a95a3c1b2df"
+    },
+    {
+      "seq": 10,
+      "ts_utc": "2026-11-01T15:14:20.162662+00:00",
+      "run_id": "eval-ocds-synth-kenya-000003-0",
+      "actor": "human",
+      "tool": "approval_gate",
+      "inputs": {
+        "action": "flag_finding_and_create_investigation_file",
+        "approver_name": "eval-harness (automated)",
+        "approver_role": "automated evaluation",
+        "decision": "approve",
+        "reason": "NOT a human approval; evaluation only"
+      },
+      "outputs": {
+        "run_id": "eval-ocds-synth-kenya-000003-0",
+        "action": "flag_finding_and_create_investigation_file",
+        "approver_name": "eval-harness (automated)",
+        "approver_role": "automated evaluation",
+        "decision": "approve",
+        "reason": "NOT a human approval; evaluation only",
+        "ts_utc": ""
+      },
+      "duration_ms": 0.0,
+      "tokens": null,
+      "prev_hash": "362e9c6de4bf495c2e08c8282b68cd3f81e6ceaee6b5ba6e25ea2a95a3c1b2df",
+      "hash": "227d024307f85468ee00c4030760331da340f574d585287bc7a28afe2b6ddc94"
     }
   ],
   "footer": "Prepared for committee decision. No award decision is made or implied."

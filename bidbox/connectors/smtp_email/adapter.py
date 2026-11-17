@@ -65,12 +65,14 @@ class SmtpEmail(Connector):
                 server.starttls(context=ssl.create_default_context())
                 server.ehlo()
                 server.login(user, password)
-                message_id = server.send_message(message)
+                refused = server.send_message(message)
+                if refused:
+                    raise ConnectorError("upstream_error", "SMTP server refused the recipient; no delivery confirmed")
         except smtplib.SMTPAuthenticationError as exc:
             raise ConnectorError("auth", "SMTP credentials rejected") from exc
         except (smtplib.SMTPException, OSError) as exc:
             raise ConnectorError("upstream_error", f"send failed: {exc}") from exc
-        return {"status": "sent", "recipients": [mask_contact(to)], "message_id": str(message_id or "")}
+        return {"status": "accepted", "recipients": [mask_contact(to)], "delivery": "not confirmed"}
 
     def act(self, action: str, params: dict[str, Any]) -> Any:
         if action == "send_approval_link":

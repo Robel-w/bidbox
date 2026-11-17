@@ -170,6 +170,10 @@ class Connector:
             if effective_mode == "act" and self.manifest.field_allowlist:
                 if set(params) - set(self.manifest.field_allowlist):
                     raise ConnectorError("invalid_request", "Outbound fields are not in field_allowlist")
+            if self.verified_mode is None:
+                health = self.health_check()
+                if self.verified_mode is None:
+                    raise ConnectorError("not_configured" if health["status"] == "not_configured" else "upstream_error", health["detail"])
             with self._rate_lock:
                 now = time.monotonic()
                 while self._calls and self._calls[0] <= now - 60:

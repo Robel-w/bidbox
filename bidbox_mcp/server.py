@@ -4,7 +4,7 @@ from mcp.server.fastmcp import FastMCP
 
 from bidbox.store import ensure_store_loaded
 from bidbox.data import search_awards as search_awards_data
-from audit.logger import audited
+from audit.logger import audited, CURRENT_RUN
 from bidbox_mcp.schemas.evidence import FindingSource
 from bidbox_mcp.schemas.investigation import (
     FlagFindingResult,
@@ -18,12 +18,20 @@ from bidbox_mcp.tools.flag_finding import flag_finding_tool
 from bidbox_mcp.tools.inspect_tender import inspect_tender_tool
 from bidbox_mcp.tools.investigate_supplier import investigate_supplier_tool
 
+def run_tool(run_id, fn, **kwargs):
+    token = CURRENT_RUN.set(run_id)
+    try:
+        return fn(**kwargs)
+    finally:
+        CURRENT_RUN.reset(token)
+
+
 mcp = FastMCP("bidbox")
 
 
 @mcp.tool(name="search_awards", description="Search actual award-bearing contract processes by OCID, buyer or title. Returns origin and fiscal years on every hit, or explicit not found. Sandbox data requires sandbox=true; no reference is guessed.")
 @audited("search_awards")
-def search_awards(query: str = "", limit: int = 20, sandbox: bool = False) -> dict:
+def search_awards(query: str = "", limit: int = 20, sandbox: bool = False, run_id: str = "unknown") -> dict:
     return search_awards_data(query, limit, sandbox)
 
 
@@ -34,8 +42,8 @@ def search_awards(query: str = "", limit: int = 20, sandbox: bool = False) -> di
         "for a specific OCDS tender or award by its OCID."
     ),
 )
-def inspect_tender(ocid: str, award_id: str | None = None) -> TenderInspectionResult:
-    return inspect_tender_tool(ocid=ocid, award_id=award_id)
+def inspect_tender(ocid: str, award_id: str | None = None, run_id: str = "unknown") -> TenderInspectionResult:
+    return run_tool(run_id, inspect_tender_tool, ocid=ocid, award_id=award_id)
 
 
 @mcp.tool(
@@ -45,9 +53,9 @@ def inspect_tender(ocid: str, award_id: str | None = None) -> TenderInspectionRe
         "number of awards, buyer concentration share, and repeat-win distribution."
     ),
 )
-def investigate_supplier(supplier_id: str) -> SupplierInvestigationResult:
+def investigate_supplier(supplier_id: str, run_id: str = "unknown") -> SupplierInvestigationResult:
     """Investigate company-level supplier history and buyer concentration."""
-    return investigate_supplier_tool(supplier_id=supplier_id)
+    return run_tool(run_id, investigate_supplier_tool, supplier_id=supplier_id)
 
 
 @mcp.tool(
@@ -62,9 +70,10 @@ def benchmark_award(
     ocid: str,
     min_comparables: int = 3,
     award_id: str | None = None,
+    run_id: str = "unknown",
 ) -> AwardBenchmarkResult:
     """Benchmark award price against historical peer comparables."""
-    return benchmark_award_tool(ocid=ocid, min_comparables=min_comparables, award_id=award_id)
+    return run_tool(run_id, benchmark_award_tool, ocid=ocid, min_comparables=min_comparables, award_id=award_id)
 
 
 @mcp.tool(
@@ -142,6 +151,9 @@ def register_connector_tools() -> int:
                 result = connector.perform(str(run_id), spec["action"], dict(params or {}))
                 return {"connector": spec["connector"], "action": spec["action"], "result": result}
 
+            from typing import Annotated
+            from pydantic import Field
+            connector_tool.__annotations__["params"] = Annotated[dict[str, Any], Field(json_schema_extra=spec["input_schema"])]
             return connector_tool
 
         mcp.tool(name=spec["name"], description=spec["description"])(make_connector_tool())

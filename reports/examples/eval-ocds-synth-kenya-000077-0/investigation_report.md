@@ -1,0 +1,204 @@
+# BidBox Investigation Report
+
+**Run ID:** `eval-ocds-synth-kenya-000077-0`  
+**Authorized By:** eval-harness (automated) (automated evaluation)  
+**Generated At (UTC):** 2026-11-01T15:02:16.621858+00:00  
+
+## Executive Summary
+This file compiles 0 evidence-backed observation(s) for committee review.
+
+## Findings
+*No draft findings were filed for this investigation.*
+## Data Limitations
+- Analyses rely solely on completed historical procurement awards (OCDS data).
+- An anomaly constitutes a flag for human verification, not misconduct or liability.
+
+## Tool-Call Audit Appendix
+Total logged actions in run: 7
+
+```json
+[
+  {
+    "seq": 0,
+    "ts_utc": "2026-11-01T14:59:44.300618+00:00",
+    "run_id": "eval-ocds-synth-kenya-000077-0",
+    "actor": "agent",
+    "tool": "llm_call",
+    "inputs": {
+      "model": "llama3.2:latest"
+    },
+    "outputs": {
+      "tokens": {
+        "prompt_tokens": 262,
+        "completion_tokens": 42,
+        "total_tokens": 304
+      }
+    },
+    "duration_ms": 0.0,
+    "tokens": {
+      "prompt_tokens": 262,
+      "completion_tokens": 42,
+      "total_tokens": 304
+    },
+    "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "hash": "f0c2da3ce6fbcd55a79d873fb4f752386f72983392e28f38b7787c70de28c9a7"
+  },
+  {
+    "seq": 1,
+    "ts_utc": "2026-11-01T15:01:18.816518+00:00",
+    "run_id": "eval-ocds-synth-kenya-000077-0",
+    "actor": "agent",
+    "tool": "llm_call",
+    "inputs": {
+      "model": "llama3.2:latest"
+    },
+    "outputs": {
+      "tokens": {
+        "prompt_tokens": 211,
+        "completion_tokens": 20,
+        "total_tokens": 231
+      }
+    },
+    "duration_ms": 0.0,
+    "tokens": {
+      "prompt_tokens": 211,
+      "completion_tokens": 20,
+      "total_tokens": 231
+    },
+    "prev_hash": "f0c2da3ce6fbcd55a79d873fb4f752386f72983392e28f38b7787c70de28c9a7",
+    "hash": "0c1e432b19fc76e9b9ff4c53aecc787c8d00d7a84fcd9e57876d339fd1faa1a6"
+  },
+  {
+    "seq": 2,
+    "ts_utc": "2026-11-01T15:02:07.183724+00:00",
+    "run_id": "eval-ocds-synth-kenya-000077-0",
+    "actor": "agent",
+    "tool": "recovery",
+    "inputs": {
+      "min_comparables": 1
+    },
+    "outputs": {
+      "status": "retried"
+    },
+    "duration_ms": 0.0,
+    "tokens": null,
+    "prev_hash": "0c1e432b19fc76e9b9ff4c53aecc787c8d00d7a84fcd9e57876d339fd1faa1a6",
+    "hash": "6078a891884ac9af80c73a62c10e1d02983a7cc90efa3b873919d5c42ff305f8"
+  },
+  {
+    "seq": 3,
+    "ts_utc": "2026-11-01T15:02:12.437052+00:00",
+    "run_id": "eval-ocds-synth-kenya-000077-0",
+    "actor": "agent",
+    "tool": "llm_call",
+    "inputs": {
+      "model": "llama3.2:latest"
+    },
+    "outputs": {
+      "tokens": {
+        "prompt_tokens": 218,
+        "completion_tokens": 34,
+        "total_tokens": 252
+      }
+    },
+    "duration_ms": 0.0,
+    "tokens": {
+      "prompt_tokens": 218,
+      "completion_tokens": 34,
+      "total_tokens": 252
+    },
+    "prev_hash": "6078a891884ac9af80c73a62c10e1d02983a7cc90efa3b873919d5c42ff305f8",
+    "hash": "a3e776d94c80ce0af0e2a95dff3e55e80d3495902bd64d6dad33100bcd9bc48a"
+  },
+  {
+    "seq": 4,
+    "ts_utc": "2026-11-01T15:02:12.464364+00:00",
+    "run_id": "eval-ocds-synth-kenya-000077-0",
+    "actor": "agent",
+    "tool": "request_approval",
+    "inputs": {
+      "action": "flag_finding_and_create_investigation_file",
+      "summary": "Commit reviewed findings and prepare the committee investigation file."
+    },
+    "outputs": {
+      "status": "pending",
+      "action": "flag_finding_and_create_investigation_file"
+    },
+    "duration_ms": 0.0,
+    "tokens": null,
+    "prev_hash": "a3e776d94c80ce0af0e2a95dff3e55e80d3495902bd64d6dad33100bcd9bc48a",
+    "hash": "48f96e53642fb21a1893a28b9275389db8e58632991fbd7371c284d55809002a"
+  },
+  {
+    "seq": 5,
+    "ts_utc": "2026-11-01T15:02:12.491477+00:00",
+    "run_id": "eval-ocds-synth-kenya-000077-0",
+    "actor": "human",
+    "tool": "approval_gate",
+    "inputs": {
+      "action": "flag_finding_and_create_investigation_file",
+      "approver_name": "eval-harness (automated)",
+      "approver_role": "automated evaluation",
+      "decision": "approve",
+      "reason": "NOT a human approval; evaluation only"
+    },
+    "outputs": {
+      "run_id": "eval-ocds-synth-kenya-000077-0",
+      "action": "flag_finding_and_create_investigation_file",
+      "approver_name": "eval-harness (automated)",
+      "approver_role": "automated evaluation",
+      "decision": "approve",
+      "reason": "NOT a human approval; evaluation only",
+      "ts_utc": ""
+    },
+    "duration_ms": 0.0,
+    "tokens": null,
+    "prev_hash": "48f96e53642fb21a1893a28b9275389db8e58632991fbd7371c284d55809002a",
+    "hash": "5bf5da2473a9ae9d99e3be1056833089b4a9d902e90873fc0be7bbea8318cb70"
+  },
+  {
+    "seq": 6,
+    "ts_utc": "2026-11-01T15:02:14.410652+00:00",
+    "run_id": "eval-ocds-synth-kenya-000077-0",
+    "actor": "tool",
+    "tool": "flag_finding",
+    "inputs": {
+      "args": [],
+      "kwargs": {
+        "run_id": "eval-ocds-synth-kenya-000077-0",
+        "ocid": "ocds-synth-kenya-000077",
+        "type": "supplier_history",
+        "severity": "medium",
+        "statement": "Supplier awards show a high concentration with one buyer.",
+        "rationale": "High concentration: 100.0% of awards with Kenya Power and Lighting Company",
+        "uncertainty": "The available history may not cover all procurements.",
+        "follow_up": "Committee should review the supplier's complete award history.",
+        "sources": [
+          {
+            "ocid": "ocds-synth-kenya-000077",
+            "award_id": "AWD-000077",
+            "field_path": "awards[0].suppliers",
+            "source_url": "data/fixtures/releases.json"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "flag_id": "FLAG-262702FD",
+      "run_id": "eval-ocds-synth-kenya-000077-0",
+      "ocid": "ocds-synth-kenya-000077",
+      "status": "draft"
+    },
+    "duration_ms": 0.25,
+    "tokens": null,
+    "prev_hash": "5bf5da2473a9ae9d99e3be1056833089b4a9d902e90873fc0be7bbea8318cb70",
+    "hash": "d92f5018db353ab26169844f31b96796c34a93952a5fb21489803a0045028552"
+  }
+]
+```
+
+**Execution Cost:** $0.00 (Local model (Ollama / qwen2.5:7b-instruct): $0.00 (open weights))
+**Total Tokens:** 787
+
+---
+Prepared for committee decision. No award decision is made or implied.

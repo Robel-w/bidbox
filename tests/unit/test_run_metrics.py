@@ -36,6 +36,7 @@ def _sample_run() -> None:
     _tool("benchmark_award")
     track_tokens(RUN, 3000, 400, "test-model", latency_ms=80)
     append_audit_event(RUN, "agent", "recovery", {}, {})
+    append_audit_event(RUN, "human", "approval_gate", {"decision": "approve"}, {})
     _tool("create_investigation_file")
 
 
@@ -100,12 +101,15 @@ def test_formula_matches_brief_and_flags_unconfigured_fees(monkeypatch: pytest.M
     answer = (2000 * 0.5 + 300 * 2) / 1_000_000
     outcome = answer * 2 + 0.001 * 4 + 0 + 0 + 0.01
     assert metrics["cost_per_answer_usd"] == pytest.approx(answer)
-    assert metrics["cost_per_outcome_usd"] == pytest.approx(outcome)
+    assert metrics["cost_per_outcome_usd"] is None
+    monkeypatch.setenv("SMS_FEE_USD", "0")
+    monkeypatch.setenv("API_FEE_PER_OUTCOME_USD", "0")
+    assert build_run_metrics(RUN)["cost_per_outcome_usd"] == pytest.approx(outcome)
     assert metrics["fees"]["SMS_FEE_USD"]["configured"] is False
     assert metrics["fees"]["API_FEE_PER_OUTCOME_USD"]["configured"] is False
     assert any("SMS_FEE_USD" in note and "API_FEE_PER_OUTCOME_USD" in note for note in metrics["notes"])
     assert metrics["cost_per_outcome_kes"] is None
-    assert any("USD_TO_KES" in note for note in metrics["notes"])
+    assert any("USD_TO_KES" in note for note in build_run_metrics(RUN)["notes"])
 
 
 def test_free_plan_does_not_invent_zero_prices(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -138,6 +142,9 @@ def test_kes_uses_configured_rate_and_file_is_written(monkeypatch: pytest.Monkey
     monkeypatch.setenv("LLM_PRICE_IN", "0.5")
     monkeypatch.setenv("LLM_PRICE_OUT", "2")
     monkeypatch.setenv("USD_TO_KES", "129.5")
+    monkeypatch.setenv("USD_TO_KES_DATE", "2026-11-17")
+    for fee in ("TOOL_FEE_USD", "SMS_FEE_USD", "API_FEE_PER_OUTCOME_USD", "HOSTING_FEE_PER_OUTCOME_USD"):
+        monkeypatch.setenv(fee, "0")
     _sample_run()
     path = write_run_metrics(RUN)
     assert path == Path("runs") / RUN / "run_metrics.json"

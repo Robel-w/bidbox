@@ -1,0 +1,14 @@
+.git
+.venv
+.env
+.env.*
+__pycache__
+**/__pycache__
+reports
+runs
+.qoder
+0
+data/*.duckdb*
+data/downloads
+.pytest_cache
+.ruff_cache

@@ -2,7 +2,7 @@
   "run_id": "eval-ocds-synth-kenya-000201-0",
   "approver_name": "eval-harness (automated)",
   "approver_role": "automated evaluation",
-  "generated_at_utc": "2026-10-14T23:08:09.638620+00:00",
+  "generated_at_utc": "2026-11-01T15:17:49.740684+00:00",
   "findings": [],
   "data_limitations": [
     "Historical completed awards only",
@@ -104,6 +104,111 @@
       "tokens": null,
       "prev_hash": "0e09a78e51e5e876dcf3c29b1eee7d93ae4d16bdadfd3eeec18db5dfd42dee14",
       "hash": "7457adb7cda2605af77a854c687d1592adf7b25892fbc319c9cb64cc2cd4835e"
+    },
+    {
+      "seq": 4,
+      "ts_utc": "2026-10-14T23:08:09.640564+00:00",
+      "run_id": "eval-ocds-synth-kenya-000201-0",
+      "actor": "tool",
+      "tool": "create_investigation_file",
+      "inputs": {
+        "args": [],
+        "kwargs": {
+          "run_id": "eval-ocds-synth-kenya-000201-0",
+          "approver_name": "eval-harness (automated)",
+          "approver_role": "automated evaluation"
+        }
+      },
+      "outputs": {
+        "run_id": "eval-ocds-synth-kenya-000201-0",
+        "markdown_path": "reports\\examples\\eval-ocds-synth-kenya-000201-0\\investigation_report.md",
+        "json_path": "reports\\examples\\eval-ocds-synth-kenya-000201-0\\investigation_report.json",
+        "approver_name": "eval-harness (automated)",
+        "approver_role": "automated evaluation",
+        "status": "finalized",
+        "findings_count": 0
+      },
+      "duration_ms": 9.72,
+      "tokens": null,
+      "prev_hash": "7457adb7cda2605af77a854c687d1592adf7b25892fbc319c9cb64cc2cd4835e",
+      "hash": "a8f25b571b2cb8aff1229ff1cb3931fd8aa2dcdbd8af8ba2e245b80db806a06f"
+    },
+    {
+      "seq": 5,
+      "ts_utc": "2026-11-01T15:16:09.479382+00:00",
+      "run_id": "eval-ocds-synth-kenya-000201-0",
+      "actor": "agent",
+      "tool": "llm_call",
+      "inputs": {
+        "model": "llama3.2:latest"
+      },
+      "outputs": {
+        "tokens": {
+          "prompt_tokens": 256,
+          "completion_tokens": 40,
+          "total_tokens": 296
+        }
+      },
+      "duration_ms": 0.0,
+      "tokens": {
+        "prompt_tokens": 256,
+        "completion_tokens": 40,
+        "total_tokens": 296
+      },
+      "prev_hash": "a8f25b571b2cb8aff1229ff1cb3931fd8aa2dcdbd8af8ba2e245b80db806a06f",
+      "hash": "9f377af526b1e8cc72ebb1aa609eb5e4d6174606c6175722e17ebfcb20ad0172"
+    },
+    {
+      "seq": 6,
+      "ts_utc": "2026-11-01T15:17:47.808316+00:00",
+      "run_id": "eval-ocds-synth-kenya-000201-0",
+      "actor": "agent",
+      "tool": "llm_call",
+      "inputs": {
+        "model": "llama3.2:latest"
+      },
+      "outputs": {
+        "tokens": {
+          "prompt_tokens": 67,
+          "completion_tokens": 11,
+          "total_tokens": 78
+        }
+      },
+      "duration_ms": 0.0,
+      "tokens": {
+        "prompt_tokens": 67,
+        "completion_tokens": 11,
+        "total_tokens": 78
+      },
+      "prev_hash": "9f377af526b1e8cc72ebb1aa609eb5e4d6174606c6175722e17ebfcb20ad0172",
+      "hash": "4b342e3d7e8a1d1c01eba7f9fcf2f5c2d9f3fe0acbc9a70358a1e49543bcb3dd"
+    },
+    {
+      "seq": 7,
+      "ts_utc": "2026-11-01T15:17:47.837464+00:00",
+      "run_id": "eval-ocds-synth-kenya-000201-0",
+      "actor": "human",
+      "tool": "approval_gate",
+      "inputs": {
+        "action": "flag_finding_and_create_investigation_file",
+        "approver_name": "eval-harness (automated)",
+        "approver_role": "automated evaluation",
+        "decision": "approve",
+        "reason": "NOT a human approval; evaluation only"
+      },
+      "outputs": {
+        "run_id": "eval-ocds-synth-kenya-000201-0",
+        "action": "flag_finding_and_create_investigation_file",
+        "approver_name": "eval-harness (automated)",
+        "approver_role": "automated evaluation",
+        "decision": "approve",
+        "reason": "NOT a human approval; evaluation only",
+        "ts_utc": ""
+      },
+      "duration_ms": 0.0,
+      "tokens": null,
+      "prev_hash": "4b342e3d7e8a1d1c01eba7f9fcf2f5c2d9f3fe0acbc9a70358a1e49543bcb3dd",
+      "hash": "f71d15345bae417f6db8a45f6c58c3fb7fbb053cb0f19a477aeff77415764eb9"
     }
   ],
   "footer": "Prepared for committee decision. No award decision is made or implied."

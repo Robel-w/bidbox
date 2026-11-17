@@ -5,10 +5,13 @@ import json
 from pathlib import Path
 from typing import Any, Literal, cast
 
+from audit.logger import append_audit_event, get_audit_logs
+from audit.metrics import build_run_metrics
+from audit.schemas import ApprovalDecision, RunCost
+
 
 def content_hash(content: Any) -> str:
-    from bidbox.connectors.redaction import redact
-    return hashlib.sha256(json.dumps(redact(content), sort_keys=True, separators=(",", ":"), default=str).encode()).hexdigest()
+    return hashlib.sha256(json.dumps(content, sort_keys=True, separators=(",", ":"), default=str).encode()).hexdigest()
 
 
 def report_content(run_id: str) -> dict:
@@ -18,10 +21,6 @@ def report_content(run_id: str) -> dict:
         return review
     from bidbox_mcp.tools.flag_finding import get_draft_flags
     return {"findings": [flag.model_dump() for flag in get_draft_flags(run_id)], "limitations": []}
-
-from audit.logger import append_audit_event, get_audit_logs
-from audit.metrics import build_run_metrics
-from audit.schemas import ApprovalDecision, RunCost
 
 
 def request_approval(
@@ -175,6 +174,7 @@ def track_tokens(
     status: str = "ok",
     attempt: int | None = None,
     http_status: int | None = None,
+    injected: bool = False,
 ) -> dict[str, Any]:
     """Record one LLM attempt; absent provider usage remains null."""
     reported = prompt_tokens is not None and completion_tokens is not None
@@ -204,6 +204,7 @@ def track_tokens(
         duration_ms=latency_ms,
         tokens=token_data,
         status=status,
+        injected=injected,
     )
     return event.model_dump()
 

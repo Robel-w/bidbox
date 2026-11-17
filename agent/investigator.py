@@ -14,7 +14,7 @@ from langchain_core.tools import ToolException
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_mcp_adapters.tools import load_mcp_tools
 
-from audit.logger import append_audit_event
+from audit.logger import append_audit_event, CURRENT_RUN
 from bidbox.store import record_origin
 
 
@@ -30,8 +30,7 @@ def npx_command(platform: str = sys.platform) -> str:
 def mcp_client() -> MultiServerMCPClient:
 	"""Create the two MCP connections used by an investigation."""
 	fixture_dir = str(Path("data/fixtures").resolve())
-	return MultiServerMCPClient(
-		{
+	connections = {
 			"bidbox": {
 				"transport": "stdio",
 				"command": sys.executable,
@@ -46,10 +45,10 @@ def mcp_client() -> MultiServerMCPClient:
 					fixture_dir,
 				],
 			},
-		},
-		# Surface MCP isError results as exceptions; otherwise refusals look like successful output.
-		handle_tool_errors=False,
-	)
+		}
+	if os.getenv("BIDBOX_SANDBOX") != "1":
+		connections.pop("borrowed_filesystem")
+	return MultiServerMCPClient(connections, handle_tool_errors=False)
 
 
 async def _open_mcp_sessions(stack: AsyncExitStack) -> dict[str, Any]:
@@ -202,7 +201,7 @@ def tool_timeout_s() -> float:
 
 def _should_inject_fault(run_id: str, name: str) -> bool:
 	"""DEMO_FAULT_TOOL makes the named tool time out once per run, to show the failure path."""
-	if os.getenv("DEMO_FAULT_TOOL", "").strip() != name or (run_id, name) in _FAULTS_INJECTED:
+	if os.getenv("DEMO_MODE") != "1" or os.getenv("DEMO_FAULT_TOOL", "").strip() != name or (run_id, name) in _FAULTS_INJECTED:
 		return False
 	_FAULTS_INJECTED.add((run_id, name))
 	return True
@@ -243,7 +242,14 @@ async def call_tool(
 			if name not in tools:
 				raise LookupError(f"tool '{name}' is not available from any connected MCP server")
 			async with deadline:
-				raw = await _invoke(tools[name], arguments, inject)
+				token = CURRENT_RUN.set(run_id)
+				try:
+					call_args = dict(arguments)
+					if "run_id" in getattr(tools[name], "args", {}):
+						call_args["run_id"] = run_id
+					raw = await _invoke(tools[name], call_args, inject)
+				finally:
+					CURRENT_RUN.reset(token)
 			result = _parse_result(raw)
 		except Exception as exc:
 			elapsed_ms = (time.perf_counter() - started) * 1000
@@ -258,7 +264,7 @@ async def call_tool(
 			reconnect = not final and not timed_out and _POOL is not None and tools is _POOL.tools
 			if reconnect:
 				outputs["reconnect"] = True
-			append_audit_event(run_id, "agent", name, inputs, outputs, duration_ms=elapsed_ms, status=status)
+			append_audit_event(run_id, "agent", name, inputs, outputs, duration_ms=elapsed_ms, status=status, injected=inject)
 			print(f"tool={name} attempt={attempt} status={status} error={error[:100]}", flush=True)
 			if final:
 				raise ToolCallFailed(name, status, error) from exc
@@ -326,7 +332,12 @@ async def investigate(state: dict[str, Any]) -> dict[str, Any]:
 	if "price benchmark" in plan:
 		calls.append(("benchmark_award", {"ocid": state["ocid"]}))
 	if "supplier history" in plan or "buyer concentration" in plan:
-		calls.append(("investigate_supplier", {"supplier_id": tender["supplier_id"]}))
+		if tender.get("supplier_id"):
+			calls.append(("investigate_supplier", {"supplier_id": tender["supplier_id"]}))
+		else:
+			limitations.append("Supplier identifier not reported; supplier history could not be checked.")
+	for item in state.get("plan", {}).get("connector_calls", []):
+		calls.append((item["name"], {"run_id": state["run_id"], "params": item["params"]}))
 	for name, arguments in calls:
 		if used >= int(state.get("step_budget", 6)):
 			break

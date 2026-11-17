@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from collections import Counter
 from datetime import datetime
@@ -11,7 +12,7 @@ from typing import Any
 
 from audit.logger import get_audit_logs
 
-NON_TOOL_EVENTS = {"llm_call", "recovery", "request_approval", "approval_gate", "source_verification", "evidence_review", "rate_limited", "retry", "fallback_model"}
+NON_TOOL_EVENTS = {"llm_call", "recovery", "request_approval", "approval_gate", "source_verification", "evidence_review", "rate_limited", "retry", "fallback_model", "plan", "state", "notification", "limitation", "done", "error"}
 
 
 def env_number(name: str) -> dict[str, Any]:
@@ -20,9 +21,12 @@ def env_number(name: str) -> dict[str, Any]:
     if not raw:
         return {"env": name, "value": 0.0, "configured": False}
     try:
-        return {"env": name, "value": float(raw), "configured": True}
+        value = float(raw)
+        if not math.isfinite(value) or value < 0:
+            raise ValueError
+        return {"env": name, "value": value, "configured": True}
     except ValueError:
-        return {"env": name, "value": 0.0, "configured": False, "error": f"not a number: {raw!r}"}
+        return {"env": name, "value": 0.0, "configured": False, "error": "must be a finite, non-negative number"}
 
 
 def _ts(event: dict[str, Any]) -> datetime | None:
@@ -82,7 +86,12 @@ def build_run_metrics(run_id: str) -> dict[str, Any]:
     fx = env_number("USD_TO_KES")
 
     tool_call_count = len(tool_events)
-    sms_messages = 0
+    sms_messages = sum(e.get("tool") == "africastalking_sms.send_approval_link" and e.get("status") == "ok" for e in events)
+    request = next((e for e in events if e.get("tool") == "request_approval"), None)
+    decision = next((e for e in reversed(events) if e.get("tool") == "approval_gate"), None)
+    report_done = bool(decision and decision.get("inputs", {}).get("decision") == "approve" and any(
+        e.get("tool") == "create_investigation_file" and e.get("status") == "ok" and e.get("seq", -1) > decision["seq"] for e in events
+    ))
     fees = {
         "tool_fees_usd": round(tool_fee["value"] * tool_call_count, 6),
         "sms_fees_usd": round(sms_fee["value"] * sms_messages, 6),
@@ -105,7 +114,8 @@ def build_run_metrics(run_id: str) -> dict[str, Any]:
     else:
         avg_in, avg_out = total_in / model_calls, total_out / model_calls
         cost_per_answer = (avg_in * price_in["value"] + avg_out * price_out["value"]) / 1_000_000
-        cost_per_outcome = cost_per_answer * model_calls + sum(fees.values())
+        all_fees = all(fee["configured"] for fee in (tool_fee, sms_fee, api_fee, hosting_fee))
+        cost_per_outcome = cost_per_answer * model_calls + sum(fees.values()) if all_fees and report_done else None
         working = {
             "cost_per_answer": (
                 f"{avg_in:.1f} in x ${price_in['value']}/1M + {avg_out:.1f} out x ${price_out['value']}/1M "
@@ -114,26 +124,27 @@ def build_run_metrics(run_id: str) -> dict[str, Any]:
             "cost_per_outcome": (
                 f"${cost_per_answer:.8f} x {model_calls} calls + tool ${fees['tool_fees_usd']} "
                 f"+ sms ${fees['sms_fees_usd']} + api ${fees['api_fees_usd']} "
-                f"+ hosting ${fees['hosting_fee_per_outcome_usd']} = ${cost_per_outcome:.8f}"
+                f"+ hosting ${fees['hosting_fee_per_outcome_usd']} = {cost_per_outcome if cost_per_outcome is not None else 'not computed'} USD"
             ),
         }
         unconfigured = [f["env"] for f in (tool_fee, sms_fee, api_fee, hosting_fee) if not f["configured"]]
         if unconfigured:
-            notes.append(f"Fees not configured (counted as 0): {', '.join(unconfigured)}.")
+            notes.append(f"Fees not configured; total cost is unknown: {', '.join(unconfigured)}.")
+        if not report_done:
+            notes.append("No approved investigation file created; no completed outcome for this run.")
+    notes.append("Population cost per outcome includes every case, including failures and rejections; see aggregate economics.")
 
+    fx_date = os.getenv("USD_TO_KES_DATE", "")
+    try:
+        datetime.strptime(fx_date, "%Y-%m-%d")
+    except ValueError:
+        fx_date = None
     cost_kes = None
-    if cost_per_outcome is not None and fx["configured"]:
+    if cost_per_outcome is not None and fx["configured"] and fx_date:
         cost_kes = round(cost_per_outcome * fx["value"], 6)
         working["cost_per_outcome_kes"] = f"${cost_per_outcome:.8f} x {fx['value']} KES/USD"
     elif cost_per_outcome is not None:
         notes.append("USD_TO_KES not configured; KES cost not computed.")
-
-    request = next((e for e in events if e.get("tool") == "request_approval"), None)
-    decision = next((e for e in reversed(events) if e.get("tool") == "approval_gate"), None)
-    report_done = any(
-        e.get("tool") == "create_investigation_file" and e.get("actor") == "agent" and e.get("status") == "ok"
-        for e in events
-    )
 
     return {
         "run_id": run_id,
@@ -168,13 +179,55 @@ def build_run_metrics(run_id: str) -> dict[str, Any]:
             "HOSTING_FEE_PER_OUTCOME_USD": {**hosting_fee, "unit": "USD per outcome"},
             **fees,
         },
-        "fx": {"USD_TO_KES": fx},
+        "fx": {"USD_TO_KES": fx, "date": fx_date},
         "cost_per_answer_usd": round(cost_per_answer, 8) if cost_per_answer is not None else None,
         "cost_per_outcome_usd": round(cost_per_outcome, 8) if cost_per_outcome is not None else None,
         "cost_per_outcome_kes": cost_kes,
         "working": working,
         "notes": notes,
     }
+
+
+def aggregate_economics(run_ids: list[str]) -> dict:
+    metrics = [build_run_metrics(run_id) for run_id in run_ids]
+    outcomes = []
+    total_calls = 0
+    costs = []
+    for item in metrics:
+        events = get_audit_logs(item["run_id"])
+        decision = next((e for e in reversed(events) if e.get("tool") == "approval_gate"), {})
+        completed = decision.get("inputs", {}).get("decision") == "approve" and any(
+            e.get("tool") == "create_investigation_file" and e.get("status") == "ok" and e.get("seq", -1) > decision.get("seq", -1) for e in events)
+        item["outcome_completed"] = completed
+        if completed:
+            outcomes.append(item)
+        total_calls += item["model_calls"]
+        model_cost = item["list_price_cost_usd"] if item["model_calls"] else 0.0
+        fees = [item["fees"][name] for name in ("TOOL_FEE_USD", "SMS_FEE_USD", "API_FEE_PER_OUTCOME_USD", "HOSTING_FEE_PER_OUTCOME_USD")]
+        value = None
+        if model_cost is not None and all(fee["configured"] for fee in fees):
+            value = model_cost + fees[0]["value"] * item["tool_calls"]["count"] + fees[1]["value"] * fees[1]["count"]
+            if completed:
+                value += fees[2]["value"] + fees[3]["value"]
+        costs.append(value)
+    total = sum(costs) if costs and all(value is not None for value in costs) else None
+    count = len(outcomes)
+    per_outcome = total / count if total is not None and count else None
+    fx = env_number("USD_TO_KES")
+    date = os.getenv("USD_TO_KES_DATE")
+    try:
+        datetime.strptime(date or "", "%Y-%m-%d")
+    except ValueError:
+        date = None
+    return {"runs": len(metrics), "outcomes": count, "definition": "An approved investigation file created",
+            "total_model_calls": total_calls, "total_cost_usd": total, "cost_per_outcome_usd": per_outcome,
+            "cost_per_outcome_kes": per_outcome * fx["value"] if per_outcome is not None and fx["configured"] and date else None,
+            "fx": {**fx, "date": date}, "working": f"Total cost of all {len(metrics)} runs ({total if total is not None else 'not fully reported/configured'} USD) / {count} approved files",
+            "calls_per_outcome": total_calls / count if count else None,
+            "average_completed_run_calls": sum(item["model_calls"] for item in outcomes) / count if count else None,
+            "worst_completed_run_calls": max((item["model_calls"] for item in outcomes), default=None),
+            "model_comparison": "not measured", "cache_effect": "not measured",
+            "per_run": [{"run_id": item["run_id"], "tokens": item["tokens"], "model_calls": item["model_calls"], "outcome_completed": item["outcome_completed"], "total_cost_usd": value} for item, value in zip(metrics, costs)]}
 
 
 def write_run_metrics(run_id: str, root: str | Path = "runs") -> Path:

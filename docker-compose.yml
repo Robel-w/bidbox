@@ -3,3 +3,16 @@ services:
     build: .
     env_file:
       - .env
+    ports:
+      - "127.0.0.1:${PORT:-8000}:${PORT:-8000}"
+    volumes:
+      - bidbox-data:/var/lib/bidbox
+    restart: unless-stopped
+  ollama:
+    image: ollama/ollama:0.6.8
+    profiles: [local-model]
+    volumes:
+      - ollama-data:/root/.ollama
+volumes:
+  bidbox-data:
+  ollama-data:

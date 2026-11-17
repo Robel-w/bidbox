@@ -1,0 +1,27 @@
+'use strict';
+const S = Object.freeze({
+  start: 'Start evidence review', starting: 'Checking the exact process…',
+  intake: 'Ask about price, supplier history, or both. A review only starts after one exact live process is selected.',
+  choose: 'Several processes match. Choose the exact one; nothing has started yet.',
+  notFound: 'No matching live process. Try an exact reference or buyer; no ID has been guessed.',
+  tender: 'Tender stage only — no published award. Open the source record instead.',
+  unknownOutcome: 'The outcome is not confirmed. Check recent cases before submitting again.',
+  noCases: 'No cases started here yet. Search a live process to begin.',
+  replay: 'REPLAY — not live', liveRun: 'Persistent case · recorded evidence',
+  plan: 'Planned evidence checks', hash: 'Content hash you are approving',
+  noNotification: 'Approval notification: not configured. Ask an administrator to configure a provider.',
+  signedRequired: 'Use the signed invitation sent to the configured approver to record a decision.',
+  auditDownload: 'Download audit log', metricsDownload: 'Download run_metrics.json',
+  verify: 'Verify log integrity', valid: 'PASS — audit hash chain is intact', invalid: 'FAIL — audit integrity check failed',
+  checklist: 'Connect for real', testConnection: 'Test connection', testing: 'Checking connection…',
+  noTestSend: 'Connection tests never send messages or perform consequential actions.',
+  actions: 'Action approval policy', addSystem: 'Add a system',
+  architecture: 'Generated from the registry', sequence: 'Recorded run sequence',
+  noSequence: 'Choose a run to inspect its recorded calls.',
+  missing: '—', notMeasured: 'Not measured', fault: 'FAULT INJECTION',
+  working: 'Cost across all cases, including rejected and failed runs',
+  outcome: 'Outcome = an approved investigation file created',
+  newCase: 'Recent cases', archive: 'Archived reviews are separate from live intake.',
+  running: 'Review in progress', queued: 'Queued for review', filing: 'Creating approved file',
+  failed: 'Review stopped — inspect limitations', interrupted: 'Interrupted by service restart'
+});
