@@ -8,6 +8,9 @@ import inspect
 import json
 from pathlib import Path
 import time
+import re
+from contextvars import ContextVar
+from filelock import FileLock
 from typing import Any
 
 from audit.schemas import AuditEvent
@@ -39,6 +42,22 @@ def compute_event_hash(event_data: dict[str, Any]) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+CURRENT_RUN: ContextVar[str | None] = ContextVar("audit_run_id", default=None)
+
+
+def _locked_append(fn):
+    @functools.wraps(fn)
+    def wrapped(run_id, *args, **kwargs):
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}", run_id):
+            raise ValueError("Invalid run identifier")
+        folder = Path("reports/audit")
+        folder.mkdir(parents=True, exist_ok=True)
+        with FileLock(str(folder / f"{run_id}.lock"), timeout=15):
+            return fn(run_id, *args, **kwargs)
+    return wrapped
+
+
+@_locked_append
 def append_audit_event(
     run_id: str,
     actor: str,
@@ -49,6 +68,8 @@ def append_audit_event(
     tokens: dict[str, int] | None = None,
     status: str | None = None,
     origin: str | None = None,
+    event_type: str | None = None,
+    injected: bool = False,
 ) -> AuditEvent:
     """Append a cryptographically chained audit event to reports/audit/<run_id>.jsonl."""
     log_dir = Path("reports/audit")
@@ -68,15 +89,25 @@ def append_audit_event(
             seq = int(last_event["seq"]) + 1
             prev_hash = str(last_event["hash"])
 
+    from bidbox.connectors.redaction import redact
     ts_utc = datetime.now(UTC).isoformat()
+    types = {"plan": "plan", "llm_call": "llm_call", "request_approval": "approval_requested",
+             "approval_gate": "approval_decision", "notification": "notification", "state": "state",
+             "limitation": "limitation", "done": "done", "error": "error"}
     raw_event = {
+        "type": event_type or types.get(tool, "tool_call"),
+        "ts": ts_utc,
+        "connector": tool.split(".", 1)[0] if actor == "connector" and tool else None,
+        "summary": redact(str((outputs or {}).get("summary", tool or ""))) if isinstance(outputs, dict) else tool,
+        "injected": injected,
+        "cost_usd_running": None,
         "seq": seq,
         "ts_utc": ts_utc,
         "run_id": run_id,
         "actor": actor,
         "tool": tool,
-        "inputs": _safe_serialize(inputs or {}),
-        "outputs": _safe_serialize(outputs),
+        "inputs": redact(_safe_serialize(inputs or {})),
+        "outputs": redact(_safe_serialize(outputs)),
         # float() so the hashed value matches what the AuditEvent model serialises (120 vs 120.0).
         "duration_ms": float(round(duration_ms, 2)),
         "tokens": tokens,
@@ -162,7 +193,7 @@ def audited(
 
             @functools.wraps(func)
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
-                run_id = kwargs.get("run_id") or (
+                run_id = kwargs.get("run_id") or CURRENT_RUN.get() or (
                     args[0] if args and isinstance(args[0], str) else "unknown"
                 )
                 start_time = time.perf_counter()
@@ -192,7 +223,7 @@ def audited(
 
         @functools.wraps(func)
         def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
-            run_id = kwargs.get("run_id") or (
+            run_id = kwargs.get("run_id") or CURRENT_RUN.get() or (
                 args[0] if args and isinstance(args[0], str) else "unknown"
             )
             start_time = time.perf_counter()

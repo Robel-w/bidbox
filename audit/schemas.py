@@ -15,6 +15,12 @@ class TokenUsage(BaseModel):
 class AuditEvent(BaseModel):
     """Tamper-evident hash-chained audit log event."""
 
+    type: str = "tool_call"
+    ts: str | None = None
+    connector: str | None = None
+    summary: str | None = None
+    injected: bool = False
+    cost_usd_running: float | None = None
     seq: int
     ts_utc: str
     run_id: str

@@ -18,8 +18,8 @@ class OcdsSource(Connector):
 
         status = data_status()
         counts = status.get("counts", {})
-        live = int(counts.get("live", counts.get("live-portal", 0)) or 0)
-        sandbox = int(counts.get("sandbox", counts.get("synthetic", 0)) or 0)
+        live = int(counts.get("live", 0) or 0)
+        sandbox = int(counts.get("sandbox", 0) or 0)
         if live:
             return HealthResult(status="live", detail=f"{live} ingested publisher records; data as of {status.get('data_as_of') or 'unknown'}")
         if sandbox:

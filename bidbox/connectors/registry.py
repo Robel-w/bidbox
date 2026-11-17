@@ -129,7 +129,7 @@ class Registry:
         """MCP tool specs for every connector action, planned ones included (honest errors)."""
         specs = []
         for entry in self.entries.values():
-            if entry.manifest is None:
+            if entry.manifest is None or entry.problems:
                 continue
             for action in entry.manifest.actions:
                 tool_name = f"connector_{entry.name}_{action.name}"

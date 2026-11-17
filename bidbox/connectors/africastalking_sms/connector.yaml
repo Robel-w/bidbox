@@ -11,22 +11,20 @@ actions:
     input_schema:
       type: object
       properties:
-        to: {type: string, description: "Recipient phone number in international format"}
         link: {type: string, description: "The signed approval link"}
         case_id: {type: string, description: "Short case id to include"}
-      required: [to, link, case_id]
+      required: [link, case_id]
   - name: send_report_copy
     description: "Send case content (report summary) by SMS. Consequential: needs a recorded human approval."
     consequential: true
     input_schema:
       type: object
       properties:
-        to: {type: string, description: "Recipient phone number in international format"}
         case_id: {type: string, description: "Short case id"}
         summary: {type: string, description: "Report summary text to send"}
-      required: [to, case_id, summary]
+      required: [case_id, summary]
 limits: {timeout_s: 30, retries: 1, rate_per_min: 30}
-field_allowlist: [case_id, link, status, recipients]   # only these fields may leave the system
+field_allowlist: [case_id, link, summary, status, recipients]   # only these fields may leave the system
 next_week_checklist:
   - "Get production credentials from the provider"
   - "Register sender ID"

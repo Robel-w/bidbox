@@ -85,15 +85,11 @@ def check_no_secret_in_output(connector: Connector, sample_env: dict[str, str] |
         return []
     env_names = list(connector.manifest.credentials)
     injected: list[str] = []
-    for name in env_names:
-        if not os.environ.get(name):
-            os.environ[name] = SAMPLE_SECRET
-            injected.append(name)
     problems: list[str] = []
     try:
         results = [connector.health_check()]
         for action in connector.manifest.actions:
-            if action.consequential:
+            if action.consequential or action.resolved_mode(connector.kind) != "read":
                 continue
             try:
                 results.append(connector.perform("conformance", action.name, _sample_params(action.input_schema)))
@@ -102,8 +98,9 @@ def check_no_secret_in_output(connector: Connector, sample_env: dict[str, str] |
             except ApprovalRequiredError:
                 continue
         for result in results:
-            text = json.dumps(redact(result), default=str)
-            if SAMPLE_SECRET in text:
+            text = json.dumps(result, default=str)
+            secrets = [os.environ[name] for name in env_names if len(os.getenv(name, "")) >= 4]
+            if SAMPLE_SECRET in text or any(secret in text for secret in secrets):
                 problems.append("the conformance dummy secret leaked into connector output")
     finally:
         for name in injected:
@@ -116,7 +113,7 @@ def check_results_labelled(connector: Connector) -> list[str]:
     if not connector.implemented:
         return []
     for action in connector.manifest.actions:
-        if action.consequential:
+        if action.consequential or action.resolved_mode(connector.kind) != "read":
             continue
         try:
             result = connector.perform("conformance", action.name, _sample_params(action.input_schema))
@@ -163,6 +160,11 @@ def run_conformance(folder: Path, connector: Connector | None) -> list[str]:
     if not connector.implemented:
         planned_problems = check_manifest(folder)
         return planned_problems
+    for method in ("perform", "health_check", "_enabled", "_bounded", "_audit", "_allowlist", "_stamp_origin"):
+        if getattr(type(connector), method) is not getattr(Connector, method):
+            problems.append(f"adapter must not override base safety method {method}")
+    if problems:
+        return problems
     problems += check_health_within_timeout(connector)
     problems += check_errors_mapped(connector)
     problems += check_consequential_gated(connector)

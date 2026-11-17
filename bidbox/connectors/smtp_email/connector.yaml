@@ -11,22 +11,20 @@ actions:
     input_schema:
       type: object
       properties:
-        to: {type: string, description: "Approver email address"}
         link: {type: string, description: "The signed approval link"}
         case_id: {type: string, description: "Short case id"}
-      required: [to, link, case_id]
+      required: [link, case_id]
   - name: send_report_copy
     description: "Email case content to a recipient. Consequential: needs a recorded human approval."
     consequential: true
     input_schema:
       type: object
       properties:
-        to: {type: string, description: "Recipient email address"}
         case_id: {type: string, description: "Short case id"}
         summary: {type: string, description: "Report summary text"}
-      required: [to, case_id, summary]
+      required: [case_id, summary]
 limits: {timeout_s: 30, retries: 1, rate_per_min: 30}
-field_allowlist: [case_id, link, status, recipients, message_id]
+field_allowlist: [case_id, link, summary, status, recipients, message_id]
 next_week_checklist:
   - "Create a dedicated mailbox or SMTP relay account for BidBox"
   - "Set SMTP_HOST / SMTP_PORT / SMTP_USERNAME / SMTP_PASSWORD on the host"

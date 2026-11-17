@@ -71,9 +71,8 @@ FOLDER = Path("bidbox/connectors/{name}")
 
 
 def test_{name}_conformance():
-    problems = run_conformance(FOLDER, None)
-    # A freshly scaffolded connector is allowed to be honest about being unimplemented:
-    # run_conformance(None) only validates the manifest; the registry check below is the real one.
+    registry = Registry()
+    problems = run_conformance(FOLDER, registry.entries["{name}"].connector)
     assert not problems, problems
 
 
@@ -119,7 +118,7 @@ def connector_test_command(name: str) -> None:
     health = entry.connector.health_check()
     output: dict[str, object] = {"connector": name, "health": dict(health)}
     for action in entry.manifest.actions:
-        if action.consequential:
+        if action.consequential or action.resolved_mode(entry.manifest.kind) != "read":
             output["sample_read"] = "skipped: consequential action needs a recorded approval"
             continue
         try:

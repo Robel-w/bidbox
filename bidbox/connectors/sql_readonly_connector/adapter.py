@@ -42,13 +42,18 @@ class SqlReadonlyConnector(Connector):
             raise ConnectorError("not_configured", "postgres DSNs need a driver the host must install; configure duckdb/sqlite paths for now")
         if dsn.endswith((".duckdb", ".ddb")) or dsn == ":memory:":
             try:
-                return duckdb.connect(dsn, read_only=True)
+                return duckdb.connect(dsn, read_only=True, config={"enable_external_access": False})
             except duckdb.Error as exc:
                 raise ConnectorError("auth", f"cannot open duckdb read-only: {exc}") from exc
         path = Path(dsn)
         if path.exists() or dsn.endswith(".sqlite3") or dsn == ":memory:":
             try:
-                connection = sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=5)
+                connection = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True, timeout=5)
+                connection.execute("PRAGMA query_only=ON")
+                config = yaml.safe_load((self.folder / "queries.yaml").read_text(encoding="utf-8")) or {}
+                allowed = set(config.get("allow_listed_tables", []))
+                connection.set_authorizer(lambda op, table, col, db, trigger: sqlite3.SQLITE_DENY
+                    if op == sqlite3.SQLITE_READ and table not in allowed else sqlite3.SQLITE_OK)
                 connection.row_factory = sqlite3.Row
                 return connection
             except sqlite3.Error as exc:
@@ -65,7 +70,7 @@ class SqlReadonlyConnector(Connector):
         finally:
             connection.close()
         lowered = dsn.lower()
-        mode = "sandbox" if any(marker in lowered for marker in SANDBOX_MARKERS) else "live"
+        mode = "sandbox" if any(marker in lowered for marker in SANDBOX_MARKERS) else self.manifest.target_mode
         return HealthResult(status=mode, detail="read-only connection verified against the configured DSN")
 
     def read(self, action: str, params: dict[str, Any]) -> Any:
@@ -77,13 +82,18 @@ class SqlReadonlyConnector(Connector):
         if template is None:
             raise ConnectorError("invalid_request", f"query template {name!r} is not in queries.yaml; free SQL is refused")
         sql = str(template.get("sql") or "")
-        if not re.fullmatch(r"[\s\w:(),.'=*<>-]+", sql) or re.search(r"\b(insert|update|delete|drop|alter|create|attach|copy)\b", sql, re.I):
+        config = yaml.safe_load((self.folder / "queries.yaml").read_text(encoding="utf-8")) or {}
+        tables = set(re.findall(r"\b(?:FROM|JOIN)\s+([a-zA-Z_][a-zA-Z0-9_]*)", sql, re.I))
+        if not tables or not tables <= set(config.get("allow_listed_tables", [])):
+            raise ConnectorError("invalid_request", "Query references a table outside allow_listed_tables")
+        if not sql.lstrip().upper().startswith("SELECT ") or not re.fullmatch(r"[\s\w:(),.'=*<>-]+", sql) or re.search(r"\b(insert|update|delete|drop|alter|create|attach|copy|pragma|load|install|read_csv|read_parquet)\b", sql, re.I):
             raise ConnectorError("invalid_request", "only read-only SELECT templates are allowed")
         bound = dict(params.get("params") or {})
         connection = self._connect()
         try:
             if isinstance(connection, duckdb.DuckDBPyConnection):
-                cursor = connection.execute(sql, bound)
+                names = _param_order(sql)
+                cursor = connection.execute(re.sub(r":([a-zA-Z_][a-zA-Z0-9_]*)", "?", sql), [bound.get(key) for key in names])
                 columns = [d[0] for d in cursor.description]
                 rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
             else:

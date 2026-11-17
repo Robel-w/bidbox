@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 from typing import Any
 
@@ -23,10 +24,13 @@ MASK = "[redacted]"
 
 def redact_text(value: str) -> str:
     """Mask secrets, tokens, emails, phone numbers and ID-like numbers in a string."""
-    text = _ASSIGNMENT.sub(lambda m: f"{m.group(1)}{m.group(2)}{MASK}", value)
+    text = value
+    for name, secret in os.environ.items():
+        if len(secret) >= 4 and re.search(r"KEY|SECRET|TOKEN|PASSWORD|CREDENTIAL|AUTH_HEADER|DSN|APPROVER_EMAIL|APPROVER_PHONE|SMTP_USERNAME|AT_USERNAME", name):
+            text = text.replace(secret, MASK)
+    text = _ASSIGNMENT.sub(lambda m: f"{m.group(1)}{m.group(2)}{MASK}", text)
     text = _BEARER.sub(f"Bearer {MASK}", text)
     text = _KEY_PREFIX.sub(MASK, text)
-    text = _LONG_HEX.sub(MASK, text)
     text = _EMAIL.sub(MASK, text)
     text = _PHONE.sub(MASK, text)
     text = _INTL_PHONE.sub(MASK, text)
@@ -37,9 +41,13 @@ def redact_text(value: str) -> str:
 def redact(value: Any) -> Any:
     """Recursively redact every string in a JSON-like structure, preserving shape."""
     if isinstance(value, str):
+        if re.fullmatch(r"[a-f0-9]{64}", value):
+            return value
         return redact_text(value)
     if isinstance(value, dict):
-        return {key: redact(item) for key, item in value.items()}
+        return {key: MASK if isinstance(item, str) and re.fullmatch(
+            r"(?i)(api[_-]?key|secret|token|password|passwd|pwd|authorization)", str(key)
+        ) else redact(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
         return [redact(item) for item in value]
     return value

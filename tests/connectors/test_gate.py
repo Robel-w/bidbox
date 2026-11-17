@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from audit.logger import append_audit_event, verify_chain
+from audit.events import content_hash
 from bidbox.connectors.base import Connector
 from bidbox.connectors.errors import ApprovalRequiredError
 from bidbox.connectors.manifest import Manifest
@@ -58,7 +59,8 @@ def test_consequential_action_runs_after_recorded_approval(tmp_path):
     append_audit_event(
         run_id=run_id, actor="human", tool="approval_gate",
         inputs={"action": "connector:gate_stub:send_report_copy", "decision": "approve",
-                "approver_name": "A. Officer", "approver_role": "Audit Director", "reason": "required copy"},
+                "approver_name": "A. Officer", "approver_role": "Audit Director", "reason": "required copy",
+                "report_hash": content_hash({"case_id": "C1"})},
         outputs={"status": "approved"},
     )
     result = connector.perform(run_id, "send_report_copy", {"case_id": "C1"}, mode="act")

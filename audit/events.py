@@ -1,6 +1,23 @@
 """Approval gate and financial cost tracking events."""
 
+import hashlib
+import json
+from pathlib import Path
 from typing import Any, Literal, cast
+
+
+def content_hash(content: Any) -> str:
+    from bidbox.connectors.redaction import redact
+    return hashlib.sha256(json.dumps(redact(content), sort_keys=True, separators=(",", ":"), default=str).encode()).hexdigest()
+
+
+def report_content(run_id: str) -> dict:
+    review = next((e["outputs"] for e in reversed(get_audit_logs(run_id))
+                   if e.get("tool") == "evidence_review" and isinstance(e.get("outputs"), dict)), None)
+    if review is not None:
+        return review
+    from bidbox_mcp.tools.flag_finding import get_draft_flags
+    return {"findings": [flag.model_dump() for flag in get_draft_flags(run_id)], "limitations": []}
 
 from audit.logger import append_audit_event, get_audit_logs
 from audit.metrics import build_run_metrics
@@ -17,7 +34,7 @@ def request_approval(
         run_id=run_id,
         actor="agent",
         tool="request_approval",
-        inputs={"action": action, "summary": summary},
+        inputs={"action": action, "summary": summary, "report_hash": content_hash(report_content(run_id))},
         outputs={"status": "pending", "action": action},
     )
     return event.model_dump()
@@ -33,6 +50,7 @@ def record_approval(
     *,
     request_seq: int | None = None,
     independent_reviewer: bool | None = None,
+    report_hash: str | None = None,
 ) -> dict[str, Any]:
     """Record a human gate decision with all required sign-off fields."""
     if not approver_name or not approver_name.strip():
@@ -67,6 +85,7 @@ def record_approval(
         tool="approval_gate",
         inputs={
             "action": action,
+            "report_hash": report_hash or content_hash(report_content(run_id)),
             "approver_name": approver_name.strip(),
             "approver_role": approver_role.strip(),
             "decision": clean_decision,
@@ -118,6 +137,19 @@ def require_report_approval(run_id: str, approver_name: str | None) -> dict[str,
         reason = "recorded approval has no approver name"
     elif str(recorded["approver_name"]).strip().casefold() != claimed.casefold():
         reason = "approver does not match the recorded approval"
+
+    if reason is None:
+        from audit.logger import verify_chain
+        valid, _ = verify_chain(Path("reports/audit") / f"{run_id}.jsonl")
+        if not valid:
+            reason = "audit chain is invalid"
+        elif recorded.get("report_hash") != content_hash(report_content(run_id)):
+            reason = "approved report content hash does not match the current content"
+        elif not str(recorded.get("approver_role") or "").strip():
+            reason = "recorded approval has no approver role"
+        elif any(e.get("tool") == "request_approval" and e.get("seq", -1) > latest["seq"]
+                 for e in get_audit_logs(run_id)):
+            reason = "a newer approval request is pending"
 
     if reason:
         append_audit_event(

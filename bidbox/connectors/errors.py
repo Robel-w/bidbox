@@ -12,6 +12,8 @@ class ConnectorError(RuntimeError):
     def __init__(self, kind: str, message: str) -> None:
         if kind not in ERROR_KINDS:
             raise ValueError(f"Unknown connector error kind {kind!r}; expected one of {ERROR_KINDS}")
+        from bidbox.connectors.redaction import redact_text
+        message = redact_text(message)
         super().__init__(message)
         self.kind = kind
         self.message = message

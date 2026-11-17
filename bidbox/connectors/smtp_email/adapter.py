@@ -38,8 +38,9 @@ class SmtpEmail(Connector):
         try:
             with smtplib.SMTP(host, port, timeout=self.manifest.limits.timeout_s) as server:
                 server.ehlo()
-                if port == 587:
-                    server.starttls()
+                import ssl
+                server.starttls(context=ssl.create_default_context())
+                server.ehlo()
                 server.login(user, password)
         except smtplib.SMTPAuthenticationError:
             return HealthResult(status="error", detail="SMTP credentials rejected by the server")
@@ -60,8 +61,9 @@ class SmtpEmail(Connector):
         try:
             with smtplib.SMTP(host, port, timeout=self.manifest.limits.timeout_s) as server:
                 server.ehlo()
-                if port == 587:
-                    server.starttls()
+                import ssl
+                server.starttls(context=ssl.create_default_context())
+                server.ehlo()
                 server.login(user, password)
                 message_id = server.send_message(message)
         except smtplib.SMTPAuthenticationError as exc:
@@ -73,13 +75,13 @@ class SmtpEmail(Connector):
     def act(self, action: str, params: dict[str, Any]) -> Any:
         if action == "send_approval_link":
             return self._send_message(
-                str(params.get("to")),
+                os.getenv("APPROVER_EMAIL", ""),
                 f"BidBox approval request {params.get('case_id', '')}",
                 f"Case {params.get('case_id', '')} needs your review.\nLink (expiring, single use): {params.get('link', '')}\n",
             )
         if action == "send_report_copy":
             return self._send_message(
-                str(params.get("to")),
+                os.getenv("APPROVER_EMAIL", ""),
                 f"BidBox case {params.get('case_id', '')} report copy",
                 f"Case {params.get('case_id', '')}\n\n{params.get('summary', '')}\n",
             )

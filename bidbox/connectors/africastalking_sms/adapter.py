@@ -59,13 +59,13 @@ class AfricasTalkingSms(Connector):
         url = f"https://{self._host()}/v1/messaging"
         body = {
             "username": username,
-            "to": [payload["to"]],
+            "to": payload["to"],
             "message": payload["message"],
             **({"from": os.environ["AT_SENDER_ID"]} if os.getenv("AT_SENDER_ID") else {}),
         }
         try:
             response = httpx.post(
-                url, json=body, headers={"apiKey": api_key, "Accept": "application/json"},
+                url, data=body, headers={"apiKey": api_key, "Accept": "application/json"},
                 timeout=self.manifest.limits.timeout_s,
             )
             response.raise_for_status()
@@ -85,10 +85,10 @@ class AfricasTalkingSms(Connector):
     def act(self, action: str, params: dict[str, Any]) -> Any:
         if action == "send_approval_link":
             message = f"BidBox approval request {params.get('case_id', '')}: {params.get('link', '')} (expires; single use)"
-            return self._send({"to": str(params.get("to")), "message": message})
+            return self._send({"to": os.getenv("APPROVER_PHONE", ""), "message": message})
         if action == "send_report_copy":
             message = f"BidBox case {params.get('case_id', '')}: {params.get('summary', '')}"[:320]
-            return self._send({"to": str(params.get("to")), "message": message})
+            return self._send({"to": os.getenv("APPROVER_PHONE", ""), "message": message})
         raise ConnectorError("invalid_request", f"unknown act action {action!r}")
 
     def read(self, action: str, params: dict[str, Any]) -> Any:
