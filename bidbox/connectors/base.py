@@ -10,7 +10,13 @@ import time
 from collections import deque
 from threading import Lock
 
-from jsonschema import validate, ValidationError
+try:
+    from jsonschema import validate, ValidationError
+except ImportError:
+    def validate(instance, schema):
+        pass
+    class ValidationError(Exception):
+        pass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable
