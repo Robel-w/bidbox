@@ -97,10 +97,10 @@ def test_fixtures_and_anomalies_in_store(tmp_path: Path) -> None:
     assert len(categories) == 6
 
     # Every record is synthetic
-    non_synthetic = conn.execute(
-        "SELECT count(*) FROM awards_index WHERE synthetic = false"
+    non_sandbox = conn.execute(
+        "SELECT count(*) FROM awards_index WHERE sandbox = false"
     ).fetchone()[0]
-    assert non_synthetic == 0
+    assert non_sandbox == 0
 
     # Injected Anomaly 1: Extreme price outlier (100x)
     laptops = awards_by_category("30213100-6", "KES", conn=conn)

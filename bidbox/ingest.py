@@ -35,7 +35,27 @@ def connect_store(read_only: bool = False):
     connection.execute("SET enable_progress_bar = false")
     if not read_only:
         initialize(connection)
+        migrate_origin_labels(connection)
     return connection
+
+
+ORIGIN_LABEL_TABLES = ("procurement_records", "fiscal_membership", "release_observations")
+
+
+def migrate_origin_labels(connection: duckdb.DuckDBPyConnection) -> bool:
+    """Rename legacy origin labels in tables opened in write mode. Idempotent; True when rows changed."""
+    tables = {row[0] for row in connection.execute(
+        "SELECT table_name FROM information_schema.tables WHERE table_name IN ('procurement_records', 'fiscal_membership', 'release_observations')"
+    ).fetchall()}
+    if "procurement_records" not in tables:
+        return False
+    if not connection.execute("SELECT count(*) FROM procurement_records WHERE origin IN ('live-portal', 'synthetic')").fetchone()[0]:
+        return False
+    for table in ORIGIN_LABEL_TABLES:
+        if table in tables:
+            connection.execute(f"UPDATE {table} SET origin = CASE origin WHEN 'live-portal' THEN 'live' WHEN 'synthetic' THEN 'sandbox' END "
+                               f"WHERE origin IN ('live-portal', 'synthetic')")
+    return True
 
 
 def initialize(connection):
@@ -189,7 +209,7 @@ def prepare_record(record, fiscal_year, page_url, published_date, position, inge
     value = tender.get("value") or {}
     raw = json.dumps(record, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
     return {
-        "origin": "synthetic" if record.get("synthetic") is True else "live-portal",
+        "origin": "sandbox" if record.get("sandbox", record.get("synthetic")) is True else "live",
         "ocid": ocid, "release_key": hashlib.sha256(raw.encode()).hexdigest(),
         "release_sort": release_order(record.get("date")), "release_date": record.get("date"),
         "fiscal_year": fiscal_year or "unassigned", "source_url": page_url,

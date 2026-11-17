@@ -71,7 +71,7 @@ async def review_evidence(state: dict) -> dict:
 				else:
 					allowed = {"data/fixtures/releases.json", str(Path("data/fixtures/releases.json").resolve())}
 					if source["source_url"] not in allowed:
-						raise ValueError("cited live OCID not found; no synthetic fallback")
+						raise ValueError("cited live OCID not found; no sandbox fallback")
 					reader = "read_text_file" if "read_text_file" in tools else "read_file"
 					if _FIXTURE_RECORDS is None:
 						raw = await call_tool(tools, state["run_id"], reader, {"path": str(Path("data/fixtures/releases.json").resolve())})
@@ -92,7 +92,7 @@ async def review_evidence(state: dict) -> dict:
 							f"cited field value {cited_value!r} does not match claim {finding['claim_value']!r}"
 						)
 				if process:
-					append_audit_event(state["run_id"], "agent", "source_verification", {"source": source}, {"verified": True, "basis": "archived downloaded release", "ingested_at": process["ingested_at"]}, origin="live-portal")
+					append_audit_event(state["run_id"], "agent", "source_verification", {"source": source}, {"verified": True, "basis": "archived downloaded release", "ingested_at": process["ingested_at"]}, origin="live")
 			except Exception as exc:
 				verified = False
 				limitations.append(f"Source verification skipped or failed: {exc}")

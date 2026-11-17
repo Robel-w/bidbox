@@ -101,7 +101,7 @@ async def test_full_run_logs_every_tool_call_in_order(offline_run: dict) -> None
     assert all(e["status"] == "ok" and e["run_id"] == run_id for e in calls)
     seqs = [e["seq"] for e in calls]
     assert seqs == sorted(seqs)
-    assert {e["origin"] for e in calls[:4]} == {"synthetic"}
+    assert {e["origin"] for e in calls[:4]} == {"sandbox"}
     assert calls[3]["inputs"]["args_summary"]["path"] == "releases.json"
     assert calls[5]["inputs"]["args_summary"]["approver_name"] == "[redacted]"
     assert verify_chain(Path("reports/audit") / f"{run_id}.jsonl") == (True, None)

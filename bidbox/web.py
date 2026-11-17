@@ -92,7 +92,7 @@ def run_status(report: dict, events: list[dict]) -> str:
 @lru_cache(maxsize=1)
 def fixture_records() -> dict[str, dict]:
     path = Path(__file__).resolve().parents[1] / "data" / "fixtures" / "releases.json"
-    return {record["ocid"]: record for record in json.loads(path.read_text(encoding="utf-8")) if record.get("synthetic")}
+    return {record["ocid"]: record for record in json.loads(path.read_text(encoding="utf-8")) if record.get("sandbox", record.get("synthetic"))}
 
 
 def review_context(report: dict, events: list[dict]) -> dict:
@@ -117,13 +117,13 @@ def review_context(report: dict, events: list[dict]) -> dict:
         contract = {"ocid": ocid, "title": award.get("title"), "buyer_name": record.get("buyer", {}).get("name"),
                     "amount": award.get("value", {}).get("amount"), "currency": award.get("value", {}).get("currency"),
                     "supplier_name": next((supplier.get("name") for supplier in award.get("suppliers", [])), None),
-                    "origin": "synthetic", "sources": [{"ocid": ocid, "field_path": "awards[0]", "source_url": "data/fixtures/releases.json"}]}
+                    "origin": "sandbox", "sources": [{"ocid": ocid, "field_path": "awards[0]", "source_url": "data/fixtures/releases.json"}]}
         context_source = "current fixture"
-    origins = {event.get("origin") for event in events if event.get("origin")}
+    origins = {{"synthetic": "sandbox", "live-portal": "live"}.get(event.get("origin"), event.get("origin")) for event in events if event.get("origin")}
     if contract.get("origin"):
         origins.add(contract["origin"])
-    origin = "mixed" if "mixed" in origins or {"synthetic", "live-portal"} <= origins else (
-        "synthetic" if "synthetic" in origins else "live-portal" if "live-portal" in origins else "not recorded")
+    origin = "mixed" if "mixed" in origins or {"sandbox", "live"} <= origins else (
+        "sandbox" if "sandbox" in origins else "live" if "live" in origins else "not recorded")
     request = next((event for event in reversed(events) if event.get("tool") == "request_approval"), None)
     request_inputs = (request or {}).get("inputs") or {}
     return {"ocid": ocid, "contract": contract, "context_source": context_source, "origin": origin,
@@ -187,7 +187,7 @@ def capabilities() -> dict:
     return {"can_start_review": False, "authenticated_approval": False, "integrations": [
         {"name": "Model provider", "status": "configured" if configured else "not configured",
          "detail": "Host configuration only; provider availability is checked when an investigation starts."},
-        {"name": "Kenya PPIP OCDS", "status": "available" if data_status()["counts"]["live-portal"] else "not configured", "detail": "Downloaded publisher records with fiscal-year membership and source timestamps. Download completion is not verified full-year coverage."},
+        {"name": "Kenya PPIP OCDS", "status": "available" if data_status()["counts"]["live"] else "not configured", "detail": "Downloaded publisher records with fiscal-year membership and source timestamps. Download completion is not verified full-year coverage."},
         {"name": "Local OCDS fixtures", "status": "sandbox", "detail": "Separate synthetic test fixtures. Never substituted for live search results."},
         {"name": "Hash-chained audit", "status": "available", "detail": "Recorded actions, sources and named committee decisions."},
         {"name": "Free-text investigation startup", "status": "planned", "detail": "This viewer opens recorded reviews; new investigations use the runner."},
@@ -273,7 +273,7 @@ def fixture_source(run_id: str, ocid: str) -> dict:
         referenced.update(source.get("ocid") for source in finding.get("sources", []))
     if ocid not in referenced or ocid not in fixture_records():
         raise HTTPException(status_code=404, detail="Recorded fixture source not found")
-    return {"origin": "synthetic", "notice": "Current local fixture, not an archived publisher snapshot.", "record": fixture_records()[ocid]}
+    return {"origin": "sandbox", "notice": "Current local fixture, not an archived publisher snapshot.", "record": fixture_records()[ocid]}
 
 
 @app.get("/api/runs/{run_id}/events")

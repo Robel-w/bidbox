@@ -109,8 +109,8 @@ def pending_review(tmp_path: Path, monkeypatch):
         "status": "ok", "candidate_count": 1, "verified_count": 1, "retained_count": 1, "findings": [finding],
         "reason": "Test-only review", "limitations": ["Test-only limitation"],
         "contract": {"ocid": record["ocid"], "title": award["title"], "buyer_name": record["buyer"]["name"],
-                     "amount": award["value"]["amount"], "currency": award["value"]["currency"], "origin": "synthetic", "sources": [source]},
-    }, origin="synthetic")
+                     "amount": award["value"]["amount"], "currency": award["value"]["currency"], "origin": "sandbox", "sources": [source]},
+    }, origin="sandbox")
     pending = append_audit_event("ui-review-test", "agent", "request_approval", {
         "action": "committee_review", "requester_name": "Test Requester", "requester_role": "Officer",
     }, {"status": "pending"}).model_dump()
@@ -123,7 +123,7 @@ def test_pending_review_has_sources_context_and_no_fabricated_file(pending_revie
     client, record, payload = pending_review
     detail = client.get("/api/runs/ui-review-test").json()
     assert detail["context_source"] == "recorded"
-    assert detail["origin"] == "synthetic"
+    assert detail["origin"] == "sandbox"
     assert detail["contract"]["amount"] == record["awards"][0]["value"]["amount"]
     assert detail["findings"][0]["sources"][0]["ocid"] == record["ocid"]
     assert detail["limitations"] == ["Test-only limitation"]
@@ -131,7 +131,7 @@ def test_pending_review_has_sources_context_and_no_fabricated_file(pending_revie
     assert detail["requester_name"] == "Test Requester"
     source = client.get("/api/runs/ui-review-test/source", params={"ocid": record["ocid"]})
     assert source.status_code == 200
-    assert source.json()["origin"] == "synthetic"
+    assert source.json()["origin"] == "sandbox"
     assert "Current local fixture" in source.json()["notice"]
     assert client.get("/api/runs/ui-review-test/source", params={"ocid": "../../private"}).status_code == 404
     response = client.post("/api/runs/ui-review-test/approve", json=payload)
@@ -212,10 +212,10 @@ def test_current_fixture_is_not_presented_as_archived_evidence(tmp_path: Path, m
     monkeypatch.chdir(tmp_path)
     record = next(iter(web.fixture_records().values()))
     append_audit_event("old-review", "agent", "inspect_tender", {"args_summary": {"ocid": record["ocid"]}},
-                       {"result_summary": "Old truncated output"}, status="ok", origin="synthetic")
+                       {"result_summary": "Old truncated output"}, status="ok", origin="sandbox")
     detail = TestClient(web.app).get("/api/runs/old-review").json()
     assert detail["context_source"] == "current fixture"
-    assert detail["origin"] == "synthetic"
+    assert detail["origin"] == "sandbox"
     assert detail["findings"] == []
     assert detail["review"] == {}
     assert detail["contract"]["amount"] == record["awards"][0]["value"]["amount"]

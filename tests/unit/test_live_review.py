@@ -30,7 +30,7 @@ def test_real_award_keeps_missing_fields_and_declines_unclassified_benchmark(liv
     ocid = live_connection.execute("SELECT ocid FROM procurement_records WHERE award_count > 0").fetchone()[0]
     inspection = inspect_tender_tool(ocid)
     benchmark = benchmark_award_tool(ocid)
-    assert inspection.origin == benchmark.origin == "live-portal"
+    assert inspection.origin == benchmark.origin == "live"
     assert inspection.status is None
     assert inspection.currency == "KES"
     assert benchmark.verdict == "insufficient_comparables"
@@ -40,7 +40,7 @@ def test_real_award_keeps_missing_fields_and_declines_unclassified_benchmark(liv
     tender_ocid = live_connection.execute("SELECT ocid FROM procurement_records WHERE award_count = 0 LIMIT 1").fetchone()[0]
     assert store.get_award(tender_ocid) is None
     assert store.get_award("TEST_ONLY_NOT_FOUND") is None
-    assert live_connection.execute("SELECT count(*) FROM awards_index WHERE synthetic").fetchone()[0] == 0
+    assert live_connection.execute("SELECT count(*) FROM awards_index WHERE sandbox").fetchone()[0] == 0
 
 
 def test_empty_live_store_never_seeds_a_sandbox():

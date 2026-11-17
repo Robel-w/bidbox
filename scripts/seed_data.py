@@ -138,7 +138,7 @@ def generate_synthetic_releases(count: int = 600, seed: int = 42) -> list[dict]:
             "buyer": buyer_record,
             "awards": [award],
             "source_url": "data/fixtures/releases.json",
-            "synthetic": True,
+            "sandbox": True,
         }
         releases.append(release)
 

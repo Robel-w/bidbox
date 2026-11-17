@@ -21,7 +21,7 @@ def _release(n: int, cpv: str, amount: float) -> dict:
             "suppliers": [{"id": f"SUP-{n}", "name": f"Supplier {n}"}],
             "items": [{"classification": {"id": cpv, "scheme": "CPV"}}],
         }],
-        "synthetic": True,
+        "sandbox": True,
     }
 
 
@@ -66,7 +66,7 @@ def test_benchmark_broadens_instead_of_lowering_minimum(conn: duckdb.DuckDBPyCon
     assert result.min_comparables == 3
     assert result.comparable_count == 4
     assert "ocds-test-001" not in {c["ocid"] for c in result.comparables_used}
-    assert result.origin == "synthetic"
+    assert result.origin == "sandbox"
 
 
 def test_benchmark_stays_insufficient_when_no_broader_peers(conn: duckdb.DuckDBPyConnection) -> None:

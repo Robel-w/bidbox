@@ -113,8 +113,8 @@ function badges(id, detail, includeState = true) {
   const element = $(id);
   const origin = detail.origin;
   element.replaceChildren();
-  if (origin === 'synthetic' || origin === 'mixed') element.append(chip(origin === 'mixed' ? 'SANDBOX: includes synthetic data' : 'SANDBOX: synthetic data', 'sandbox', 'flask'));
-  else if (origin === 'live-portal') element.append(chip('Recorded publisher data', '', 'link'));
+  if (origin === 'sandbox' || origin === 'mixed') element.append(chip(origin === 'mixed' ? 'SANDBOX: includes sandbox data' : 'SANDBOX data', 'sandbox', 'flask'));
+  else if (origin === 'live') element.append(chip('LIVE data · recorded publisher', '', 'link'));
   else element.append(chip('SANDBOX: data origin unverified', 'sandbox', 'alert'));
   element.append(chip('REPLAY', 'recorded', 'replay'));
   if (includeState) element.append(chip(...status(detail)));
@@ -137,7 +137,7 @@ function renderRuns() {
   $('ask-badges').hidden = !available.length;
   if (available.length) {
     const origins = new Set(available.map(run => run.origin));
-    const origin = origins.size === 1 ? available[0].origin : origins.has('synthetic') || origins.has('mixed') ? 'mixed' : 'not recorded';
+    const origin = origins.size === 1 ? available[0].origin : origins.has('sandbox') || origins.has('mixed') ? 'mixed' : 'not recorded';
     badges('ask-badges', { origin }, false);
   }
   if (!available.length) {
@@ -183,7 +183,7 @@ async function loadPublisher() {
   try {
     const [status, result] = await Promise.all([api('/api/data/status'), api('/api/data/search?limit=12')]);
     const wrap = $('data-status'); wrap.replaceChildren(chip(status.label, status.label === 'MIXED' || status.label === 'SANDBOX DATA' ? 'sandbox' : '', 'link'));
-    wrap.append(node('p', 'helper', `${number(status.counts['live-portal'])} live processes · ${number(status.counts.synthetic)} sandbox records · Publisher data as of ${stamp(status.data_as_of)}`));
+    wrap.append(node('p', 'helper', `${number(status.counts['live'])} live processes · ${number(status.counts.sandbox)} sandbox records · Publisher data as of ${stamp(status.data_as_of)}`));
     if (status.current_fy_partial) wrap.append(node('p', 'helper partial-warning', 'FY 2026–2027 is in progress and partial. Download completion does not establish full-year coverage.'));
     const details = node('details'); details.append(node('summary', '', 'Source coverage and ingest status'));
     status.per_fy.forEach(fy => {
@@ -240,8 +240,8 @@ function sourceLinks(sources, detail) {
       const url = new URL(raw.trim());
       if (['https:', 'http:'].includes(url.protocol) && !url.username && !url.password) { href = url.href; label = url.hostname; }
     } catch (_) {
-      if (/(?:^|[/\\])releases\.json(?:$|[?#])/.test(raw) && sourceRef.ocid && ['synthetic', 'mixed'].includes(detail.origin)) {
-        href = `/api/runs/${encodeURIComponent(detail.run_id)}/source?ocid=${encodeURIComponent(sourceRef.ocid)}`; label = 'Local OCDS fixture · synthetic';
+      if (/(?:^|[/\\])releases\.json(?:$|[?#])/.test(raw) && sourceRef.ocid && ['sandbox', 'mixed'].includes(detail.origin)) {
+        href = `/api/runs/${encodeURIComponent(detail.run_id)}/source?ocid=${encodeURIComponent(sourceRef.ocid)}`; label = 'Local OCDS fixture · sandbox';
       }
     }
     const item = node(href ? 'a' : 'span', `source-link ${href ? '' : 'source-unavailable'}`);

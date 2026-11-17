@@ -163,7 +163,7 @@ def data_origin(value: Any) -> str | None:
 		origin = value.get("origin")
 		return origin if isinstance(origin, str) else None
 	if isinstance(value, list):
-		return record_origin([item for item in value if isinstance(item, dict) and "synthetic" in item])
+		return record_origin([item for item in value if isinstance(item, dict) and ("sandbox" in item or "synthetic" in item)])
 	return None
 
 

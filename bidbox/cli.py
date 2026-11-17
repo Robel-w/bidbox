@@ -81,6 +81,6 @@ def main():
             except (httpx.HTTPError, httpx.InvalidURL, ValueError, OSError) as exc:
                 errors.append(f"{type(exc).__name__}: {exc}")
         rows = connection.execute("SELECT origin, count(*) FROM procurement_records GROUP BY origin ORDER BY origin").fetchall()
-        print(json.dumps({"records_by_origin": dict(rows), "errors": errors, "synthetic_fallback_used": False}), flush=True)
+        print(json.dumps({"records_by_origin": dict(rows), "errors": errors, "sandbox_fallback_used": False}), flush=True)
     if errors:
         raise SystemExit(1)

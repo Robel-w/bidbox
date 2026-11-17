@@ -29,7 +29,7 @@ def test_actual_saved_sample_idempotent_with_exact_provenance(connection):
     assert first["releases"] == second["releases"] == 4
     assert connection.execute("SELECT ocid, ingested_at, raw_json FROM procurement_records ORDER BY ocid").fetchall() == before
     assert connection.execute("SELECT count(*) FROM release_observations").fetchone()[0] == 4
-    assert connection.execute("SELECT DISTINCT origin, source_url FROM procurement_records").fetchall() == [("live-portal", SOURCE)]
+    assert connection.execute("SELECT DISTINCT origin, source_url FROM procurement_records").fetchall() == [("live", SOURCE)]
     assert connection.execute("SELECT count(*) FROM procurement_records WHERE award_count = 0").fetchone()[0] == 3
     actual = json.loads(SAMPLE.read_text(encoding="utf-8"))
     assert {row[0] for row in before} == {record["ocid"] for record in actual["releases"]}
@@ -62,11 +62,21 @@ def test_latest_release_and_origin_separation(connection, tmp_path):
     newer = {"ocid": "TEST_ONLY", "date": "2025-01-02T00:00:00Z", "tender": {"title": "TEST_ONLY_NEW"}}
     older = {**newer, "date": "2025-01-01T00:00:00Z", "tender": {"title": "TEST_ONLY_OLD"}}
     path = tmp_path / "input.json"
-    path.write_text(json.dumps([newer, older, {**newer, "synthetic": True}]), encoding="utf-8")
+    path.write_text(json.dumps([newer, older, {**newer, "sandbox": True}]), encoding="utf-8")
     ingest.ingest_page(connection, path, SOURCE)
-    assert connection.execute("SELECT origin, title FROM procurement_records ORDER BY origin").fetchall() == [("live-portal", "TEST_ONLY_NEW"), ("synthetic", "TEST_ONLY_NEW")]
+    assert connection.execute("SELECT origin, title FROM procurement_records ORDER BY origin").fetchall() == [("live", "TEST_ONLY_NEW"), ("sandbox", "TEST_ONLY_NEW")]
     assert ingest.release_order("not a date") == ""
     assert ingest.release_order("2025-01-01") == ""
+
+
+def test_migrate_origin_labels_renames_legacy_values_and_is_idempotent(connection):
+    connection.execute("INSERT INTO procurement_records (origin, ocid) VALUES ('live-portal', 'TEST_ONLY_LIVE'), ('synthetic', 'TEST_ONLY_SANDBOX')")
+    connection.execute("INSERT INTO fiscal_membership (origin, ocid, fiscal_year) VALUES ('live-portal', 'TEST_ONLY_LIVE', '2018-2019')")
+    assert ingest.migrate_origin_labels(connection) is True
+    assert connection.execute("SELECT DISTINCT origin FROM procurement_records ORDER BY origin").fetchall() == [("live",), ("sandbox",)]
+    assert connection.execute("SELECT DISTINCT origin FROM fiscal_membership").fetchall() == [("live",)]
+    assert ingest.migrate_origin_labels(connection) is False
+    assert connection.execute("SELECT count(*) FROM procurement_records WHERE origin IN ('live-portal', 'synthetic')").fetchone()[0] == 0
 
 
 @pytest.mark.parametrize("body", [b'{"releases": {}}', b'{"records": [{}]}', b'[{"title":"TEST_ONLY_NO_OCID"}]', b'[{"ocid":"TEST_ONLY"},{"ocid":"TEST_ONLY_BROKEN"'])

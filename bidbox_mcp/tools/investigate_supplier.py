@@ -17,7 +17,7 @@ def investigate_supplier_tool(supplier_id: str) -> SupplierInvestigationResult:
         awards = awards_by_supplier(supplier_id)
 
     if not awards:
-        raise ValueError("Supplier not found in the selected data; no synthetic fallback")
+        raise ValueError("Supplier not found in the selected data; no sandbox fallback")
     if any(a.get("amount") is None or not a.get("currency") for a in awards) or len({a["currency"] for a in awards}) != 1:
         raise ValueError("Supplier award values are missing or use different currencies; no total can be computed")
     award_count = len(awards)

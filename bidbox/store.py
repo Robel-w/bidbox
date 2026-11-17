@@ -38,13 +38,13 @@ def normalize_supplier_id(raw_id: str | None) -> tuple[str, str | None]:
 
 
 def record_origin(records: list[dict[str, Any]]) -> str | None:
-    """Label indexed records as synthetic fixtures or live-portal downloads."""
-    flags = {bool(rec.get("synthetic")) for rec in records}
+    """Label indexed records as sandbox fixtures or live downloads."""
+    flags = {bool(rec.get("sandbox", rec.get("synthetic"))) for rec in records}
     if not flags:
         return None
     if len(flags) > 1:
         return "mixed"
-    return "synthetic" if flags == {True} else "live-portal"
+    return "sandbox" if flags == {True} else "live"
 
 
 def init_db(conn: duckdb.DuckDBPyConnection | None = None) -> duckdb.DuckDBPyConnection:
@@ -73,7 +73,7 @@ def init_db(conn: duckdb.DuckDBPyConnection | None = None) -> duckdb.DuckDBPyCon
             classification_desc VARCHAR,
             item_description VARCHAR,
             source_url VARCHAR,
-            synthetic BOOLEAN,
+            sandbox BOOLEAN,
             raw_json VARCHAR,
             award_position INTEGER
         )
@@ -111,7 +111,7 @@ def load_live_awards(connection):
         WITH expanded AS (
             SELECT *, unnest(json_extract(raw_json,'$.awards[*]')) AS award,
                 generate_subscripts(json_extract(raw_json,'$.awards[*]'),1)-1 AS award_position
-            FROM procurement_records WHERE origin = 'live-portal' AND award_count > 0
+            FROM procurement_records WHERE origin = 'live' AND award_count > 0
         ), extracted AS (
             SELECT ocid, json_extract_string(raw_json,'$.id') AS release_id,
                 release_date AS date, buyer_id, buyer_name,
@@ -125,7 +125,7 @@ def load_live_awards(connection):
                 coalesce(json_extract_string(award,'$.items[0].classification.id'),'') AS classification_id,
                 coalesce(json_extract_string(award,'$.items[0].classification.description'),'') AS classification_desc,
                 json_extract_string(award,'$.items[0].description') AS item_description,
-                source_url, false AS synthetic, raw_json, award_position
+                source_url, false AS sandbox, raw_json, award_position
             FROM expanded
         )
         SELECT *, normalize_supplier(supplier_id) AS normalized_supplier_id,
@@ -161,7 +161,7 @@ def load_data(
             buyer_id = buyer.get("id")
             buyer_name = buyer.get("name")
             source_url = rel.get("source_url", str(file))
-            synthetic = bool(rel.get("synthetic", False))
+            sandbox = bool(rel.get("sandbox", rel.get("synthetic", False)))
 
             awards = rel.get("awards", [])
             for position, awd in enumerate(awards):
@@ -205,7 +205,7 @@ def load_data(
                         class_desc,
                         item_desc,
                         source_url,
-                        synthetic,
+                        sandbox,
                         json.dumps(rel),
                         position,
                     )
