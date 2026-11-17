@@ -1,3 +1,143 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BidBox Committee Review</title><link rel="stylesheet" href="/style.css"></head>
-<body><header class="banner">Prepared for committee decision. No award decision is made or implied.</header><main class="layout"><aside class="panel runs"><h2>Runs</h2><div id="runs" class="stack">Loading recorded runs...</div></aside><section class="panel run"><h1>Run</h1><div id="summary" class="summary empty">Select a recorded run.</div><h2>Economics</h2><p class="muted">Currently configured list prices, not a provider bill. Missing values are not configured or not reported.</p><div id="economics" class="summary empty">Select a recorded run.</div><div id="economics-notes" class="muted"></div><h2>Timeline</h2><div id="timeline" class="stack empty">No events loaded.</div><h2>Findings</h2><div id="findings" class="stack empty">No findings loaded.</div><h2>Dropped findings</h2><div id="dropped" class="stack empty">No dropped findings recorded.</div><h2>Data limitations</h2><div id="limitations" class="stack empty">No limitations recorded.</div></section><aside class="panel gate"><h2>Committee gate</h2><p id="gate-status" class="muted">Select a run to inspect its gate.</p><form id="approval-form" hidden><label>Approver name<input id="approver-name" required></label><label>Approver role<input id="approver-role" required></label><label>Decision<select id="decision"><option value="approve">Approve</option><option value="reject">Reject</option></select></label><label>Reason<textarea id="reason" required></textarea></label><div class="actions"><button id="approve" type="submit">Record decision</button></div></form><div id="approval-event"></div></aside></main><script src="/app.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#03195b">
+  <title>BidBox · Committee review</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#ask" aria-label="BidBox home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>bidbox<span class="brand-caption">Committee review</span></span></a>
+      <nav id="main-nav" aria-label="Main navigation">
+        <a href="#ask" data-nav="ask">Review</a>
+        <a href="#economics" data-nav="economics">Economics</a>
+        <a href="#integrations" data-nav="integrations">Integrations</a>
+      </nav>
+      <span id="approval-header" class="header-note" hidden>Independent review</span>
+    </div>
+  </header>
+  <main id="main" class="page" tabindex="-1">
+    <div id="data-status" class="data-status" role="status" aria-live="polite">Loading publisher data status…</div>
+    <div id="page-notice" class="notice" role="status" aria-live="polite" hidden></div>
+    <section id="ask-screen" data-screen="ask" aria-labelledby="ask-title">
+      <div class="intro">
+        <p class="eyebrow">Evidence before decisions</p>
+        <h1 id="ask-title">A second look.<br>A clearer record.</h1>
+        <p class="intro-copy">Check the evidence. Understand the limits.<br>Leave a decision others can follow.</p>
+      </div>
+      <form id="ask-form" class="card ask-card">
+        <label for="award-query">Which contract process would you like to check?</label>
+        <div class="query-wrap"><span data-icon="search" aria-hidden="true"></span><input id="award-query" type="search" placeholder="Contract reference, buyer, or title" autocomplete="off" maxlength="240" required aria-describedby="ask-help"></div>
+        <p id="ask-help" class="helper">Search downloaded Kenya PPIP records by reference, buyer or title. Opening source data does not start an investigation or approve it.</p>
+        <div class="examples-label">Or open a published process</div>
+        <div id="examples" class="example-chips" aria-label="Published process examples"><span class="muted">Loading published processes…</span></div>
+        <button id="ask-submit" class="button primary full-width" type="submit">Find this process <span data-icon="arrow-right" aria-hidden="true"></span></button>
+        <p id="search-feedback" class="helper" role="status" aria-live="polite"></p>
+      </form>
+      <section class="recent-section" aria-labelledby="published-title"><h2 id="published-title">Published contract processes</h2><div id="live-results" class="review-list" aria-live="polite"></div><p class="helper">Publisher records, not automated findings. No synthetic fallback.</p></section>
+      <details class="recent-section"><summary>Recorded investigations · REPLAY</summary><div id="ask-badges" class="badge-row" hidden></div>
+      <section aria-labelledby="recent-title">
+        <div class="section-heading"><h2 id="recent-title">Recorded reviews</h2><span class="quiet-label">Latest review per award</span></div>
+        <div id="runs" class="review-list" aria-live="polite"><div class="list-loading"><span class="spinner" aria-hidden="true"></span> Loading recorded reviews</div></div>
+        <button id="show-more" class="text-button" type="button" hidden>Show more reviews <span data-icon="chevron-down" aria-hidden="true"></span></button>
+      </section></details>
+      <div class="principle-note"><span data-icon="shield" aria-hidden="true"></span><p>Observations for human review. Not allegations, and never an award decision.</p></div>
+    </section>
+
+    <section id="process-screen" data-screen="process" hidden aria-labelledby="process-title">
+      <a class="back-link" href="#ask"><span data-icon="arrow-left" aria-hidden="true"></span> Published processes</a>
+      <div id="process-badges" class="badge-row"></div>
+      <p class="eyebrow">Contract process · publisher evidence</p>
+      <h1 id="process-title">Opening source record…</h1>
+      <p id="process-reference" class="helper"></p>
+      <div id="process-context" class="card table-card"></div>
+      <section class="report-section"><h2>Published awards</h2><div id="process-awards" class="findings-stack"></div></section>
+      <section class="report-section"><h2>Source and limits</h2><div id="process-source" class="card table-card"></div></section>
+      <p class="helper">This is source data, not an automated finding or approval. Observations need human review; no award decision is made.</p>
+    </section>
+
+    <section id="review-screen" data-screen="review" hidden aria-labelledby="review-title">
+      <a class="back-link" href="#ask"><span data-icon="arrow-left" aria-hidden="true"></span> All reviews</a>
+      <div id="review-badges" class="badge-row"></div>
+      <p class="eyebrow">Review progress</p>
+      <h1 id="review-title">Loading review…</h1>
+      <p id="review-subtitle" class="intro-copy"></p>
+      <div id="review-contract"></div>
+      <div id="run-warning" class="notice review-notice" hidden></div>
+      <section class="card timeline-card" aria-labelledby="timeline-title">
+        <div class="section-heading"><h2 id="timeline-title">The work, step by step</h2><span id="connection-status" class="connection-status" role="status"></span></div>
+        <ol id="timeline" class="timeline"></ol>
+        <details class="tool-details"><summary><span data-icon="code" aria-hidden="true"></span> View tool log <span id="log-count" class="muted"></span></summary><div id="tool-log"></div></details>
+      </section>
+      <div id="run-next" class="next-action"></div>
+      <p class="helper">This is a recorded audit, not a new live investigation. Updates appear only when the requester’s runner records more work.</p>
+    </section>
+
+    <section id="approval-screen" data-screen="approval" hidden aria-labelledby="approval-title">
+      <a id="approval-back" class="back-link" href="#ask"><span data-icon="arrow-left" aria-hidden="true"></span> Review details</a>
+      <div id="approval-badges" class="badge-row"></div>
+      <p class="eyebrow">Independent committee review</p>
+      <h1 id="approval-title">Your decision.<br>The evidence in front of you.</h1>
+      <p class="intro-copy approval-intro">Decide whether this review can become an investigation file. No award decision is made or implied.</p>
+      <article class="card approval-card">
+        <div id="approval-context"></div>
+        <section class="approval-section" aria-labelledby="approval-evidence-title"><h2 id="approval-evidence-title">What needs a second look</h2><div id="approval-evidence"></div></section>
+        <section class="approval-section" aria-labelledby="approval-limits-title"><h2 id="approval-limits-title">What limits this review</h2><div id="approval-limits"></div></section>
+        <div id="approval-state" role="status" aria-live="polite"></div>
+        <form id="approval-form" hidden>
+          <div class="approval-section">
+            <h2>Your sign-off</h2>
+            <p id="requester-context" class="helper"></p>
+            <div class="form-grid"><div><label for="approver-name">Your full name</label><input id="approver-name" autocomplete="name" maxlength="120" required></div><div><label for="approver-role">Your committee role</label><input id="approver-role" autocomplete="organization-title" maxlength="120" required></div></div>
+            <label for="reason">Brief reason for your decision</label>
+            <textarea id="reason" rows="2" maxlength="1000" placeholder="What did you check, and why is this your decision?" required></textarea>
+            <label class="checkbox-label"><input id="independent-reviewer" type="checkbox" required><span>I am a different person from the requester.</span></label>
+            <p class="helper identity-note">This service records your name and role; it does not authenticate your identity.</p>
+            <div class="decision-buttons"><button id="approve" class="button primary" type="submit" value="approve">Approve <span data-icon="check" aria-hidden="true"></span></button><button id="reject" class="button secondary" type="submit" value="reject">Reject</button></div>
+          </div>
+        </form>
+        <div id="decision-confirm" class="approval-section confirm-panel" hidden>
+          <h2 id="confirm-title" tabindex="-1">Confirm your decision</h2>
+          <p id="confirm-copy"></p><dl id="confirm-details" class="compact-details"></dl>
+          <p class="helper">Your name, role and reason will be added to the audit trail. This cannot be silently changed.</p>
+          <div class="decision-buttons"><button id="confirm-decision" class="button primary" type="button">Confirm approval</button><button id="edit-decision" class="button secondary" type="button">Go back</button></div>
+        </div>
+        <p id="decision-error" class="form-error" role="alert" hidden></p>
+      </article>
+      <p class="helper approval-footer">Approval authorizes file creation, not the accuracy of every observation. Verify the sources and limits before signing.</p>
+    </section>
+
+    <section id="report-screen" data-screen="report" hidden aria-labelledby="report-title">
+      <a id="report-back" class="back-link" href="#ask"><span data-icon="arrow-left" aria-hidden="true"></span> Review progress</a>
+      <div id="report-badges" class="badge-row"></div>
+      <p id="report-eyebrow" class="eyebrow">Evidence for committee review</p>
+      <h1 id="report-title">Loading evidence…</h1>
+      <p id="report-subtitle" class="intro-copy"></p>
+      <div id="report-contract"></div>
+      <section class="report-section" aria-labelledby="findings-title"><div class="section-heading"><h2 id="findings-title">What was found</h2><span id="findings-count" class="quiet-label"></span></div><div id="findings" class="findings-stack"></div></section>
+      <section class="report-section" aria-labelledby="limitations-title"><h2 id="limitations-title">What limits these results</h2><div id="limitations" class="card limitations-card"></div></section>
+      <details id="dropped-details" class="card dropped-details"><summary>What the reviewer left out <span id="dropped-count" class="muted"></span></summary><div id="dropped"></div></details>
+      <section class="report-section" aria-labelledby="signoff-title"><h2 id="signoff-title">Who signed off</h2><div id="signoff" class="card signoff-card"></div></section>
+      <div id="report-action" class="next-action"></div>
+      <div class="principle-note"><span data-icon="shield" aria-hidden="true"></span><p>Prepared for committee decision. No award decision is made or implied.</p></div>
+    </section>
+
+    <section id="economics-screen" data-screen="economics" hidden aria-labelledby="economics-title">
+      <p class="eyebrow">Cost transparency</p><h1 id="economics-title">Know what the review costs.</h1><p class="intro-copy">Provider-reported usage. Clearly entered list prices.<br>No estimates dressed up as facts.</p>
+      <div id="economics-select"></div>
+      <div id="economics-content" hidden><div id="economics-badges" class="badge-row"></div><p id="economics-run" class="helper"></p><section class="card table-card"><h2>Configured list prices</h2><div id="pricing-table"></div></section><section class="card table-card"><h2>This recorded review</h2><div id="cost-table"></div></section><details class="card usage-details"><summary>Usage for each model attempt</summary><div id="usage-table"></div></details><div id="economics-notes" class="helper"></div></div>
+    </section>
+
+    <section id="integrations-screen" data-screen="integrations" hidden aria-labelledby="integrations-title">
+      <p class="eyebrow">Connections & capabilities</p><h1 id="integrations-title">What’s connected.<br>What’s still planned.</h1><p class="intro-copy">A clear boundary between working local tools and features that are not available yet.</p><div id="integrations" class="card integration-card"><span class="spinner" aria-hidden="true"></span> Loading configuration</div>
+    </section>
+    <footer class="page-footer"><span>bidbox</span><span>Calm, clear, defensible.</span></footer>
+  </main>
+  <aside id="run-counter" class="run-counter" aria-label="Recorded tokens and list-price cost" hidden><span class="counter-label">Recorded usage</span><div><span id="counter-tokens">Not reported</span><span class="counter-divider" aria-hidden="true"></span><span id="counter-cost">Not configured</span></div><a id="counter-link" href="#economics">Cost details <span data-icon="arrow-up-right" aria-hidden="true"></span></a></aside>
+</body>
+</html>

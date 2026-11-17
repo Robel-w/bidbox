@@ -30,6 +30,9 @@ def record_approval(
     approver_role: str | None = None,
     decision: str | None = None,
     reason: str | None = None,
+    *,
+    request_seq: int | None = None,
+    independent_reviewer: bool | None = None,
 ) -> dict[str, Any]:
     """Record a human gate decision with all required sign-off fields."""
     if not approver_name or not approver_name.strip():
@@ -68,6 +71,8 @@ def record_approval(
             "approver_role": approver_role.strip(),
             "decision": clean_decision,
             "reason": reason.strip(),
+            **({"request_seq": request_seq} if request_seq is not None else {}),
+            **({"independent_reviewer": independent_reviewer} if independent_reviewer is not None else {}),
         },
         outputs=decision_payload.model_dump(),
     )

@@ -1,8 +1,11 @@
 """Measured coverage of downloaded OCDS releases, separate from verified completeness."""
 
+import copy
 import json
 
 from bidbox.ingest import connect_store, db_path
+
+_STATUS_CACHE = {}
 
 FIELDS = (
     "with_buyer", "with_tender_value", "with_currency", "with_procurement_method",
@@ -56,6 +59,37 @@ def search_processes(query="", limit=20, sandbox=False, awards_only=False, conne
 
 def search_awards(query="", limit=20, sandbox=False):
     return search_processes(query, limit, sandbox, awards_only=True)
+
+
+def data_status():
+    path = db_path()
+    files = [path, path.with_name(path.name + ".wal")]
+    key = tuple((str(item), item.stat().st_mtime_ns) for item in files if item.exists())
+    if key not in _STATUS_CACHE:
+        _STATUS_CACHE.clear()
+        _STATUS_CACHE[key] = _measure_status()
+    return copy.deepcopy(_STATUS_CACHE[key])
+
+
+def _measure_status():
+    result = {"label": "NO DATA", "counts": {"live-portal": 0, "synthetic": 0}, "per_fy": [], "ingest_states": [], "source_urls": [], "data_as_of": None, "last_ingested_at": None, "current_fy_partial": False}
+    if not db_path().exists():
+        return result
+    with connect_store(read_only=True) as connection:
+        result["counts"].update(dict(connection.execute("SELECT origin,count(*) FROM procurement_records GROUP BY origin").fetchall()))
+        live, sandbox = result["counts"]["live-portal"], result["counts"]["synthetic"]
+        result["label"] = "MIXED" if live and sandbox else "LIVE DATA" if live else "SANDBOX DATA" if sandbox else "NO DATA"
+        result["latest_award_count"], result["latest_processes_with_awards"] = connection.execute("SELECT coalesce(sum(award_count),0),count(*) FILTER (WHERE award_count > 0) FROM procurement_records WHERE origin='live-portal'").fetchone()
+        coverage = measure_coverage(connection)
+        result.update(per_fy=coverage["per_fy"], observed_totals=coverage["totals"], pages=coverage["pages"], coverage_note=coverage["coverage_note"])
+        cursor = connection.execute("SELECT * FROM fiscal_ingest_state ORDER BY fiscal_year")
+        names = [column[0] for column in cursor.description]
+        result["ingest_states"] = [dict(zip(names, row)) for row in cursor.fetchall()]
+        result["source_urls"] = [row[0] for row in connection.execute("SELECT DISTINCT page_url FROM ingest_pages ORDER BY page_url").fetchall()]
+        result["data_as_of"], result["last_ingested_at"] = connection.execute("SELECT max(source_publication_date),max(ingested_at) FROM procurement_records WHERE origin='live-portal'").fetchone()
+        result["current_fy_partial"] = any(state["fiscal_year"] == "2026-2027" for state in result["ingest_states"])
+        result["latest_selection_note"] = "Latest reported release date; differing same-date releases use a deterministic content-hash tie-break, not an established chronological ordering."
+    return result
 
 
 def measure_coverage(connection):
