@@ -87,7 +87,9 @@ def get_default_connection() -> duckdb.DuckDBPyConnection:
     if _DEFAULT_CONN is None:
         from bidbox.ingest import connect_store, db_path
 
-        if db_path().exists():
+        if os.getenv("BIDBOX_SANDBOX") == "1":
+            _DEFAULT_CONN = load_data("data/fixtures/releases.json", init_db())
+        elif db_path().exists():
             _DEFAULT_CONN = connect_store(read_only=True)
             load_live_awards(_DEFAULT_CONN)
         else:

@@ -1,6 +1,7 @@
 """MCP sessions are opened once and reused; dead sessions reconnect; timeouts are logged as timeouts."""
 
 import asyncio
+import os
 import sys
 from contextlib import AsyncExitStack
 from pathlib import Path
@@ -129,7 +130,8 @@ async def test_real_bidbox_server_session_is_reused(monkeypatch: pytest.MonkeyPa
 
     def bidbox_only() -> MultiServerMCPClient:
         return MultiServerMCPClient(
-            {"bidbox": {"transport": "stdio", "command": sys.executable, "args": ["-m", "bidbox_mcp.server"]}}
+            {"bidbox": {"transport": "stdio", "command": sys.executable, "args": ["-m", "bidbox_mcp.server"],
+                        "env": {**os.environ, "BIDBOX_SANDBOX": "1"}}}
         )
 
     def counting_session(self, server_name, **kwargs):

@@ -12,6 +12,7 @@ from agent import evidence, investigator, planner
 from agent.graph import build_graph
 from audit.logger import get_audit_logs, verify_chain
 from audit.metrics import build_run_metrics
+from bidbox import store
 from bidbox_mcp.tools.benchmark_award import benchmark_award_tool
 from bidbox_mcp.tools.create_investigation_file import create_investigation_file_tool
 from bidbox_mcp.tools.flag_finding import flag_finding_tool
@@ -59,6 +60,7 @@ def offline_run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, An
     fixture.parent.mkdir(parents=True)
     shutil.copy2(REPO / "data" / "fixtures" / "releases.json", fixture)
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(store, "_DEFAULT_CONN", store.load_data(fixture, store.init_db()))
     tools = in_process_tools()
     monkeypatch.setattr(investigator, "_TOOLS_CACHE", tools)
     monkeypatch.setattr(planner, "ask_json", fake_planner_llm)

@@ -19,7 +19,7 @@ def mcp_server_params() -> StdioServerParameters:
     return StdioServerParameters(
         command=sys.executable,
         args=["-m", "bidbox_mcp.server"],
-        env=os.environ.copy(),
+        env={**os.environ, "BIDBOX_SANDBOX": "1"},
     )
 
 
