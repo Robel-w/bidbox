@@ -28,7 +28,23 @@ def main():
     ingest.add_argument("--refresh", action="store_true", help="Re-download completed fiscal years")
     measure = commands.add_parser("measure", help="Measure actual downloaded live-data field coverage")
     measure.add_argument("--output", type=Path)
+    connector = commands.add_parser("connector", help="Scaffold or test an institution connector")
+    connector_sub = connector.add_subparsers(dest="connector_command", required=True)
+    connector_new = connector_sub.add_parser("new", help="Scaffold connectors/<name>/ from a template")
+    connector_new.add_argument("name", help="lower_snake_case connector name")
+    connector_new.add_argument("--kind", required=True,
+                               choices=("data_source", "messaging", "payments", "records", "registry", "file_drop"))
+    connector_test = connector_sub.add_parser("test", help="Run the health check plus one sample read")
+    connector_test.add_argument("name", help="Connector folder name")
     args = parser.parse_args()
+    if args.command == "connector":
+        from .connectors_cli import connector_new, connector_test_command
+
+        if args.connector_command == "new":
+            connector_new(args.name, args.kind)
+        else:
+            connector_test_command(args.name)
+        return
     if args.command == "measure":
         from .data import measure_coverage
 
